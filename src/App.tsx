@@ -6,12 +6,19 @@ import {
   Folder,
   PanelLeft,
 } from "lucide-react";
+import { Background, ReactFlow } from "@xyflow/react";
+import type { Edge, Node } from "@xyflow/react";
+
+import "@xyflow/react/dist/style.css";
 
 const workspaceItems = [
   { label: "Project", value: "Untitled graph" },
   { label: "Mode", value: "Local workspace" },
   { label: "Runtime", value: "Not configured" },
 ];
+
+const canvasNodes: Node[] = [];
+const canvasEdges: Edge[] = [];
 
 export function App() {
   return (
@@ -71,12 +78,30 @@ export function App() {
             </dl>
           </div>
 
-          <div className="workspace-preview" aria-label="Workspace status">
-            <div className="preview-empty-state">
+          <section className="graph-canvas" aria-label="Graph canvas">
+            <ReactFlow
+              nodes={canvasNodes}
+              edges={canvasEdges}
+              nodesDraggable={false}
+              nodesConnectable={false}
+              elementsSelectable={false}
+              panOnDrag={false}
+              zoomOnScroll={false}
+              zoomOnPinch={false}
+              zoomOnDoubleClick={false}
+              preventScrolling={false}
+            >
+              <Background color="#c2d0ca" gap={28} size={1.25} />
+            </ReactFlow>
+
+            <div className="canvas-empty-state">
               <CircuitBoard size={38} strokeWidth={1.6} aria-hidden="true" />
-              <p>Workspace ready</p>
+              <div>
+                <p>Canvas is empty</p>
+                <span>Ready for architecture layout</span>
+              </div>
             </div>
-          </div>
+          </section>
         </section>
       </main>
     </div>
