@@ -14,16 +14,29 @@ describe("App shell", () => {
     expect(screen.getAllByText(/local workspace/i).length).toBeGreaterThan(0);
   });
 
-  it("renders an empty graph canvas without architecture nodes", () => {
+  it("renders deterministic primitive architecture nodes on the canvas", () => {
     render(<App />);
 
     expect(
       screen.getByRole("region", { name: /graph canvas/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/canvas is empty/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/ready for architecture layout/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByTestId("architecture-node")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("architecture-node")).toHaveLength(4);
+    expect(screen.getByText("Tensor")).toBeInTheDocument();
+    expect(screen.getByText("Neuron")).toBeInTheDocument();
+    expect(screen.getByText("Activation")).toBeInTheDocument();
+    expect(screen.getByText("Dense / Linear")).toBeInTheDocument();
+    expect(screen.queryByText("Convolution")).not.toBeInTheDocument();
+  });
+
+  it("shows readable metadata for each primitive node without editing controls", () => {
+    render(<App />);
+
+    expect(screen.queryByText(/canvas is empty/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Role: data carrier")).toBeInTheDocument();
+    expect(screen.getByText("Lowest exposed primitive")).toBeInTheDocument();
+    expect(screen.getByText("Function: GELU")).toBeInTheDocument();
+    expect(screen.getByText("Derived from neuron primitives")).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
