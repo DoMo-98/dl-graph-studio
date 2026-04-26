@@ -1,0 +1,17 @@
+[package]
+name = "dl-graph-studio"
+version = "0.1.0"
+description = "A local-first desktop application for visual neural architecture prototyping."
+authors = ["Eric Dominguez Morales"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "dl_graph_studio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
