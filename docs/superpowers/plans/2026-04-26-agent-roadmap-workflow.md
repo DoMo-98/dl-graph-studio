@@ -485,7 +485,7 @@ Expected: all commands exit successfully.
 Run:
 
 ```bash
-rg -n "PLACEHOLDER|UNFINISHED|REPLACE_ME" AGENTS.md .github docs README.md
+rg -n "PLACEHOLDER|UNFINISHED|REPLACE_ME" AGENTS.md .github docs/roadmap docs/superpowers/specs README.md
 ```
 
 Expected: no matches and exit code `1`.
@@ -514,5 +514,5 @@ Expected: no output.
 
 - Spec coverage: The plan implements all repository artifacts requested by the approved spec: `AGENTS.md`, issue template, PR template, roadmap process guide, and README discoverability.
 - Scope control: The plan does not add CI, issue automation, GitHub Actions, or application runtime code because the spec defers automation until after 5-10 real PRs.
-- Unfinished-marker scan: The plan avoids incomplete work markers and includes a final `rg` scan for common replacement markers.
+- Unfinished-marker scan: The plan includes a final `rg` scan for common replacement markers across workflow artifacts and specs, excluding implementation plans to avoid self-matching the verification command.
 - Type and naming consistency: Branch pattern, labels, statuses, milestones, issue structure, PR structure, and Definition of Done match the approved spec.
