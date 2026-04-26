@@ -7,9 +7,17 @@ import {
   PanelLeft,
 } from "lucide-react";
 import { Background, ReactFlow } from "@xyflow/react";
-import type { Edge, Node } from "@xyflow/react";
+import type { Edge, Node, NodeProps, NodeTypes } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
+
+type PrimitiveNode = {
+  id: string;
+  label: string;
+  kind: string;
+  metadata: string[];
+  position: { x: number; y: number };
+};
 
 const workspaceItems = [
   { label: "Project", value: "Untitled graph" },
@@ -17,7 +25,75 @@ const workspaceItems = [
   { label: "Runtime", value: "Not configured" },
 ];
 
-const canvasNodes: Node[] = [];
+const primitiveNodes: PrimitiveNode[] = [
+  {
+    id: "tensor",
+    label: "Tensor",
+    kind: "Data",
+    metadata: ["Role: data carrier", "Shape: dynamic"],
+    position: { x: 96, y: 64 },
+  },
+  {
+    id: "neuron",
+    label: "Neuron",
+    kind: "Foundation",
+    metadata: ["Lowest exposed primitive", "Parameters: weights + bias"],
+    position: { x: 96, y: 216 },
+  },
+  {
+    id: "activation",
+    label: "Activation",
+    kind: "Primitive",
+    metadata: ["Function: GELU", "Role: nonlinear transform"],
+    position: { x: 96, y: 368 },
+  },
+  {
+    id: "dense-linear",
+    label: "Dense / Linear",
+    kind: "Built-in",
+    metadata: ["Units: 128", "Derived from neuron primitives"],
+    position: { x: 96, y: 520 },
+  },
+];
+
+type PrimitiveNodeData = Omit<PrimitiveNode, "id" | "position">;
+type PrimitiveFlowNode = Node<PrimitiveNodeData, "primitive">;
+
+function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
+  return (
+    <article
+      className="architecture-node"
+      data-testid="architecture-node"
+      aria-label={`${data.label} primitive node`}
+    >
+      <span className="architecture-node-kind">{data.kind}</span>
+      <h4>{data.label}</h4>
+      <ul>
+        {data.metadata.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
+const nodeTypes: NodeTypes = {
+  primitive: PrimitiveNodeCard,
+};
+
+const canvasNodes: PrimitiveFlowNode[] = primitiveNodes.map((node) => ({
+  id: node.id,
+  type: "primitive",
+  position: node.position,
+  data: {
+    label: node.label,
+    kind: node.kind,
+    metadata: node.metadata,
+  },
+  className: "architecture-flow-node",
+  selectable: false,
+  draggable: false,
+}));
 const canvasEdges: Edge[] = [];
 
 export function App() {
@@ -82,6 +158,7 @@ export function App() {
             <ReactFlow
               nodes={canvasNodes}
               edges={canvasEdges}
+              nodeTypes={nodeTypes}
               nodesDraggable={false}
               nodesConnectable={false}
               elementsSelectable={false}
@@ -90,17 +167,20 @@ export function App() {
               zoomOnPinch={false}
               zoomOnDoubleClick={false}
               preventScrolling={false}
+              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
               <Background color="#c2d0ca" gap={28} size={1.25} />
             </ReactFlow>
 
-            <div className="canvas-empty-state">
-              <CircuitBoard size={38} strokeWidth={1.6} aria-hidden="true" />
-              <div>
-                <p>Canvas is empty</p>
-                <span>Ready for architecture layout</span>
+            {canvasNodes.length === 0 ? (
+              <div className="canvas-empty-state">
+                <CircuitBoard size={38} strokeWidth={1.6} aria-hidden="true" />
+                <div>
+                  <p>Canvas is empty</p>
+                  <span>Ready for architecture layout</span>
+                </div>
               </div>
-            </div>
+            ) : null}
           </section>
         </section>
       </main>
