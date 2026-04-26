@@ -10,3 +10,9 @@ See [PRD.md](PRD.md) for the official product requirements document.
 
 - [Agent roadmap workflow design](docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md)
 - [Roadmap process](docs/roadmap/roadmap-process.md)
+
+## License
+
+Copyright 2026 Eric Dominguez Morales.
+
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE).
