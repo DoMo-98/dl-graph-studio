@@ -1,0 +1,5 @@
+docs/superpowers/plans/2026-04-26-agent-roadmap-workflow.md
+docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md
+.playwright-cli/
+output/playwright/
+public/favicon.svg
