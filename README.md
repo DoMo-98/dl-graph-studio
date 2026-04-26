@@ -11,6 +11,10 @@ See [PRD.md](PRD.md) for the official product requirements document.
 - [Agent roadmap workflow design](docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md)
 - [Roadmap process](docs/roadmap/roadmap-process.md)
 
+## Architecture
+
+- [Initial technical stack](docs/architecture/technical-stack.md)
+
 ## License
 
 Copyright 2026 Eric Dominguez Morales.
