@@ -47,18 +47,21 @@ Create these labels:
 
 ## Agent Cycle
 
+The GitHub Project tracks roadmap issues as the status owner. Pull requests are linked delivery artifacts that move the issue through Project statuses.
+
 1. The product owner asks for the next task.
 2. The agent reviews the GitHub Project.
 3. The agent proposes one issue with the `ready` label and explains the recommendation.
-4. The product owner confirms the issue or selects another one.
+4. The product owner confirms the issue or selects another one, and the issue moves from `Ready` to `In Progress`.
 5. The agent creates a branch named `codex/<issue-number>-<short-name>`.
 6. The agent implements only the issue scope.
 7. The agent runs the required verification.
-8. The agent opens a PR linked with `Closes #<issue-number>`.
+8. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
 9. The product owner reviews the result.
-10. If changes are needed, the PR moves to `Needs Iteration` and the agent updates the same PR.
-11. When accepted and merged, the issue moves to `Done`.
-12. The next issue starts only after product-owner confirmation.
+10. If changes are needed, the issue moves to `Needs Iteration` and the agent updates the same PR.
+11. When the update is ready for review, the issue moves back to `In Review`.
+12. When accepted and merged, the issue moves to `Done`.
+13. The next issue starts only after product-owner confirmation.
 
 ## First Executable Roadmap
 
