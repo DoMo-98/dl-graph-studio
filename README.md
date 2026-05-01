@@ -41,6 +41,7 @@ pnpm format:check
 ## Roadmap Workflow
 
 - [Agent roadmap workflow design](docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md)
+- [Milestone UX/UI hardening design](docs/superpowers/specs/2026-05-01-milestone-ux-ui-hardening-design.md)
 - [Roadmap process](docs/roadmap/roadmap-process.md)
 
 ## Architecture
