@@ -4,8 +4,11 @@ import {
   CircuitBoard,
   FlaskConical,
   Folder,
+  Info,
   PanelLeft,
 } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { Background, ReactFlow } from "@xyflow/react";
 import type { Edge, Node, NodeProps, NodeTypes } from "@xyflow/react";
 
@@ -56,15 +59,34 @@ const primitiveNodes: PrimitiveNode[] = [
   },
 ];
 
-type PrimitiveNodeData = Omit<PrimitiveNode, "id" | "position">;
+type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
+  isSelected: boolean;
+  onSelect: (nodeId: string) => void;
+};
 type PrimitiveFlowNode = Node<PrimitiveNodeData, "primitive">;
 
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
+  const selectNode = () => {
+    data.onSelect(data.id);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectNode();
+    }
+  };
+
   return (
     <article
-      className="architecture-node"
+      className={`architecture-node${data.isSelected ? " selected" : ""}`}
       data-testid="architecture-node"
+      role="button"
+      tabIndex={0}
+      aria-pressed={data.isSelected}
       aria-label={`${data.label} primitive node`}
+      onClick={selectNode}
+      onKeyDown={handleKeyDown}
     >
       <span className="architecture-node-kind">{data.kind}</span>
       <h4>{data.label}</h4>
@@ -81,22 +103,35 @@ const nodeTypes: NodeTypes = {
   primitive: PrimitiveNodeCard,
 };
 
-const canvasNodes: PrimitiveFlowNode[] = primitiveNodes.map((node) => ({
-  id: node.id,
-  type: "primitive",
-  position: node.position,
-  data: {
-    label: node.label,
-    kind: node.kind,
-    metadata: node.metadata,
-  },
-  className: "architecture-flow-node",
-  selectable: false,
-  draggable: false,
-}));
 const canvasEdges: Edge[] = [];
 
 export function App() {
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNode =
+    primitiveNodes.find((node) => node.id === selectedNodeId) ?? null;
+
+  const canvasNodes: PrimitiveFlowNode[] = useMemo(
+    () =>
+      primitiveNodes.map((node) => ({
+        id: node.id,
+        type: "primitive",
+        position: node.position,
+        data: {
+          id: node.id,
+          label: node.label,
+          kind: node.kind,
+          metadata: node.metadata,
+          isSelected: selectedNodeId === node.id,
+          onSelect: setSelectedNodeId,
+        },
+        className: "architecture-flow-node",
+        selected: selectedNodeId === node.id,
+        selectable: true,
+        draggable: false,
+      })),
+    [selectedNodeId],
+  );
+
   return (
     <div className="app-shell">
       <aside className="sidebar" aria-label="Primary">
@@ -139,19 +174,47 @@ export function App() {
         </header>
 
         <section className="workbench" aria-label="Project overview">
-          <div className="workspace-panel">
-            <div className="panel-heading">
-              <Folder size={18} aria-hidden="true" />
-              <h3>Session</h3>
+          <div className="workspace-panel-stack">
+            <div className="workspace-panel">
+              <div className="panel-heading">
+                <Folder size={18} aria-hidden="true" />
+                <h3>Session</h3>
+              </div>
+              <dl className="meta-list">
+                {workspaceItems.map((item) => (
+                  <div className="meta-row" key={item.label}>
+                    <dt>{item.label}</dt>
+                    <dd>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-            <dl className="meta-list">
-              {workspaceItems.map((item) => (
-                <div className="meta-row" key={item.label}>
-                  <dt>{item.label}</dt>
-                  <dd>{item.value}</dd>
+
+            <aside className="workspace-panel" aria-label="Node inspector">
+              <div className="panel-heading">
+                <Info size={18} aria-hidden="true" />
+                <h3>Inspector</h3>
+              </div>
+
+              {selectedNode ? (
+                <div className="inspector-details">
+                  <span className="architecture-node-kind">
+                    {selectedNode.kind}
+                  </span>
+                  <h4>{selectedNode.label}</h4>
+                  <ul>
+                    {selectedNode.metadata.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
-              ))}
-            </dl>
+              ) : (
+                <div className="inspector-empty">
+                  <p>No node selected</p>
+                  <span>Select a primitive node on the canvas.</span>
+                </div>
+              )}
+            </aside>
           </div>
 
           <section className="graph-canvas" aria-label="Graph canvas">
