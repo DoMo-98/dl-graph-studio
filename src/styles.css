@@ -256,6 +256,67 @@ h4 {
   font-weight: 650;
 }
 
+.project-file-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.project-file-actions button,
+.project-file-import {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  width: 100%;
+  padding: 0 10px;
+  color: var(--accent-strong);
+  background: rgb(15 143 125 / 9%);
+  border: 1px solid rgb(15 143 125 / 22%);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 740;
+  cursor: pointer;
+}
+
+.project-file-actions button:hover,
+.project-file-actions button:focus-visible,
+.project-file-import:hover,
+.project-file-import:focus-within {
+  background: rgb(15 143 125 / 14%);
+  outline: 3px solid rgb(15 143 125 / 14%);
+}
+
+.project-file-import {
+  position: relative;
+  overflow: hidden;
+}
+
+.project-file-import input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.project-file-status {
+  margin: 12px 0 0;
+  color: var(--ink-muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.project-file-status.success {
+  color: var(--accent-strong);
+}
+
+.project-file-status.error {
+  color: #a34712;
+}
+
 .graph-canvas {
   position: relative;
   min-height: 960px;

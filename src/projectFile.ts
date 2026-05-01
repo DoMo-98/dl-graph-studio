@@ -1,0 +1,271 @@
+export type PrimitiveNodeParameter =
+  | {
+      id: string;
+      label: string;
+      type: "number";
+      value: number;
+      min?: number;
+      step?: number;
+    }
+  | {
+      id: string;
+      label: string;
+      type: "select";
+      value: string;
+      options: string[];
+    }
+  | {
+      id: string;
+      label: string;
+      type: "text";
+      value: string;
+    }
+  | {
+      id: string;
+      label: string;
+      type: "boolean";
+      value: boolean;
+    };
+
+export type PrimitiveNode = {
+  id: string;
+  label: string;
+  kind: string;
+  metadata: string[];
+  parameters: PrimitiveNodeParameter[];
+  position: { x: number; y: number };
+};
+
+export type GraphConnection = {
+  id: string;
+  source: string;
+  target: string;
+};
+
+export type ProjectFile = {
+  version: 1;
+  nodes: PrimitiveNode[];
+  connections: GraphConnection[];
+};
+
+type ParseProjectFileResult =
+  | { ok: true; project: ProjectFile }
+  | { ok: false; message: string };
+
+const PROJECT_FILE_VERSION = 1;
+
+export function createProjectFile(
+  nodes: PrimitiveNode[],
+  connections: GraphConnection[],
+): ProjectFile {
+  return {
+    version: PROJECT_FILE_VERSION,
+    nodes: nodes.map(cloneNode),
+    connections: connections.map((connection) => ({ ...connection })),
+  };
+}
+
+export function serializeProjectFile(project: ProjectFile) {
+  return `${JSON.stringify(project, null, 2)}\n`;
+}
+
+export function parseProjectFileContent(
+  content: string,
+): ParseProjectFileResult {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return { ok: false, message: "Project file is not valid JSON." };
+  }
+
+  if (!isRecord(parsed)) {
+    return { ok: false, message: "Project file must be a JSON object." };
+  }
+
+  if (parsed.version !== PROJECT_FILE_VERSION) {
+    return { ok: false, message: "Project file version is not supported." };
+  }
+
+  if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.connections)) {
+    return {
+      ok: false,
+      message: "Project file must include nodes and connections.",
+    };
+  }
+
+  const nodes = parsed.nodes.map(parseNode);
+
+  if (nodes.some((node) => node === null)) {
+    return { ok: false, message: "Project file contains invalid nodes." };
+  }
+
+  const parsedNodes = nodes as PrimitiveNode[];
+  const nodeIds = new Set(parsedNodes.map((node) => node.id));
+  const connections = parsed.connections.map((connection) =>
+    parseConnection(connection, nodeIds),
+  );
+
+  if (connections.some((connection) => connection === null)) {
+    return {
+      ok: false,
+      message: "Project file contains invalid connections.",
+    };
+  }
+
+  return {
+    ok: true,
+    project: {
+      version: PROJECT_FILE_VERSION,
+      nodes: parsedNodes,
+      connections: connections as GraphConnection[],
+    },
+  };
+}
+
+function cloneNode(node: PrimitiveNode): PrimitiveNode {
+  return {
+    ...node,
+    metadata: [...node.metadata],
+    parameters: node.parameters.map((parameter) => ({ ...parameter })),
+    position: { ...node.position },
+  };
+}
+
+function parseNode(value: unknown): PrimitiveNode | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (
+    !isString(value.id) ||
+    !isString(value.label) ||
+    !isString(value.kind) ||
+    !isStringArray(value.metadata) ||
+    !Array.isArray(value.parameters) ||
+    !isPosition(value.position)
+  ) {
+    return null;
+  }
+
+  const parameters = value.parameters.map(parseParameter);
+
+  if (parameters.some((parameter) => parameter === null)) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    label: value.label,
+    kind: value.kind,
+    metadata: value.metadata,
+    parameters: parameters as PrimitiveNodeParameter[],
+    position: value.position,
+  };
+}
+
+function parseParameter(value: unknown): PrimitiveNodeParameter | null {
+  if (!isRecord(value) || !isString(value.id) || !isString(value.label)) {
+    return null;
+  }
+
+  if (value.type === "number") {
+    if (!isFiniteNumber(value.value)) {
+      return null;
+    }
+
+    return {
+      id: value.id,
+      label: value.label,
+      type: "number",
+      value: value.value,
+      min: isFiniteNumber(value.min) ? value.min : undefined,
+      step: isFiniteNumber(value.step) ? value.step : undefined,
+    };
+  }
+
+  if (value.type === "select") {
+    if (!isString(value.value) || !isStringArray(value.options)) {
+      return null;
+    }
+
+    return {
+      id: value.id,
+      label: value.label,
+      type: "select",
+      value: value.value,
+      options: value.options,
+    };
+  }
+
+  if (value.type === "text") {
+    if (!isString(value.value)) {
+      return null;
+    }
+
+    return {
+      id: value.id,
+      label: value.label,
+      type: "text",
+      value: value.value,
+    };
+  }
+
+  if (value.type === "boolean") {
+    if (typeof value.value !== "boolean") {
+      return null;
+    }
+
+    return {
+      id: value.id,
+      label: value.label,
+      type: "boolean",
+      value: value.value,
+    };
+  }
+
+  return null;
+}
+
+function parseConnection(
+  value: unknown,
+  nodeIds: Set<string>,
+): GraphConnection | null {
+  if (
+    !isRecord(value) ||
+    !isString(value.id) ||
+    !isString(value.source) ||
+    !isString(value.target) ||
+    !nodeIds.has(value.source) ||
+    !nodeIds.has(value.target)
+  ) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    source: value.source,
+    target: value.target,
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isString);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isPosition(value: unknown): value is PrimitiveNode["position"] {
+  return isRecord(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y);
+}
