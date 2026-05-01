@@ -5,12 +5,26 @@ import {
   FlaskConical,
   Folder,
   Info,
+  Link2,
   PanelLeft,
+  X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
-import { Background, ReactFlow } from "@xyflow/react";
-import type { Edge, Node, NodeProps, NodeTypes } from "@xyflow/react";
+import {
+  Background,
+  Handle,
+  MarkerType,
+  Position,
+  ReactFlow,
+} from "@xyflow/react";
+import type {
+  Connection,
+  Edge,
+  Node,
+  NodeProps,
+  NodeTypes,
+} from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
 
@@ -52,6 +66,12 @@ type PrimitiveNode = {
   position: { x: number; y: number };
 };
 
+type GraphConnection = {
+  id: string;
+  source: string;
+  target: string;
+};
+
 const workspaceItems = [
   { label: "Project", value: "Untitled graph" },
   { label: "Mode", value: "Local workspace" },
@@ -85,7 +105,7 @@ const primitiveNodes: PrimitiveNode[] = [
       },
       { id: "bias", label: "Bias", type: "boolean", value: true },
     ],
-    position: { x: 96, y: 244 },
+    position: { x: 96, y: 284 },
   },
   {
     id: "activation",
@@ -101,7 +121,7 @@ const primitiveNodes: PrimitiveNode[] = [
         options: ["GELU", "ReLU", "SiLU", "Tanh"],
       },
     ],
-    position: { x: 96, y: 424 },
+    position: { x: 96, y: 504 },
   },
   {
     id: "dense-linear",
@@ -118,13 +138,18 @@ const primitiveNodes: PrimitiveNode[] = [
         step: 1,
       },
     ],
-    position: { x: 96, y: 604 },
+    position: { x: 96, y: 724 },
   },
 ];
 
 type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
   isSelected: boolean;
+  connectionSourceId: string | null;
+  connectionSourceLabel: string | null;
   onSelect: (nodeId: string) => void;
+  onStartConnection: (nodeId: string) => void;
+  onCancelConnection: () => void;
+  onCompleteConnection: (targetNodeId: string) => void;
   displayMetadata: string[];
 };
 type PrimitiveFlowNode = Node<PrimitiveNodeData, "primitive">;
@@ -156,25 +181,78 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
     }
   };
 
+  const isConnectionSource = data.connectionSourceId === data.id;
+  const isConnectionTarget =
+    data.connectionSourceId !== null && data.connectionSourceId !== data.id;
+
   return (
-    <article
-      className={`architecture-node${data.isSelected ? " selected" : ""}`}
-      data-testid="architecture-node"
-      role="button"
-      tabIndex={0}
-      aria-pressed={data.isSelected}
-      aria-label={`${data.label} primitive node`}
-      onClick={selectNode}
-      onKeyDown={handleKeyDown}
-    >
-      <span className="architecture-node-kind">{data.kind}</span>
-      <h4>{data.label}</h4>
-      <ul>
-        {data.displayMetadata.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </article>
+    <div className="architecture-node-shell">
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="architecture-node-handle"
+      />
+      <article
+        className={`architecture-node${data.isSelected ? " selected" : ""}${
+          isConnectionSource ? " connection-source" : ""
+        }${isConnectionTarget ? " connection-target" : ""}`}
+        data-testid="architecture-node"
+        role="button"
+        tabIndex={0}
+        aria-pressed={data.isSelected}
+        aria-label={`${data.label} primitive node`}
+        onClick={selectNode}
+        onKeyDown={handleKeyDown}
+      >
+        <span className="architecture-node-kind">{data.kind}</span>
+        <h4>{data.label}</h4>
+        <ul>
+          {data.displayMetadata.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </article>
+      <div className="connection-controls">
+        {isConnectionSource ? (
+          <button
+            type="button"
+            className="connection-button cancel"
+            aria-label={`Cancel connection from ${data.label}`}
+            title={`Cancel connection from ${data.label}`}
+            onClick={data.onCancelConnection}
+          >
+            <X size={15} aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="connection-button"
+            aria-label={
+              data.connectionSourceId
+                ? `Connect ${data.connectionSourceLabel} to ${data.label}`
+                : `Start connection from ${data.label}`
+            }
+            title={
+              data.connectionSourceId
+                ? `Connect ${data.connectionSourceLabel} to ${data.label}`
+                : `Start connection from ${data.label}`
+            }
+            onClick={() =>
+              data.connectionSourceId
+                ? data.onCompleteConnection(data.id)
+                : data.onStartConnection(data.id)
+            }
+          >
+            <Link2 size={15} aria-hidden="true" />
+          </button>
+        )}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="architecture-node-handle"
+      />
+    </div>
   );
 }
 
@@ -182,13 +260,19 @@ const nodeTypes: NodeTypes = {
   primitive: PrimitiveNodeCard,
 };
 
-const canvasEdges: Edge[] = [];
-
 export function App() {
   const [graphNodes, setGraphNodes] = useState<PrimitiveNode[]>(primitiveNodes);
+  const [graphConnections, setGraphConnections] = useState<GraphConnection[]>(
+    [],
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
+    null,
+  );
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
+  const connectionSource =
+    graphNodes.find((node) => node.id === connectionSourceId) ?? null;
 
   const updateNodeParameter = (
     nodeId: string,
@@ -213,6 +297,54 @@ export function App() {
     );
   };
 
+  const addGraphConnection = useCallback(
+    (sourceId: string, targetId: string) => {
+      setGraphConnections((currentConnections) => {
+        const connectionExists = currentConnections.some(
+          (connection) =>
+            connection.source === sourceId && connection.target === targetId,
+        );
+
+        if (connectionExists) {
+          return currentConnections;
+        }
+
+        return [
+          ...currentConnections,
+          {
+            id: `connection-${sourceId}-${targetId}`,
+            source: sourceId,
+            target: targetId,
+          },
+        ];
+      });
+      setConnectionSourceId(null);
+    },
+    [],
+  );
+
+  const completeGraphConnection = useCallback(
+    (targetNodeId: string) => {
+      if (!connectionSourceId || connectionSourceId === targetNodeId) {
+        return;
+      }
+
+      addGraphConnection(connectionSourceId, targetNodeId);
+    },
+    [addGraphConnection, connectionSourceId],
+  );
+
+  const handleReactFlowConnect = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.target) {
+        return;
+      }
+
+      addGraphConnection(connection.source, connection.target);
+    },
+    [addGraphConnection],
+  );
+
   const canvasNodes: PrimitiveFlowNode[] = useMemo(
     () =>
       graphNodes.map((node) => ({
@@ -227,14 +359,65 @@ export function App() {
           parameters: node.parameters,
           displayMetadata: getDisplayMetadata(node),
           isSelected: selectedNodeId === node.id,
+          connectionSourceId,
+          connectionSourceLabel: connectionSource?.label ?? null,
           onSelect: setSelectedNodeId,
+          onStartConnection: setConnectionSourceId,
+          onCancelConnection: () => setConnectionSourceId(null),
+          onCompleteConnection: completeGraphConnection,
         },
         className: "architecture-flow-node",
         selected: selectedNodeId === node.id,
         selectable: true,
         draggable: false,
       })),
-    [graphNodes, selectedNodeId],
+    [
+      completeGraphConnection,
+      connectionSource?.label,
+      connectionSourceId,
+      graphNodes,
+      selectedNodeId,
+    ],
+  );
+
+  const canvasEdges: Edge[] = useMemo(
+    () =>
+      graphConnections.map((connection) => {
+        const sourceNode = graphNodes.find(
+          (node) => node.id === connection.source,
+        );
+        const targetNode = graphNodes.find(
+          (node) => node.id === connection.target,
+        );
+        const label = `${sourceNode?.label ?? connection.source} -> ${
+          targetNode?.label ?? connection.target
+        }`;
+
+        return {
+          id: connection.id,
+          source: connection.source,
+          target: connection.target,
+          label,
+          type: "smoothstep",
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 16,
+            height: 16,
+            color: "#0b6d60",
+          },
+          style: {
+            stroke: "#0b6d60",
+            strokeWidth: 2,
+          },
+          labelBgPadding: [8, 4],
+          labelBgBorderRadius: 6,
+          labelBgStyle: {
+            fill: "#f8faf8",
+            fillOpacity: 0.94,
+          },
+        };
+      }),
+    [graphConnections, graphNodes],
   );
 
   return (
@@ -340,8 +523,9 @@ export function App() {
               nodes={canvasNodes}
               edges={canvasEdges}
               nodeTypes={nodeTypes}
+              onConnect={handleReactFlowConnect}
               nodesDraggable={false}
-              nodesConnectable={false}
+              nodesConnectable={true}
               elementsSelectable={false}
               panOnDrag={false}
               zoomOnScroll={false}
@@ -360,6 +544,14 @@ export function App() {
                   <p>Canvas is empty</p>
                   <span>Ready for architecture layout</span>
                 </div>
+              </div>
+            ) : null}
+
+            {canvasEdges.length > 0 ? (
+              <div className="connection-list" aria-label="Graph connections">
+                {canvasEdges.map((edge) => (
+                  <span key={edge.id}>{edge.label}</span>
+                ))}
               </div>
             ) : null}
           </section>

@@ -126,4 +126,35 @@ describe("App shell", () => {
       within(inspector).getByRole("spinbutton", { name: /units/i }),
     ).toHaveValue(256);
   });
+
+  it("creates visible in-memory connections between primitive nodes", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+
+    expect(screen.getByText("Tensor -> Neuron")).toBeInTheDocument();
+    expect(screen.getByText("Neuron -> Activation")).toBeInTheDocument();
+  });
+
+  it("keeps node selection and inspector behavior after connections are created", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/neuron primitive node/i));
+
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+
+    expect(
+      within(inspector).getByRole("heading", { name: /neuron/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(inspector).getByRole("spinbutton", { name: /units/i }),
+    ).toHaveValue(1);
+  });
 });
