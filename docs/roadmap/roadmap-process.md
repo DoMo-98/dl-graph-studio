@@ -45,6 +45,32 @@ Create these labels:
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
 - Keep issues small enough for a PR review of about 15-30 minutes.
 
+## Milestone UX/UI Hardening
+
+Each product milestone should end with one roadmap issue named `Phase N UX/UI hardening` unless the product owner explicitly decides to skip it.
+
+Use this issue as a milestone closeout pass, not as a redesign bucket. It may include small UX/UI corrections across the milestone flow:
+
+- spacing, sizing, alignment, and layout consistency,
+- visual hierarchy and density,
+- label, empty-state, and validation-message clarity,
+- selection, disabled-state, invalid-action, and transition feedback,
+- consistency between canvas, inspector, toolbar, navigation, and validation surfaces,
+- layout stability across supported viewport sizes.
+
+Use `ux`, `frontend`, and `ready` labels when the issue is ready for selection.
+
+The hardening issue must not include new product capabilities, large redesigns, broad refactors, dependency changes, or future milestone behavior. Larger UX or product findings should become follow-up roadmap issues.
+
+Default acceptance criteria:
+
+- [ ] The primary milestone flow has been reviewed end-to-end.
+- [ ] Small UX/UI inconsistencies found during review have been fixed or explicitly deferred.
+- [ ] Larger issues discovered during review have follow-up issues instead of being bundled into the hardening PR.
+- [ ] The PR includes screenshots or a short recording for the reviewed flow.
+- [ ] Manual verification describes the flow that was tested.
+- [ ] No new product capabilities were added.
+
 ## Agent Cycle
 
 The GitHub Project tracks roadmap issues as the status owner. Pull requests are linked delivery artifacts that move the issue through Project statuses.
@@ -77,6 +103,7 @@ Start with enough Phase 1 issues for roughly 2-4 weeks of work:
 8. Validate basic invalid connections.
 9. Save and load a minimal project.
 10. Create the first composite node representation.
+11. Phase 1 UX/UI hardening.
 
 Do not start PyTorch execution or training until the graph representation is minimal, stable, and persistible.
 

@@ -8,6 +8,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 
 - `PRD.md` is the high-level product source of truth.
 - `docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md` is the workflow design source of truth.
+- `docs/superpowers/specs/2026-05-01-milestone-ux-ui-hardening-design.md` defines the milestone UX/UI hardening convention.
 - The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
@@ -19,6 +20,13 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - Explain why the proposed issue is the best next task.
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
+
+## Milestone UX/UI Hardening
+
+- Treat `Phase N UX/UI hardening` as the default final issue for each product milestone, especially Phase 1 and Phase 2.
+- The hardening issue may include small UX/UI corrections only when they stay within the issue scope.
+- Do not use hardening issues for new product capabilities, large redesigns, broad refactors, dependency changes, or future milestone behavior.
+- If hardening reveals larger UX or product problems, create follow-up roadmap issues instead of bundling them into the hardening PR.
 
 ## Branches
 
