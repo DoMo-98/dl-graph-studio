@@ -46,6 +46,8 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - Run the verification listed in the issue.
 - Run relevant automated tests when tests exist.
 - For UI changes, capture screenshots or a short video/GIF for the PR.
+- Before opening the PR, give the product owner concise manual verification instructions so they can corroborate that the implementation succeeded.
+- Product-owner verification instructions must explain what to test, where to test it, the expected result, and any known limitations or skipped checks.
 - Document manual verification steps in the PR.
 - If a requested verification cannot be run, state why in the PR.
 
@@ -68,6 +70,7 @@ A PR is ready for review when:
 - Automated tests pass where tests exist.
 - New behavior has suitable test coverage when practical.
 - UI changes include screenshots or a short video/GIF.
+- Product-owner manual verification instructions were provided before opening the PR.
 - Manual verification steps have been run and documented.
 - No unrelated refactors or scope creep are included.
 - Documentation is updated when behavior, architecture, or workflow changes.
