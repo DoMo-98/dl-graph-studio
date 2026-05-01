@@ -15,6 +15,8 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 
 ## Task Selection
 
+- Before starting any task, run `git pull --ff-only` or an equivalent safe sync command so the local workspace is up to date with the remote.
+- If the workspace has local changes or `git pull --ff-only` cannot complete safely, stop and report the state before making task changes.
 - Do not start a new roadmap task without product-owner confirmation.
 - When asked for the next task, inspect the GitHub Project and propose one issue with the `ready` label.
 - Explain why the proposed issue is the best next task.
