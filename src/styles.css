@@ -258,7 +258,7 @@ h4 {
 
 .graph-canvas {
   position: relative;
-  min-height: 820px;
+  min-height: 960px;
   overflow: hidden;
   background:
     linear-gradient(90deg, rgb(15 143 125 / 5%) 1px, transparent 1px),
@@ -303,6 +303,12 @@ h4 {
   cursor: pointer;
 }
 
+.architecture-node-shell {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+
 .architecture-node:hover,
 .architecture-node:focus-visible,
 .architecture-node.selected {
@@ -311,6 +317,18 @@ h4 {
   box-shadow:
     0 0 0 3px rgb(199 123 23 / 18%),
     0 16px 34px rgb(23 33 31 / 18%);
+}
+
+.architecture-node.connection-source {
+  border-color: rgb(15 143 125 / 64%);
+  border-left-color: var(--accent);
+  box-shadow:
+    0 0 0 3px rgb(15 143 125 / 16%),
+    0 16px 34px rgb(23 33 31 / 16%);
+}
+
+.architecture-node.connection-target {
+  border-color: rgb(199 123 23 / 58%);
 }
 
 .architecture-node-kind {
@@ -343,6 +361,67 @@ h4 {
   font-weight: 650;
   line-height: 1.25;
   list-style: none;
+}
+
+.architecture-node-handle {
+  width: 12px;
+  height: 12px;
+  background: var(--accent-strong);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px rgb(15 143 125 / 22%);
+}
+
+.connection-controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.connection-button {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: #ffffff;
+  background: var(--accent-strong);
+  border: 1px solid rgb(11 109 96 / 72%);
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgb(23 33 31 / 14%);
+  cursor: pointer;
+}
+
+.connection-button:hover,
+.connection-button:focus-visible {
+  background: var(--accent);
+  outline: 3px solid rgb(15 143 125 / 18%);
+}
+
+.connection-button.cancel {
+  background: var(--signal);
+  border-color: rgb(199 123 23 / 72%);
+}
+
+.connection-list {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 4;
+  display: grid;
+  gap: 6px;
+  max-width: min(280px, calc(100% - 32px));
+  padding: 10px;
+  color: var(--accent-strong);
+  background: rgb(248 250 248 / 92%);
+  border: 1px solid rgb(15 143 125 / 22%);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgb(23 33 31 / 10%);
+  pointer-events: none;
+}
+
+.connection-list span {
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+  font-weight: 760;
+  line-height: 1.25;
 }
 
 .inspector-details {
@@ -519,7 +598,7 @@ h4 {
   }
 
   .graph-canvas {
-    min-height: 820px;
+    min-height: 960px;
   }
 
   .canvas-empty-state {
