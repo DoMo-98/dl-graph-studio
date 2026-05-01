@@ -26,6 +26,7 @@ No changes are planned for `.github/ISSUE_TEMPLATE/roadmap-task.md` or `.github/
 ## Task 1: Add Agent Rule For Milestone Hardening
 
 **Files:**
+
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Read the current agent operating rules**
@@ -81,6 +82,7 @@ Expected: commit succeeds with only `AGENTS.md` changed.
 ## Task 2: Update Roadmap Process
 
 **Files:**
+
 - Modify: `docs/roadmap/roadmap-process.md`
 
 - [ ] **Step 1: Read the current roadmap process**
@@ -164,6 +166,7 @@ Expected: commit succeeds with only `docs/roadmap/roadmap-process.md` changed.
 ## Task 3: Link The Hardening Spec From README
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Read the documentation links section**
@@ -208,6 +211,7 @@ Expected: commit succeeds with only `README.md` changed.
 ## Task 4: Final Verification
 
 **Files:**
+
 - Verify: `AGENTS.md`
 - Verify: `docs/roadmap/roadmap-process.md`
 - Verify: `README.md`
