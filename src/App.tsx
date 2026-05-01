@@ -1,5 +1,6 @@
 import {
   Activity,
+  AlertTriangle,
   Boxes,
   CircuitBoard,
   Download,
@@ -40,6 +41,10 @@ import type {
   PrimitiveNode,
   PrimitiveNodeParameter,
 } from "./projectFile";
+
+type ConnectionValidationResult =
+  | { isValid: true }
+  | { isValid: false; message: string };
 
 const workspaceItems = [
   { label: "Project", value: "Untitled graph" },
@@ -165,6 +170,51 @@ function readProjectFile(file: File) {
   });
 }
 
+function validateGraphConnection(
+  sourceId: string,
+  targetId: string,
+  nodes: PrimitiveNode[],
+  connections: GraphConnection[],
+): ConnectionValidationResult {
+  const sourceNode = nodes.find((node) => node.id === sourceId);
+  const targetNode = nodes.find((node) => node.id === targetId);
+
+  if (!sourceNode || !targetNode) {
+    return {
+      isValid: false,
+      message: "Choose two existing nodes before creating a connection.",
+    };
+  }
+
+  if (sourceId === targetId) {
+    return {
+      isValid: false,
+      message: `${sourceNode.label} cannot connect to itself.`,
+    };
+  }
+
+  const connectionExists = connections.some(
+    (connection) =>
+      connection.source === sourceId && connection.target === targetId,
+  );
+
+  if (connectionExists) {
+    return {
+      isValid: false,
+      message: "That connection already exists.",
+    };
+  }
+
+  if (targetNode.kind === "Data") {
+    return {
+      isValid: false,
+      message: `${targetNode.label} is an input node and cannot receive connections.`,
+    };
+  }
+
+  return { isValid: true };
+}
+
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const selectNode = () => {
     data.onSelect(data.id);
@@ -263,6 +313,9 @@ export function App() {
   const [graphConnections, setGraphConnections] = useState<GraphConnection[]>(
     [],
   );
+  const [connectionFeedback, setConnectionFeedback] = useState<string | null>(
+    null,
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
@@ -301,28 +354,31 @@ export function App() {
 
   const addGraphConnection = useCallback(
     (sourceId: string, targetId: string) => {
-      setGraphConnections((currentConnections) => {
-        const connectionExists = currentConnections.some(
-          (connection) =>
-            connection.source === sourceId && connection.target === targetId,
-        );
+      const validation = validateGraphConnection(
+        sourceId,
+        targetId,
+        graphNodes,
+        graphConnections,
+      );
 
-        if (connectionExists) {
-          return currentConnections;
-        }
+      if (!validation.isValid) {
+        setConnectionFeedback(validation.message);
+        setConnectionSourceId(null);
+        return;
+      }
 
-        return [
-          ...currentConnections,
-          {
-            id: `connection-${sourceId}-${targetId}`,
-            source: sourceId,
-            target: targetId,
-          },
-        ];
-      });
+      setGraphConnections([
+        ...graphConnections,
+        {
+          id: `connection-${sourceId}-${targetId}`,
+          source: sourceId,
+          target: targetId,
+        },
+      ]);
+      setConnectionFeedback(null);
       setConnectionSourceId(null);
     },
-    [],
+    [graphConnections, graphNodes],
   );
 
   const completeGraphConnection = useCallback(
@@ -642,6 +698,13 @@ export function App() {
                 {canvasEdges.map((edge) => (
                   <span key={edge.id}>{edge.label}</span>
                 ))}
+              </div>
+            ) : null}
+
+            {connectionFeedback ? (
+              <div className="connection-feedback" role="alert">
+                <AlertTriangle size={16} aria-hidden="true" />
+                <span>{connectionFeedback}</span>
               </div>
             ) : null}
           </section>

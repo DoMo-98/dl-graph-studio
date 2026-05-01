@@ -145,6 +145,38 @@ describe("App shell", () => {
     expect(screen.getByText("Neuron -> Activation")).toBeInTheDocument();
   });
 
+  it("rejects duplicate connections with clear feedback", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+
+    const connectionList = screen.getByLabelText(/graph connections/i);
+
+    expect(
+      within(connectionList).getAllByText("Tensor -> Neuron"),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText(/that connection already exists/i),
+    ).toBeInTheDocument();
+  });
+
+  it("rejects connections into the tensor input node with clear feedback", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to tensor/i));
+
+    expect(screen.queryByText("Neuron -> Tensor")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /tensor is an input node and cannot receive connections/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("keeps node selection and inspector behavior after connections are created", () => {
     render(<App />);
 
