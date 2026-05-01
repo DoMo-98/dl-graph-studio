@@ -8,6 +8,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 
 - `PRD.md` is the high-level product source of truth.
 - `docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md` is the workflow design source of truth.
+- The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
 
