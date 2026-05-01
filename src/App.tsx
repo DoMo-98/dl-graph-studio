@@ -2,11 +2,14 @@ import {
   Activity,
   Boxes,
   CircuitBoard,
+  Download,
   FlaskConical,
   Folder,
   Info,
   Link2,
   PanelLeft,
+  RotateCcw,
+  Upload,
   X,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -27,50 +30,16 @@ import type {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-
-type PrimitiveNodeParameter =
-  | {
-      id: string;
-      label: string;
-      type: "number";
-      value: number;
-      min?: number;
-      step?: number;
-    }
-  | {
-      id: string;
-      label: string;
-      type: "select";
-      value: string;
-      options: string[];
-    }
-  | {
-      id: string;
-      label: string;
-      type: "text";
-      value: string;
-    }
-  | {
-      id: string;
-      label: string;
-      type: "boolean";
-      value: boolean;
-    };
-
-type PrimitiveNode = {
-  id: string;
-  label: string;
-  kind: string;
-  metadata: string[];
-  parameters: PrimitiveNodeParameter[];
-  position: { x: number; y: number };
-};
-
-type GraphConnection = {
-  id: string;
-  source: string;
-  target: string;
-};
+import {
+  createProjectFile,
+  parseProjectFileContent,
+  serializeProjectFile,
+} from "./projectFile";
+import type {
+  GraphConnection,
+  PrimitiveNode,
+  PrimitiveNodeParameter,
+} from "./projectFile";
 
 const workspaceItems = [
   { label: "Project", value: "Untitled graph" },
@@ -153,6 +122,19 @@ type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
   displayMetadata: string[];
 };
 type PrimitiveFlowNode = Node<PrimitiveNodeData, "primitive">;
+type ProjectStatus = {
+  kind: "neutral" | "success" | "error";
+  message: string;
+};
+
+function createInitialGraphNodes() {
+  return primitiveNodes.map((node) => ({
+    ...node,
+    metadata: [...node.metadata],
+    parameters: node.parameters.map((parameter) => ({ ...parameter })),
+    position: { ...node.position },
+  }));
+}
 
 function formatParameterSummary(parameter: PrimitiveNodeParameter) {
   if (parameter.type === "boolean") {
@@ -167,6 +149,20 @@ function getDisplayMetadata(node: PrimitiveNode) {
     ...node.parameters.map((parameter) => formatParameterSummary(parameter)),
     ...node.metadata,
   ];
+}
+
+function readProjectFile(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      resolve(String(reader.result ?? ""));
+    });
+    reader.addEventListener("error", () => {
+      reject(reader.error ?? new Error("Project file could not be read."));
+    });
+    reader.readAsText(file);
+  });
 }
 
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
@@ -261,7 +257,9 @@ const nodeTypes: NodeTypes = {
 };
 
 export function App() {
-  const [graphNodes, setGraphNodes] = useState<PrimitiveNode[]>(primitiveNodes);
+  const [graphNodes, setGraphNodes] = useState<PrimitiveNode[]>(
+    createInitialGraphNodes,
+  );
   const [graphConnections, setGraphConnections] = useState<GraphConnection[]>(
     [],
   );
@@ -269,6 +267,10 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
+  const [projectStatus, setProjectStatus] = useState<ProjectStatus>({
+    kind: "neutral",
+    message: "Export or import a local project file.",
+  });
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
@@ -344,6 +346,71 @@ export function App() {
     },
     [addGraphConnection],
   );
+
+  const resetProject = () => {
+    setGraphNodes(createInitialGraphNodes());
+    setGraphConnections([]);
+    setSelectedNodeId(null);
+    setConnectionSourceId(null);
+    setProjectStatus({
+      kind: "neutral",
+      message: "Project reset to the default graph.",
+    });
+  };
+
+  const exportProject = () => {
+    const project = createProjectFile(graphNodes, graphConnections);
+    const blob = new Blob([serializeProjectFile(project)], {
+      type: "application/json",
+    });
+    const downloadUrl = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = downloadUrl;
+    downloadLink.download = "untitled-graph.dlgraph.json";
+    downloadLink.click();
+    URL.revokeObjectURL(downloadUrl);
+    setProjectStatus({
+      kind: "success",
+      message: "Project exported.",
+    });
+  };
+
+  const importProject = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const result = parseProjectFileContent(await readProjectFile(file));
+
+      if (!result.ok) {
+        setProjectStatus({
+          kind: "error",
+          message: `Could not load project. ${result.message}`,
+        });
+        return;
+      }
+
+      setGraphNodes(result.project.nodes);
+      setGraphConnections(result.project.connections);
+      setSelectedNodeId(null);
+      setConnectionSourceId(null);
+      setProjectStatus({
+        kind: "success",
+        message: "Project loaded.",
+      });
+    } catch {
+      setProjectStatus({
+        kind: "error",
+        message: "Could not load project. The file could not be read.",
+      });
+    } finally {
+      event.target.value = "";
+    }
+  };
 
   const canvasNodes: PrimitiveFlowNode[] = useMemo(
     () =>
@@ -476,6 +543,29 @@ export function App() {
                   </div>
                 ))}
               </dl>
+              <div className="project-file-actions">
+                <button type="button" onClick={exportProject}>
+                  <Download size={15} aria-hidden="true" />
+                  <span>Export project</span>
+                </button>
+                <label className="project-file-import">
+                  <Upload size={15} aria-hidden="true" />
+                  <span>Import project</span>
+                  <input
+                    aria-label="Import project"
+                    type="file"
+                    accept=".dlgraph.json,.json,application/json"
+                    onChange={importProject}
+                  />
+                </label>
+                <button type="button" onClick={resetProject}>
+                  <RotateCcw size={15} aria-hidden="true" />
+                  <span>Reset project</span>
+                </button>
+              </div>
+              <p className={`project-file-status ${projectStatus.kind}`}>
+                {projectStatus.message}
+              </p>
             </div>
 
             <aside className="workspace-panel" aria-label="Node inspector">
