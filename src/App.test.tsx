@@ -28,7 +28,7 @@ describe("App shell", () => {
     expect(screen.queryByText("Convolution")).not.toBeInTheDocument();
   });
 
-  it("shows readable metadata for each primitive node without editing controls", () => {
+  it("shows readable metadata for each primitive node before selection", () => {
     render(<App />);
 
     expect(screen.queryByText(/canvas is empty/i)).not.toBeInTheDocument();
@@ -38,9 +38,6 @@ describe("App shell", () => {
     expect(
       screen.getByText("Derived from neuron primitives"),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("shows a clear inspector state when no node is selected", () => {
@@ -56,7 +53,7 @@ describe("App shell", () => {
     expect(screen.getByText(/select a primitive node/i)).toBeInTheDocument();
   });
 
-  it("selects a primitive node and shows its read-only inspector details", () => {
+  it("selects a primitive node and shows editable inspector details", () => {
     render(<App />);
 
     const neuronNode = screen.getByLabelText(/neuron primitive node/i);
@@ -79,6 +76,54 @@ describe("App shell", () => {
     expect(
       within(inspector).getByText("Parameters: weights + bias"),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(
+      within(inspector).getByRole("spinbutton", { name: /units/i }),
+    ).toHaveValue(1);
+    expect(
+      within(inspector).getByRole("checkbox", { name: /bias/i }),
+    ).toBeChecked();
+  });
+
+  it("updates selected node parameters and keeps values associated with each node", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+    const unitsInput = within(inspector).getByRole("spinbutton", {
+      name: /units/i,
+    });
+
+    fireEvent.change(unitsInput, { target: { value: "256" } });
+
+    expect(unitsInput).toHaveValue(256);
+    expect(within(inspector).getByText("Units: 256")).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByLabelText(/dense \/ linear primitive node/i),
+      ).getByText("Units: 256"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/activation primitive node/i));
+    const activationSelect = within(inspector).getByRole("combobox", {
+      name: /function/i,
+    });
+
+    fireEvent.change(activationSelect, { target: { value: "ReLU" } });
+
+    expect(activationSelect).toHaveValue("ReLU");
+    expect(within(inspector).getByText("Function: ReLU")).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText(/activation primitive node/i)).getByText(
+        "Function: ReLU",
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+
+    expect(
+      within(inspector).getByRole("spinbutton", { name: /units/i }),
+    ).toHaveValue(256);
   });
 });
