@@ -27,7 +27,7 @@ export type PrimitiveNodeParameter =
       value: boolean;
     };
 
-export type PrimitiveNode = {
+type BaseGraphNode = {
   id: string;
   label: string;
   kind: string;
@@ -35,6 +35,17 @@ export type PrimitiveNode = {
   parameters: PrimitiveNodeParameter[];
   position: { x: number; y: number };
 };
+
+export type PrimitiveNode = BaseGraphNode & {
+  type: "primitive";
+};
+
+export type CompositeNode = BaseGraphNode & {
+  type: "composite";
+  memberNodeIds: string[];
+};
+
+export type GraphNode = PrimitiveNode | CompositeNode;
 
 export type GraphConnection = {
   id: string;
@@ -44,7 +55,7 @@ export type GraphConnection = {
 
 export type ProjectFile = {
   version: 1;
-  nodes: PrimitiveNode[];
+  nodes: GraphNode[];
   connections: GraphConnection[];
 };
 
@@ -55,7 +66,7 @@ type ParseProjectFileResult =
 const PROJECT_FILE_VERSION = 1;
 
 export function createProjectFile(
-  nodes: PrimitiveNode[],
+  nodes: GraphNode[],
   connections: GraphConnection[],
 ): ProjectFile {
   return {
@@ -101,7 +112,7 @@ export function parseProjectFileContent(
     return { ok: false, message: "Project file contains invalid nodes." };
   }
 
-  const parsedNodes = nodes as PrimitiveNode[];
+  const parsedNodes = nodes as GraphNode[];
   const nodeIds = new Set(parsedNodes.map((node) => node.id));
   const connections = parsed.connections.map((connection) =>
     parseConnection(connection, nodeIds),
@@ -124,16 +135,25 @@ export function parseProjectFileContent(
   };
 }
 
-function cloneNode(node: PrimitiveNode): PrimitiveNode {
-  return {
+function cloneNode(node: GraphNode): GraphNode {
+  const clonedNode = {
     ...node,
     metadata: [...node.metadata],
     parameters: node.parameters.map((parameter) => ({ ...parameter })),
     position: { ...node.position },
   };
+
+  if (clonedNode.type === "composite") {
+    return {
+      ...clonedNode,
+      memberNodeIds: [...clonedNode.memberNodeIds],
+    };
+  }
+
+  return clonedNode;
 }
 
-function parseNode(value: unknown): PrimitiveNode | null {
+function parseNode(value: unknown): GraphNode | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -155,7 +175,8 @@ function parseNode(value: unknown): PrimitiveNode | null {
     return null;
   }
 
-  return {
+  const nodeType = value.type ?? "primitive";
+  const baseNode = {
     id: value.id,
     label: value.label,
     kind: value.kind,
@@ -163,6 +184,23 @@ function parseNode(value: unknown): PrimitiveNode | null {
     parameters: parameters as PrimitiveNodeParameter[],
     position: value.position,
   };
+
+  if (nodeType === "primitive") {
+    return {
+      ...baseNode,
+      type: "primitive",
+    };
+  }
+
+  if (nodeType === "composite" && isStringArray(value.memberNodeIds)) {
+    return {
+      ...baseNode,
+      type: "composite",
+      memberNodeIds: value.memberNodeIds,
+    };
+  }
+
+  return null;
 }
 
 function parseParameter(value: unknown): PrimitiveNodeParameter | null {
@@ -266,6 +304,6 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-function isPosition(value: unknown): value is PrimitiveNode["position"] {
+function isPosition(value: unknown): value is GraphNode["position"] {
   return isRecord(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y);
 }

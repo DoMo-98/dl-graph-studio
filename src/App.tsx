@@ -37,6 +37,8 @@ import {
   serializeProjectFile,
 } from "./projectFile";
 import type {
+  CompositeNode,
+  GraphNode,
   GraphConnection,
   PrimitiveNode,
   PrimitiveNodeParameter,
@@ -55,6 +57,7 @@ const workspaceItems = [
 const primitiveNodes: PrimitiveNode[] = [
   {
     id: "tensor",
+    type: "primitive",
     label: "Tensor",
     kind: "Data",
     metadata: ["Role: data carrier"],
@@ -65,6 +68,7 @@ const primitiveNodes: PrimitiveNode[] = [
   },
   {
     id: "neuron",
+    type: "primitive",
     label: "Neuron",
     kind: "Foundation",
     metadata: ["Lowest exposed primitive", "Parameters: weights + bias"],
@@ -83,6 +87,7 @@ const primitiveNodes: PrimitiveNode[] = [
   },
   {
     id: "activation",
+    type: "primitive",
     label: "Activation",
     kind: "Primitive",
     metadata: ["Role: nonlinear transform"],
@@ -99,6 +104,7 @@ const primitiveNodes: PrimitiveNode[] = [
   },
   {
     id: "dense-linear",
+    type: "primitive",
     label: "Dense / Linear",
     kind: "Built-in",
     metadata: ["Derived from neuron primitives"],
@@ -116,6 +122,19 @@ const primitiveNodes: PrimitiveNode[] = [
   },
 ];
 
+const compositeNodes: CompositeNode[] = [
+  {
+    id: "dense-block",
+    type: "composite",
+    label: "Dense Block",
+    kind: "Composite",
+    metadata: ["Role: reusable feed-forward block"],
+    parameters: [],
+    memberNodeIds: ["neuron", "activation", "dense-linear"],
+    position: { x: 332, y: 344 },
+  },
+];
+
 type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
   isSelected: boolean;
   connectionSourceId: string | null;
@@ -127,16 +146,26 @@ type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
   displayMetadata: string[];
 };
 type PrimitiveFlowNode = Node<PrimitiveNodeData, "primitive">;
+type CompositeNodeData = Omit<CompositeNode, "position"> & {
+  isSelected: boolean;
+  onSelect: (nodeId: string) => void;
+  displayMetadata: string[];
+};
+type CompositeFlowNode = Node<CompositeNodeData, "composite">;
+type GraphFlowNode = PrimitiveFlowNode | CompositeFlowNode;
 type ProjectStatus = {
   kind: "neutral" | "success" | "error";
   message: string;
 };
 
 function createInitialGraphNodes() {
-  return primitiveNodes.map((node) => ({
+  return [...primitiveNodes, ...compositeNodes].map((node) => ({
     ...node,
     metadata: [...node.metadata],
     parameters: node.parameters.map((parameter) => ({ ...parameter })),
+    ...(node.type === "composite"
+      ? { memberNodeIds: [...node.memberNodeIds] }
+      : {}),
     position: { ...node.position },
   }));
 }
@@ -149,7 +178,21 @@ function formatParameterSummary(parameter: PrimitiveNodeParameter) {
   return `${parameter.label}: ${parameter.value}`;
 }
 
-function getDisplayMetadata(node: PrimitiveNode) {
+function getCompositeMemberSummary(node: CompositeNode, nodes: GraphNode[]) {
+  const memberLabels = node.memberNodeIds.map(
+    (memberNodeId) =>
+      nodes.find((candidateNode) => candidateNode.id === memberNodeId)?.label ??
+      memberNodeId,
+  );
+
+  return `Members: ${memberLabels.join(", ")}`;
+}
+
+function getDisplayMetadata(node: GraphNode, nodes: GraphNode[]) {
+  if (node.type === "composite") {
+    return [getCompositeMemberSummary(node, nodes), ...node.metadata];
+  }
+
   return [
     ...node.parameters.map((parameter) => formatParameterSummary(parameter)),
     ...node.metadata,
@@ -173,7 +216,7 @@ function readProjectFile(file: File) {
 function validateGraphConnection(
   sourceId: string,
   targetId: string,
-  nodes: PrimitiveNode[],
+  nodes: GraphNode[],
   connections: GraphConnection[],
 ): ConnectionValidationResult {
   const sourceNode = nodes.find((node) => node.id === sourceId);
@@ -302,12 +345,49 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   );
 }
 
+function CompositeNodeCard({ data }: NodeProps<CompositeFlowNode>) {
+  const selectNode = () => {
+    data.onSelect(data.id);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectNode();
+    }
+  };
+
+  return (
+    <article
+      className={`architecture-node composite-node${
+        data.isSelected ? " selected" : ""
+      }`}
+      data-testid="composite-node"
+      role="button"
+      tabIndex={0}
+      aria-pressed={data.isSelected}
+      aria-label={`${data.label} composite node`}
+      onClick={selectNode}
+      onKeyDown={handleKeyDown}
+    >
+      <span className="architecture-node-kind">{data.kind}</span>
+      <h4>{data.label}</h4>
+      <ul>
+        {data.displayMetadata.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
 const nodeTypes: NodeTypes = {
   primitive: PrimitiveNodeCard,
+  composite: CompositeNodeCard,
 };
 
 export function App() {
-  const [graphNodes, setGraphNodes] = useState<PrimitiveNode[]>(
+  const [graphNodes, setGraphNodes] = useState<GraphNode[]>(
     createInitialGraphNodes,
   );
   const [graphConnections, setGraphConnections] = useState<GraphConnection[]>(
@@ -468,32 +548,59 @@ export function App() {
     }
   };
 
-  const canvasNodes: PrimitiveFlowNode[] = useMemo(
+  const canvasNodes: GraphFlowNode[] = useMemo(
     () =>
-      graphNodes.map((node) => ({
-        id: node.id,
-        type: "primitive",
-        position: node.position,
-        data: {
+      graphNodes.map((node) => {
+        const commonNode = {
           id: node.id,
-          label: node.label,
-          kind: node.kind,
-          metadata: node.metadata,
-          parameters: node.parameters,
-          displayMetadata: getDisplayMetadata(node),
-          isSelected: selectedNodeId === node.id,
-          connectionSourceId,
-          connectionSourceLabel: connectionSource?.label ?? null,
-          onSelect: setSelectedNodeId,
-          onStartConnection: setConnectionSourceId,
-          onCancelConnection: () => setConnectionSourceId(null),
-          onCompleteConnection: completeGraphConnection,
-        },
-        className: "architecture-flow-node",
-        selected: selectedNodeId === node.id,
-        selectable: true,
-        draggable: false,
-      })),
+          position: node.position,
+          selected: selectedNodeId === node.id,
+          selectable: true,
+          draggable: false,
+        };
+
+        if (node.type === "composite") {
+          return {
+            ...commonNode,
+            type: "composite",
+            data: {
+              id: node.id,
+              type: node.type,
+              label: node.label,
+              kind: node.kind,
+              metadata: node.metadata,
+              parameters: node.parameters,
+              memberNodeIds: node.memberNodeIds,
+              displayMetadata: getDisplayMetadata(node, graphNodes),
+              isSelected: selectedNodeId === node.id,
+              onSelect: setSelectedNodeId,
+            },
+            className: "architecture-flow-node composite-flow-node",
+          };
+        }
+
+        return {
+          ...commonNode,
+          type: "primitive",
+          data: {
+            id: node.id,
+            type: node.type,
+            label: node.label,
+            kind: node.kind,
+            metadata: node.metadata,
+            parameters: node.parameters,
+            displayMetadata: getDisplayMetadata(node, graphNodes),
+            isSelected: selectedNodeId === node.id,
+            connectionSourceId,
+            connectionSourceLabel: connectionSource?.label ?? null,
+            onSelect: setSelectedNodeId,
+            onStartConnection: setConnectionSourceId,
+            onCancelConnection: () => setConnectionSourceId(null),
+            onCompleteConnection: completeGraphConnection,
+          },
+          className: "architecture-flow-node",
+        };
+      }),
     [
       completeGraphConnection,
       connectionSource?.label,
@@ -637,28 +744,32 @@ export function App() {
                   </span>
                   <h4>{selectedNode.label}</h4>
                   <ul>
-                    {getDisplayMetadata(selectedNode).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
+                    {getDisplayMetadata(selectedNode, graphNodes).map(
+                      (item) => (
+                        <li key={item}>{item}</li>
+                      ),
+                    )}
                   </ul>
-                  <div
-                    className="parameter-form"
-                    aria-label={`${selectedNode.label} parameters`}
-                  >
-                    {selectedNode.parameters.map((parameter) => (
-                      <ParameterControl
-                        key={parameter.id}
-                        nodeId={selectedNode.id}
-                        parameter={parameter}
-                        onChange={updateNodeParameter}
-                      />
-                    ))}
-                  </div>
+                  {selectedNode.parameters.length > 0 ? (
+                    <div
+                      className="parameter-form"
+                      aria-label={`${selectedNode.label} parameters`}
+                    >
+                      {selectedNode.parameters.map((parameter) => (
+                        <ParameterControl
+                          key={parameter.id}
+                          nodeId={selectedNode.id}
+                          parameter={parameter}
+                          onChange={updateNodeParameter}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="inspector-empty">
                   <p>No node selected</p>
-                  <span>Select a primitive node on the canvas.</span>
+                  <span>Select a node on the canvas.</span>
                 </div>
               )}
             </aside>
