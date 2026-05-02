@@ -34,6 +34,23 @@ describe("App shell", () => {
     expect(screen.queryByText("Convolution")).not.toBeInTheDocument();
   });
 
+  it("renders a visually distinct composite architecture node on the canvas", () => {
+    render(<App />);
+
+    const compositeNode = screen.getByLabelText(/dense block composite node/i);
+
+    expect(screen.getAllByTestId("architecture-node")).toHaveLength(4);
+    expect(screen.getAllByTestId("composite-node")).toHaveLength(1);
+    expect(compositeNode).toHaveClass("composite-node");
+    expect(within(compositeNode).getByText("Composite")).toBeInTheDocument();
+    expect(within(compositeNode).getByText("Dense Block")).toBeInTheDocument();
+    expect(
+      within(compositeNode).getByText(
+        "Members: Neuron, Activation, Dense / Linear",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("shows readable metadata for each primitive node before selection", () => {
     render(<App />);
 
@@ -55,8 +72,14 @@ describe("App shell", () => {
     expect(
       screen.getByRole("heading", { name: /inspector/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/no node selected/i)).toBeInTheDocument();
-    expect(screen.getByText(/select a primitive node/i)).toBeInTheDocument();
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+
+    expect(
+      within(inspector).getByText(/no node selected/i),
+    ).toBeInTheDocument();
+    expect(within(inspector).getByText(/select a node/i)).toBeInTheDocument();
   });
 
   it("selects a primitive node and shows editable inspector details", () => {
@@ -88,6 +111,37 @@ describe("App shell", () => {
     expect(
       within(inspector).getByRole("checkbox", { name: /bias/i }),
     ).toBeChecked();
+  });
+
+  it("selects a composite node and shows basic inspector details", () => {
+    render(<App />);
+
+    const compositeNode = screen.getByLabelText(/dense block composite node/i);
+
+    fireEvent.click(compositeNode);
+
+    expect(compositeNode).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText(/neuron primitive node/i)).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+
+    expect(
+      within(inspector).getByRole("heading", { name: /dense block/i }),
+    ).toBeInTheDocument();
+    expect(within(inspector).getByText("Composite")).toBeInTheDocument();
+    expect(
+      within(inspector).getByText(
+        "Members: Neuron, Activation, Dense / Linear",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(inspector).getByText("Role: reusable feed-forward block"),
+    ).toBeInTheDocument();
   });
 
   it("updates selected node parameters and keeps values associated with each node", () => {
@@ -239,6 +293,11 @@ describe("App shell", () => {
               expect.objectContaining({ id: "units", value: 256 }),
             ]),
             position: { x: 96, y: 724 },
+          }),
+          expect.objectContaining({
+            id: "dense-block",
+            type: "composite",
+            memberNodeIds: ["neuron", "activation", "dense-linear"],
           }),
         ]),
         connections: [

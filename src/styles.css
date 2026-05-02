@@ -346,6 +346,10 @@ h4 {
   cursor: pointer;
 }
 
+.graph-canvas .react-flow__node.composite-flow-node {
+  width: 220px;
+}
+
 .architecture-node {
   display: grid;
   gap: 10px;
@@ -362,6 +366,17 @@ h4 {
   box-shadow: 0 14px 30px rgb(23 33 31 / 14%);
   outline: none;
   cursor: pointer;
+}
+
+.architecture-node.composite-node {
+  height: 180px;
+  background:
+    linear-gradient(135deg, rgb(199 123 23 / 12%), transparent 42%), #fffdf8;
+  border-color: rgb(199 123 23 / 46%);
+  border-left-color: var(--signal);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 70%),
+    0 18px 36px rgb(23 33 31 / 16%);
 }
 
 .architecture-node-shell {
@@ -390,6 +405,22 @@ h4 {
 
 .architecture-node.connection-target {
   border-color: rgb(199 123 23 / 58%);
+}
+
+.architecture-node.composite-node:hover,
+.architecture-node.composite-node:focus-visible,
+.architecture-node.composite-node.selected {
+  border-color: rgb(199 123 23 / 72%);
+  box-shadow:
+    0 0 0 3px rgb(199 123 23 / 22%),
+    inset 0 0 0 1px rgb(255 255 255 / 82%),
+    0 20px 38px rgb(23 33 31 / 20%);
+}
+
+.composite-node .architecture-node-kind {
+  color: #7a3f00;
+  background: rgb(199 123 23 / 13%);
+  border-color: rgb(199 123 23 / 24%);
 }
 
 .architecture-node-kind {
@@ -422,6 +453,7 @@ h4 {
   font-weight: 650;
   line-height: 1.25;
   list-style: none;
+  overflow-wrap: anywhere;
 }
 
 .architecture-node-handle {
