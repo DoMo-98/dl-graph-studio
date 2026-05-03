@@ -11,6 +11,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - `docs/superpowers/specs/2026-05-01-milestone-ux-ui-hardening-design.md` defines the milestone UX/UI hardening convention.
 - `docs/superpowers/specs/2026-05-03-milestone-technical-audit-design.md` defines the milestone technical audit convention.
 - `docs/superpowers/specs/2026-05-03-product-owner-idea-intake-design.md` defines the product-owner idea intake convention.
+- `docs/superpowers/specs/2026-05-03-start-task-in-progress-design.md` defines when a confirmed local task moves to `In Progress`.
 - The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
@@ -27,6 +28,8 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
 - Before creating or updating a live roadmap issue outside GitHub's issue-template UI, use `.github/ISSUE_TEMPLATE/roadmap-task.md` as the canonical format and run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it to the Project as ready.
+- After the product owner confirms a ready issue and the agent creates the local branch `codex/<issue-number>-<short-name>`, immediately attempt to move the confirmed issue from `Ready` to `In Progress` in the `dl-graph-studio Roadmap` GitHub Project before making implementation edits.
+- If the GitHub Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, report the limitation and request the manual move of issue `#<issue-number>` to `In Progress`, or get explicit product-owner approval to continue despite the temporary Project mismatch.
 
 ## Product Owner Idea Intake
 
