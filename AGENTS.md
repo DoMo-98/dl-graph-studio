@@ -26,6 +26,8 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 ## Milestone UX/UI Hardening
 
 - Treat `Phase N UX/UI hardening` as the default final issue for each product milestone, especially Phase 1 and Phase 2.
+- Use the milestone hardening issue as the organized inbox for product-owner-reported UX/UI findings during the milestone.
+- When the product owner reports a UX/UI issue, record it in the current milestone hardening issue with enough context to reproduce or evaluate it.
 - The hardening issue may include small UX/UI corrections only when they stay within the issue scope.
 - Do not use hardening issues for new product capabilities, large redesigns, broad refactors, dependency changes, or future milestone behavior.
 - If hardening reveals larger UX or product problems, create follow-up roadmap issues instead of bundling them into the hardening PR.

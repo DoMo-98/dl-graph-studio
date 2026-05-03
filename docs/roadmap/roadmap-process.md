@@ -60,11 +60,19 @@ Use this issue as a milestone closeout pass, not as a redesign bucket. It may in
 
 Use `ux`, `frontend`, and `ready` labels when the issue is ready for selection.
 
+During a milestone, the product owner may report UX/UI findings informally
+while reviewing work. Agents should record those findings in the current
+milestone hardening issue under a clear `User-reported UX/UI findings` section.
+Each entry should capture the affected flow or screen, the observed problem,
+the expected experience when known, severity or impact, and whether the finding
+looks like small polish, a UX bug, or a larger product/design issue.
+
 The hardening issue must not include new product capabilities, large redesigns, broad refactors, dependency changes, or future milestone behavior. Larger UX or product findings should become follow-up roadmap issues.
 
 Default acceptance criteria:
 
 - [ ] The primary milestone flow has been reviewed end-to-end.
+- [ ] Product-owner-reported UX/UI findings for the milestone have been triaged.
 - [ ] Small UX/UI inconsistencies found during review have been fixed or explicitly deferred.
 - [ ] Larger issues discovered during review have follow-up issues instead of being bundled into the hardening PR.
 - [ ] The PR includes screenshots or a short recording for the reviewed flow.

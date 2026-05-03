@@ -40,6 +40,20 @@ The issue should usually carry these labels:
 ux, frontend, ready
 ```
 
+During the milestone, this issue also serves as the organized inbox for
+UX/UI findings reported by the product owner. The product owner can report
+findings informally in conversation. The agent is responsible for normalizing
+them into the hardening issue so they are not lost.
+
+Use a `User-reported UX/UI findings` section with entries that capture:
+
+- affected flow, screen, or component,
+- observed problem,
+- expected experience when known,
+- severity or user impact,
+- classification as small polish, UX bug, or larger product/design issue,
+- status such as open, deferred, resolved, or converted to follow-up issue.
+
 ## Scope
 
 The hardening issue may include small UX/UI corrections that improve coherence
@@ -76,6 +90,7 @@ Each milestone hardening issue should adapt these criteria to the current
 milestone:
 
 - [ ] The primary milestone flow has been reviewed end-to-end.
+- [ ] Product-owner-reported UX/UI findings have been triaged.
 - [ ] Small UX/UI inconsistencies found during review have been fixed or
       explicitly deferred.
 - [ ] Larger issues discovered during review have follow-up issues instead of
@@ -110,6 +125,10 @@ Phase 1 and Phase 2.
 The existing rule that each roadmap task needs product-owner confirmation still
 applies. An agent should not start a hardening issue unless the product owner
 confirms it like any other roadmap task.
+
+Recording product-owner-reported UX/UI findings in the hardening issue does not
+start the hardening task. It only preserves review input for later triage and
+keeps the active implementation issue focused.
 
 ## Rationale
 
