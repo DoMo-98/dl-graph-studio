@@ -16,7 +16,8 @@
 - Modify `src/App.tsx`: layout grouping for existing brand/nav/session actions/inspector/canvas/connections/feedback and React Flow edge/grid styling.
 - Keep `src/projectFile.ts` unchanged.
 - Keep existing tests unless a visual-system change intentionally affects accessible labels or DOM contracts.
-- Use `docs/verification/issue-17/visual-direction-board.png` as the approved visual exploration artifact.
+- Use `docs/verification/issue-17/visual-reference-direction-b.png` as the approved single-image visual reference.
+- Keep `docs/verification/issue-17/visual-direction-board.png` only as the original comparison board.
 
 ## Task 1: Preserve Behavior Before Visual Edits
 

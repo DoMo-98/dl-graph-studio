@@ -12,9 +12,11 @@ The product owner selected Direction B from the generated visual exploration boa
 
 The direction should visually track Direction B closely, not merely take loose inspiration from it. The target is a desktop, canvas-first workflow editor that feels modern and n8n-like without copying n8n branding, exact colors, logos, or proprietary assets. Existing implemented functionality should be arranged and styled to match the Direction B composition as closely as practical. Do not add fake or non-functional controls just because they appear in the mockup.
 
-Generated direction artifact:
+Approved visual reference:
 
-- `docs/verification/issue-17/visual-direction-board.png`
+- `docs/verification/issue-17/visual-reference-direction-b.png`
+
+The original comparison board remains available for context, but implementation should use the single Direction B reference above to avoid ambiguity.
 
 ## Design Goals
 
