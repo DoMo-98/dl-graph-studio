@@ -179,4 +179,3 @@ Manual verification:
 - Confirmed both documents preserve product-owner confirmation before issue readiness or implementation.
 - Confirmed the initial version does not add GitHub Actions or Project automation.
 ```
-
