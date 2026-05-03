@@ -155,16 +155,18 @@ The GitHub Project tracks roadmap issues as the status owner. Pull requests are 
 1. The product owner asks for the next task.
 2. The agent reviews the GitHub Project.
 3. The agent proposes one issue with the `ready` label and explains the recommendation.
-4. The product owner confirms the issue or selects another one, and the issue moves from `Ready` to `In Progress`.
+4. The product owner confirms the issue or selects another one.
 5. The agent creates a branch named `codex/<issue-number>-<short-name>`.
-6. The agent implements only the issue scope.
-7. The agent runs the required verification.
-8. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
-9. The product owner reviews the result.
-10. If changes are needed, the issue moves to `Needs Iteration` and the agent updates the same PR.
-11. When the update is ready for review, the issue moves back to `In Review`.
-12. When accepted and merged, the issue moves to `Done`.
-13. The next issue starts only after product-owner confirmation.
+6. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
+7. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
+8. The agent implements only the issue scope.
+9. The agent runs the required verification.
+10. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
+11. The product owner reviews the result.
+12. If changes are needed, the issue moves to `Needs Iteration` and the agent updates the same PR.
+13. When the update is ready for review, the issue moves back to `In Review`.
+14. When accepted and merged, the issue moves to `Done`.
+15. The next issue starts only after product-owner confirmation.
 
 ## First Executable Roadmap
 
