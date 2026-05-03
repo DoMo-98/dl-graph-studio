@@ -48,6 +48,29 @@ Create these labels:
 - Do not apply the `ready` label or add the issue to the Project as ready until the roadmap issue validator passes.
 - Keep issues small enough for a PR review of about 15-30 minutes.
 
+## Product Owner Idea Intake
+
+When the product owner proposes a new idea in conversation, treat it as intake for executable roadmap work unless it is clearly a PRD-level product direction discussion.
+
+The default outcome is a roadmap issue that can enter `Ready` once the issue contract is clear. The agent should not start implementation during intake.
+
+Use this intake sequence:
+
+1. Classify the idea as a UX/UI finding, technical audit finding, new roadmap task, or PRD-level idea.
+2. If it fits the current milestone hardening or technical audit issue, record it there with enough context to evaluate later.
+3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, labels, and expected PR size.
+4. If the idea is too large for one 15-30 minute reviewable PR, split it before issue creation and recommend the first issue to create.
+5. Draft the issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
+6. Validate the draft before applying `ready` or adding it to the Project as ready:
+
+   ```bash
+   pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>
+   ```
+
+7. Ask the product owner to confirm issue creation, readiness, and priority.
+
+Ideas do not become implementation work until the product owner confirms the issue. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
+
 ## Milestone Technical Audit
 
 Each product milestone should include one roadmap issue with the live title `[Roadmap]: Phase N technical audit` unless the product owner explicitly decides to skip it. Conceptually, this is the `Phase N technical audit` issue, and it should usually run before `[Roadmap]: Phase N UX/UI hardening`.
