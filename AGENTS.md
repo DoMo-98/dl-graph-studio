@@ -9,6 +9,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - `PRD.md` is the high-level product source of truth.
 - `docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md` is the workflow design source of truth.
 - `docs/superpowers/specs/2026-05-01-milestone-ux-ui-hardening-design.md` defines the milestone UX/UI hardening convention.
+- `docs/superpowers/specs/2026-05-03-milestone-technical-audit-design.md` defines the milestone technical audit convention.
 - The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
@@ -33,6 +34,16 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - The hardening issue may include small UX/UI corrections only when they stay within the issue scope.
 - Do not use hardening issues for new product capabilities, large redesigns, broad refactors, dependency changes, or future milestone behavior.
 - If hardening reveals larger UX or product problems, create follow-up roadmap issues instead of bundling them into the hardening PR.
+
+## Milestone Technical Audit
+
+- Treat `Phase N technical audit` as the default penultimate issue for each product milestone, followed by `Phase N UX/UI hardening` as the final issue, unless the product owner explicitly decides to skip or reorder either closeout task.
+- Use the technical audit issue as a corrective closeout pass for architecture boundaries, clean code, maintainability, library usage, test coverage, and milestone-local technical debt.
+- Split technical audit work across subagents with one responsibility each, such as architecture boundaries, clean-code maintainability, library use, test coverage, and performance/rendering only when applicable.
+- Do not let one subagent own multiple unrelated audit domains. Cross-domain findings should be reported to the lead agent and routed to the correct owner.
+- The technical audit issue may include bounded corrective changes directly tied to audit findings.
+- Do not use technical audit issues for new product capabilities, future milestone behavior, broad rewrites, speculative abstractions, dependency changes without a concrete finding, or formatting churn.
+- If the audit reveals larger architecture, dependency, testing, or maintainability work, create follow-up roadmap issues instead of bundling that work into the audit PR.
 
 ## Branches
 
