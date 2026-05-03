@@ -23,6 +23,7 @@ The approved spec covers one subsystem: repository workflow documentation for id
 ### Task 1: Update Agent Operating Instructions
 
 **Files:**
+
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Add the idea intake spec to Source Of Truth**
@@ -77,13 +78,14 @@ Expected: commit succeeds with only `AGENTS.md` staged.
 ### Task 2: Update Human Roadmap Process
 
 **Files:**
+
 - Modify: `docs/roadmap/roadmap-process.md`
 
 - [ ] **Step 1: Add the human-readable intake section**
 
 In `docs/roadmap/roadmap-process.md`, insert this section after `Issue Rules` and before `Milestone Technical Audit`:
 
-```md
+````md
 ## Product Owner Idea Intake
 
 When the product owner proposes a new idea in conversation, treat it as intake for executable roadmap work unless it is clearly a PRD-level product direction discussion.
@@ -105,8 +107,8 @@ Use this intake sequence:
 
 7. Ask the product owner to confirm issue creation, readiness, and priority.
 
-Ideas do not become implementation work until the product owner confirms the issue. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
-```
+Intake confirmation can create or update the issue, mark it `Ready`, and set its priority, but it does not authorize implementation. Ideas become implementation work only when the product owner explicitly selects or confirms a ready issue for work under the Agent Cycle. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
+````
 
 - [ ] **Step 2: Review section placement and terminology**
 
@@ -132,6 +134,7 @@ Expected: commit succeeds with only `docs/roadmap/roadmap-process.md` staged.
 ### Task 3: Verify Documentation Consistency
 
 **Files:**
+
 - Inspect: `AGENTS.md`
 - Inspect: `docs/roadmap/roadmap-process.md`
 - Inspect: `docs/superpowers/specs/2026-05-03-product-owner-idea-intake-design.md`
@@ -165,7 +168,7 @@ git status --short --branch
 git log --oneline -3
 ```
 
-Expected: working tree is clean; latest commits include the design spec commit and the two documentation implementation commits.
+Expected: working tree is clean; latest commits include the idea intake design, plan, agent instruction, roadmap process, and clarification commits.
 
 - [ ] **Step 4: Prepare manual verification notes**
 

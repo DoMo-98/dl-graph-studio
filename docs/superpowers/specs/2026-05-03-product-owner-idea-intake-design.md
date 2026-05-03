@@ -41,9 +41,13 @@ Use this sequence:
 2. Check whether it belongs in an existing milestone closeout issue.
 3. Ask only the clarifying questions needed to produce a complete issue.
 4. Draft a roadmap issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
-5. Validate the issue with `pnpm validate:roadmap-issue -- --title
-   "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it
-   to the Project as ready.
+5. Validate the issue before applying `ready` or adding it to the Project as
+   ready:
+
+   ```bash
+   pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>
+   ```
+
 6. Ask the product owner to confirm creation, readiness, and priority.
 
 The agent may create or update the live GitHub issue only after product-owner
