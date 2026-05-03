@@ -199,6 +199,31 @@ describe("App shell", () => {
     expect(screen.getByText("Neuron -> Activation")).toBeInTheDocument();
   });
 
+  it("deletes one chosen connection while preserving nodes and other connections", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+
+    fireEvent.click(screen.getByLabelText(/delete connection tensor to neuron/i));
+
+    const connectionList = screen.getByLabelText(/graph connections/i);
+
+    expect(
+      within(connectionList).queryByText("Tensor -> Neuron"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(connectionList).getByText("Neuron -> Activation"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("alert"),
+    ).toHaveTextContent(/tensor -> neuron deleted/i);
+    expect(screen.getByLabelText(/tensor primitive node/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/neuron primitive node/i)).toBeInTheDocument();
+  });
+
   it("rejects duplicate connections with clear feedback", () => {
     render(<App />);
 
@@ -250,7 +275,7 @@ describe("App shell", () => {
     ).toHaveValue(1);
   });
 
-  it("exports a minimal project with edited parameters and connections", async () => {
+  it("exports a minimal project with edited parameters and remaining connections after deletion", async () => {
     const originalCreateObjectUrl = URL.createObjectURL;
     const originalRevokeObjectUrl = URL.revokeObjectURL;
     const originalAnchorClick = HTMLAnchorElement.prototype.click;
@@ -278,6 +303,11 @@ describe("App shell", () => {
       });
       fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
       fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+      fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+      fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+      fireEvent.click(
+        screen.getByLabelText(/delete connection tensor to neuron/i),
+      );
       fireEvent.click(screen.getByRole("button", { name: /export project/i }));
 
       await waitFor(() => expect(exportedProject).not.toBe(""));
@@ -302,9 +332,9 @@ describe("App shell", () => {
         ]),
         connections: [
           {
-            id: "connection-tensor-neuron",
-            source: "tensor",
-            target: "neuron",
+            id: "connection-neuron-activation",
+            source: "neuron",
+            target: "activation",
           },
         ],
       });

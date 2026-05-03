@@ -507,14 +507,40 @@ h4 {
   border: 1px solid rgb(15 143 125 / 22%);
   border-radius: 8px;
   box-shadow: 0 12px 28px rgb(23 33 31 / 10%);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
-.connection-list span {
+.connection-list-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 8px;
+}
+
+.connection-list-item span {
   overflow-wrap: anywhere;
   font-size: 0.78rem;
   font-weight: 760;
   line-height: 1.25;
+}
+
+.connection-delete-button {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  color: #8c2f1f;
+  background: rgb(255 255 255 / 86%);
+  border: 1px solid rgb(140 47 31 / 22%);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.connection-delete-button:hover,
+.connection-delete-button:focus-visible {
+  color: #ffffff;
+  background: #8c2f1f;
+  outline: 3px solid rgb(140 47 31 / 18%);
 }
 
 .connection-feedback {
