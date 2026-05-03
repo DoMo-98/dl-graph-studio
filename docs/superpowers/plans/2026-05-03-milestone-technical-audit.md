@@ -41,7 +41,7 @@ Edit `AGENTS.md` and insert this section immediately after `## Milestone UX/UI H
 ```md
 ## Milestone Technical Audit
 
-- Treat `Phase N technical audit` as the default penultimate issue for each product milestone, followed by `Phase N UX/UI hardening` as the final issue, unless the product owner explicitly decides to skip or reorder either closeout task.
+- Treat `[Roadmap]: Phase N technical audit` as the default penultimate issue for each product milestone, followed by `[Roadmap]: Phase N UX/UI hardening` as the final issue, unless the product owner explicitly decides to skip or reorder either closeout task.
 - Use the technical audit issue as a corrective closeout pass for architecture boundaries, clean code, maintainability, library usage, test coverage, and milestone-local technical debt.
 - Split technical audit work across subagents with one responsibility each, such as architecture boundaries, clean-code maintainability, library use, test coverage, and performance/rendering only when applicable.
 - Do not let one subagent own multiple unrelated audit domains. Cross-domain findings should be reported to the lead agent and routed to the correct owner.
@@ -55,7 +55,7 @@ Edit `AGENTS.md` and insert this section immediately after `## Milestone UX/UI H
 Run:
 
 ```sh
-rg -n "milestone technical audit|Phase N technical audit|single responsibility|technical audit issues" AGENTS.md
+rg -n -F -e "milestone technical audit" -e "[Roadmap]: Phase N technical audit" -e "single responsibility" -e "technical audit issues" AGENTS.md
 ```
 
 Expected: output includes the new source-of-truth bullet and the milestone technical audit rules.
@@ -86,7 +86,7 @@ Edit `docs/roadmap/roadmap-process.md` and insert this section immediately befor
 ```md
 ## Milestone Technical Audit
 
-Each product milestone should include one roadmap issue named `Phase N technical audit` unless the product owner explicitly decides to skip it. This issue should usually run before `Phase N UX/UI hardening`.
+Each product milestone should include one roadmap issue named `[Roadmap]: Phase N technical audit` unless the product owner explicitly decides to skip it. This issue should usually run before `[Roadmap]: Phase N UX/UI hardening`.
 
 Use this issue as a corrective milestone closeout pass for technical quality, not as an unbounded cleanup bucket. It may include bounded corrections across the milestone implementation:
 
@@ -133,14 +133,14 @@ Default acceptance criteria:
 In `docs/roadmap/roadmap-process.md`, replace:
 
 ```md
-11. Phase 1 UX/UI hardening.
+11. [Roadmap]: Phase 1 UX/UI hardening.
 ```
 
 with:
 
 ```md
-11. Phase 1 technical audit.
-12. Phase 1 UX/UI hardening.
+11. [Roadmap]: Phase 1 technical audit.
+12. [Roadmap]: Phase 1 UX/UI hardening.
 ```
 
 - [ ] **Step 3: Verify roadmap process references**
@@ -148,7 +148,7 @@ with:
 Run:
 
 ```sh
-rg -n "Milestone Technical Audit|Phase N technical audit|Phase 1 technical audit|architecture-boundaries|library-use" docs/roadmap/roadmap-process.md
+rg -n -F -e "Milestone Technical Audit" -e "[Roadmap]: Phase N technical audit" -e "[Roadmap]: Phase 1 technical audit" -e "architecture-boundaries" -e "library-use" docs/roadmap/roadmap-process.md
 ```
 
 Expected: output shows the technical audit section, subagent domains, and Phase 1 ordering.
@@ -227,7 +227,7 @@ Expected: command exits successfully with no output.
 Run:
 
 ```sh
-rg -n "2026-05-03-milestone-technical-audit-design|Milestone Technical Audit|Phase N technical audit|Phase 1 technical audit|Milestone technical audit design" AGENTS.md docs/roadmap/roadmap-process.md README.md
+rg -n -F -e "2026-05-03-milestone-technical-audit-design" -e "Milestone Technical Audit" -e "[Roadmap]: Phase N technical audit" -e "[Roadmap]: Phase 1 technical audit" -e "Milestone technical audit design" AGENTS.md docs/roadmap/roadmap-process.md README.md
 ```
 
 Expected: output includes:
@@ -273,8 +273,8 @@ Tell the product owner:
 ```md
 Manual verification:
 
-1. Open AGENTS.md and confirm future agents are told to use `Phase N technical audit` as the default penultimate milestone issue.
-2. Open docs/roadmap/roadmap-process.md and confirm the roadmap now places `Phase 1 technical audit` before `Phase 1 UX/UI hardening`.
+1. Open AGENTS.md and confirm future agents are told to use `[Roadmap]: Phase N technical audit` as the default penultimate milestone issue.
+2. Open docs/roadmap/roadmap-process.md and confirm the roadmap now places `[Roadmap]: Phase 1 technical audit` before `[Roadmap]: Phase 1 UX/UI hardening`.
 3. Open README.md and confirm the roadmap workflow section links to the milestone technical audit design.
 ```
 
