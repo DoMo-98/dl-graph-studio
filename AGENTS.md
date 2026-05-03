@@ -25,10 +25,11 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - Explain why the proposed issue is the best next task.
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
+- Before creating or updating a live roadmap issue outside GitHub's issue-template UI, use `.github/ISSUE_TEMPLATE/roadmap-task.md` as the canonical format and run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it to the Project as ready.
 
 ## Milestone UX/UI Hardening
 
-- Treat `Phase N UX/UI hardening` as the default final issue for each product milestone, especially Phase 1 and Phase 2.
+- Treat `[Roadmap]: Phase N UX/UI hardening` as the default final live issue title for each product milestone, especially Phase 1 and Phase 2.
 - Use the milestone hardening issue as the organized inbox for product-owner-reported UX/UI findings during the milestone.
 - When the product owner reports a UX/UI issue, record it in the current milestone hardening issue with enough context to reproduce or evaluate it.
 - The hardening issue may include small UX/UI corrections only when they stay within the issue scope.
@@ -37,7 +38,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 
 ## Milestone Technical Audit
 
-- Treat `Phase N technical audit` as the default penultimate issue for each product milestone, followed by `Phase N UX/UI hardening` as the final issue, unless the product owner explicitly decides to skip or reorder either closeout task.
+- Treat `[Roadmap]: Phase N technical audit` as the default penultimate live issue title for each product milestone, followed by `[Roadmap]: Phase N UX/UI hardening` as the final issue, unless the product owner explicitly decides to skip or reorder either closeout task.
 - Use the technical audit issue as a corrective closeout pass for architecture boundaries, clean code, maintainability, library usage, test coverage, and milestone-local technical debt.
 - Split technical audit work across subagents with one responsibility each, such as architecture boundaries, clean-code maintainability, library use, test coverage, and performance/rendering only when applicable.
 - Do not let one subagent own multiple unrelated audit domains. Cross-domain findings should be reported to the lead agent and routed to the correct owner.

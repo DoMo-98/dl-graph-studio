@@ -42,12 +42,15 @@ Create these labels:
 
 - One issue should map to one branch and one pull request by default.
 - A PR can close multiple issues only when the issues explicitly allow grouping before work starts.
+- `.github/ISSUE_TEMPLATE/roadmap-task.md` is the canonical roadmap issue format, including the `[Roadmap]: ` title prefix and verification section shape.
+- Before creating or updating a live roadmap issue through the CLI, API, or any path outside GitHub's issue-template UI, run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
+- Do not apply the `ready` label or add the issue to the Project as ready until the roadmap issue validator passes.
 - Keep issues small enough for a PR review of about 15-30 minutes.
 
 ## Milestone Technical Audit
 
-Each product milestone should include one roadmap issue named `Phase N technical audit` unless the product owner explicitly decides to skip it. This issue should usually run before `Phase N UX/UI hardening`.
+Each product milestone should include one roadmap issue with the live title `[Roadmap]: Phase N technical audit` unless the product owner explicitly decides to skip it. Conceptually, this is the `Phase N technical audit` issue, and it should usually run before `[Roadmap]: Phase N UX/UI hardening`.
 
 Use this issue as a corrective milestone closeout pass for technical quality, not as an unbounded cleanup bucket. It may include bounded corrections across the milestone implementation:
 
@@ -90,7 +93,7 @@ Default acceptance criteria:
 
 ## Milestone UX/UI Hardening
 
-Each product milestone should end with one roadmap issue named `Phase N UX/UI hardening` unless the product owner explicitly decides to skip it.
+Each product milestone should end with one roadmap issue with the live title `[Roadmap]: Phase N UX/UI hardening` unless the product owner explicitly decides to skip it.
 
 Use this issue as a milestone closeout pass, not as a redesign bucket. It may include small UX/UI corrections across the milestone flow:
 
@@ -154,8 +157,8 @@ Start with enough Phase 1 issues for roughly 2-4 weeks of work:
 8. Validate basic invalid connections.
 9. Save and load a minimal project.
 10. Create the first composite node representation.
-11. Phase 1 technical audit.
-12. Phase 1 UX/UI hardening.
+11. `[Roadmap]: Phase 1 technical audit`.
+12. `[Roadmap]: Phase 1 UX/UI hardening`.
 
 Do not start PyTorch execution or training until the graph representation is minimal, stable, and persistible.
 

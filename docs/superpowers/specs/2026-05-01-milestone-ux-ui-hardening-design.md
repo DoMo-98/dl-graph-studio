@@ -23,7 +23,7 @@ into an unbounded redesign.
 At the end of each product milestone, create one roadmap issue named:
 
 ```md
-Phase N UX/UI hardening
+[Roadmap]: Phase N UX/UI hardening
 ```
 
 The issue should use the normal roadmap task contract:
@@ -106,14 +106,17 @@ Use this verification shape unless a milestone has stronger requirements:
 ```md
 ## Verification
 
-- Automated:
-  - Run the relevant frontend test, lint, and build commands for the current
-    app state.
-- Manual:
-  - Open the milestone flow end-to-end.
-  - Verify canvas readability, inspector behavior, navigation, interaction
-    feedback, and empty/error states relevant to the milestone.
-  - Capture screenshots or a short video/GIF.
+Automated:
+
+- [ ] Run the relevant frontend test, lint, and build commands for the current
+      app state.
+
+Manual:
+
+- [ ] Open the milestone flow end-to-end.
+- [ ] Verify canvas readability, inspector behavior, navigation, interaction
+      feedback, and empty/error states relevant to the milestone.
+- [ ] Capture screenshots or a short video/GIF.
 ```
 
 ## Process Impact

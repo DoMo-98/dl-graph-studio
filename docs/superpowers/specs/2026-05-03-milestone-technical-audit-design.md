@@ -28,13 +28,13 @@ of hiding broad refactors inside the closeout pull request.
 Near the end of each product milestone, create one roadmap issue named:
 
 ```md
-Phase N technical audit
+[Roadmap]: Phase N technical audit
 ```
 
 This issue should usually run before:
 
 ```md
-Phase N UX/UI hardening
+[Roadmap]: Phase N UX/UI hardening
 ```
 
 The technical audit should stabilize implementation quality first. The UX/UI
@@ -186,15 +186,18 @@ Use this verification shape unless a milestone has stronger requirements:
 ```md
 ## Verification
 
-- Automated:
-  - Run the relevant typecheck, lint, test, and build commands for the current
-    app state.
-  - Run targeted tests added or changed by audit fixes.
-- Manual:
-  - Open the primary milestone flow.
-  - Verify the flow still behaves as it did before the technical audit.
-  - Check any touched area where refactoring could affect user-visible
-    behavior.
+Automated:
+
+- [ ] Run the relevant typecheck, lint, test, and build commands for the
+      current app state.
+- [ ] Run targeted tests added or changed by audit fixes.
+
+Manual:
+
+- [ ] Open the primary milestone flow.
+- [ ] Verify the flow still behaves as it did before the technical audit.
+- [ ] Check any touched area where refactoring could affect user-visible
+      behavior.
 ```
 
 When the milestone includes UI behavior, the audit pull request should include

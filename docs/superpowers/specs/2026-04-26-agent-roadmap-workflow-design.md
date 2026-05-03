@@ -110,6 +110,9 @@ Exceptions are allowed only when several issues are small, tightly coupled, and 
 Each roadmap issue should use this structure:
 
 ```md
+# Title
+[Roadmap]: <short task title>
+
 ## Objective
 What user/product outcome this issue delivers.
 
@@ -124,12 +127,19 @@ What explicitly should not be done in this PR.
 - [ ] Concrete behavior 2
 
 ## Verification
-- Automated:
-- Manual:
+Automated:
+
+- [ ] Exact automated command, or not applicable with a reason.
+
+Manual:
+
+- [ ] Manual review step.
 
 ## Notes
 Links, dependencies, implementation constraints, or design decisions.
 ```
+
+`.github/ISSUE_TEMPLATE/roadmap-task.md` is the canonical format for roadmap issues, including the `[Roadmap]: ` title prefix. Before creating or updating a live roadmap issue outside GitHub's issue-template UI, agents should run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
 
 An issue can move to `Ready` only when the objective, scope, acceptance criteria, and verification sections are clear enough for an agent to work without inventing product behavior.
 
