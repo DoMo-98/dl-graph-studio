@@ -45,6 +45,49 @@ Create these labels:
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
 - Keep issues small enough for a PR review of about 15-30 minutes.
 
+## Milestone Technical Audit
+
+Each product milestone should include one roadmap issue named `Phase N technical audit` unless the product owner explicitly decides to skip it. This issue should usually run before `Phase N UX/UI hardening`.
+
+Use this issue as a corrective milestone closeout pass for technical quality, not as an unbounded cleanup bucket. It may include bounded corrections across the milestone implementation:
+
+- architecture boundaries, ownership, data flow, coupling, domain models, and adapter layers,
+- clean-code maintainability, naming, duplication, complexity, local API clarity, and dead code,
+- library usage, including places where the code reinvents solved problems instead of using robust existing tools,
+- test coverage gaps for milestone behavior,
+- performance or rendering concerns when the milestone includes behavior where those costs are meaningful,
+- documentation corrections when actual architecture or workflow differs from the documented design.
+
+Use `infra` and `ready` labels when the issue is ready for selection. Add domain labels such as `frontend`, `runtime`, `validation`, `persistence`, or `docs` when the milestone work makes them relevant.
+
+The technical audit should be coordinated by one lead agent and split across subagents with one responsibility each. Recommended subagent domains are:
+
+- `architecture-boundaries`,
+- `clean-code-maintainability`,
+- `library-use`,
+- `test-coverage`,
+- `performance-rendering` when applicable.
+
+Each subagent should report and fix only within its assigned domain. Cross-domain findings should be routed through the lead agent instead of letting one subagent mix unrelated responsibilities. When subagents edit in parallel, each one needs a disjoint write scope; shared modules should be serialized or assigned to one owner.
+
+The technical audit issue may include bounded corrective changes directly tied to audit findings. It must not include new product capabilities, future milestone behavior, broad rewrites, speculative abstractions, dependency changes without a concrete finding, style-only formatting churn, or fixes that make the PR too large for the normal 15-30 minute review window.
+
+New dependencies are allowed only when the audit finding shows that the project is solving a mature, well-understood problem itself and an industry-standard library is a better long-term choice. The PR must document why the dependency is robust, maintained, narrowly scoped, and preferable to the existing implementation.
+
+Larger architecture, dependency, testing, or maintainability findings should become follow-up roadmap issues with their own objective, scope, acceptance criteria, and verification details.
+
+Default acceptance criteria:
+
+- [ ] The milestone code has been audited for architecture boundaries, maintainability, library usage, and test coverage.
+- [ ] Audit work was split across single-responsibility subagents where parallel work was useful.
+- [ ] Each subagent had a clear domain and did not mix unrelated responsibilities.
+- [ ] Bounded corrective findings were fixed inside the audit pull request.
+- [ ] Larger findings were converted into follow-up roadmap issues instead of being bundled into the audit pull request.
+- [ ] Any new dependency is justified by a concrete finding and evaluated for maturity, maintenance, scope, and project fit.
+- [ ] Relevant automated checks pass.
+- [ ] Manual verification describes the milestone behavior that was checked after technical changes.
+- [ ] No new product capabilities were added.
+
 ## Milestone UX/UI Hardening
 
 Each product milestone should end with one roadmap issue named `Phase N UX/UI hardening` unless the product owner explicitly decides to skip it.
@@ -111,7 +154,8 @@ Start with enough Phase 1 issues for roughly 2-4 weeks of work:
 8. Validate basic invalid connections.
 9. Save and load a minimal project.
 10. Create the first composite node representation.
-11. Phase 1 UX/UI hardening.
+11. Phase 1 technical audit.
+12. Phase 1 UX/UI hardening.
 
 Do not start PyTorch execution or training until the graph representation is minimal, stable, and persistible.
 
