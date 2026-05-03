@@ -343,11 +343,16 @@ h4 {
   background: transparent;
   border: 0;
   box-shadow: none;
-  cursor: pointer;
+  cursor: grab;
 }
 
 .graph-canvas .react-flow__node.composite-flow-node {
   width: 220px;
+}
+
+.graph-canvas .react-flow__node.architecture-flow-node.dragging {
+  cursor: grabbing;
+  z-index: 5;
 }
 
 .architecture-node {
@@ -393,6 +398,15 @@ h4 {
   box-shadow:
     0 0 0 3px rgb(199 123 23 / 18%),
     0 16px 34px rgb(23 33 31 / 18%);
+}
+
+.architecture-node.moving {
+  border-color: rgb(15 143 125 / 72%);
+  border-left-color: var(--accent);
+  box-shadow:
+    0 0 0 4px rgb(15 143 125 / 20%),
+    0 22px 42px rgb(23 33 31 / 22%);
+  cursor: grabbing;
 }
 
 .architecture-node.connection-source {

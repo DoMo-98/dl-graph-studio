@@ -207,7 +207,9 @@ describe("App shell", () => {
     fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
     fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
 
-    fireEvent.click(screen.getByLabelText(/delete connection tensor to neuron/i));
+    fireEvent.click(
+      screen.getByLabelText(/delete connection tensor to neuron/i),
+    );
 
     const connectionList = screen.getByLabelText(/graph connections/i);
 
@@ -217,9 +219,9 @@ describe("App shell", () => {
     expect(
       within(connectionList).getByText("Neuron -> Activation"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("alert"),
-    ).toHaveTextContent(/tensor -> neuron deleted/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /tensor -> neuron deleted/i,
+    );
     expect(screen.getByLabelText(/tensor primitive node/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/neuron primitive node/i)).toBeInTheDocument();
   });

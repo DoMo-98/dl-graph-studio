@@ -59,6 +59,11 @@ export type ProjectFile = {
   connections: GraphConnection[];
 };
 
+export type GraphNodePositionUpdate = {
+  id: string;
+  position: GraphNode["position"];
+};
+
 type ParseProjectFileResult =
   | { ok: true; project: ProjectFile }
   | { ok: false; message: string };
@@ -78,6 +83,32 @@ export function createProjectFile(
 
 export function serializeProjectFile(project: ProjectFile) {
   return `${JSON.stringify(project, null, 2)}\n`;
+}
+
+export function updateGraphNodePositions(
+  nodes: GraphNode[],
+  positionUpdates: GraphNodePositionUpdate[],
+) {
+  if (positionUpdates.length === 0) {
+    return nodes;
+  }
+
+  const positionsByNodeId = new Map(
+    positionUpdates.map((update) => [update.id, update.position]),
+  );
+
+  return nodes.map((node) => {
+    const nextPosition = positionsByNodeId.get(node.id);
+
+    if (!nextPosition) {
+      return node;
+    }
+
+    return {
+      ...node,
+      position: { ...nextPosition },
+    };
+  });
 }
 
 export function parseProjectFileContent(
