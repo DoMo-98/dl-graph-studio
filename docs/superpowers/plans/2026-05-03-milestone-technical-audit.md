@@ -23,6 +23,7 @@
 ### Task 1: Add Agent Operating Rules
 
 **Files:**
+
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Update the source-of-truth list**
@@ -75,6 +76,7 @@ Expected: git creates a commit containing only `AGENTS.md`.
 ### Task 2: Add Roadmap Closeout Process
 
 **Files:**
+
 - Modify: `docs/roadmap/roadmap-process.md`
 
 - [ ] **Step 1: Add the closeout section**
@@ -167,6 +169,7 @@ Expected: git creates a commit containing only `docs/roadmap/roadmap-process.md`
 ### Task 3: Add README Discoverability Link
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Add the spec link**
@@ -203,6 +206,7 @@ Expected: git creates a commit containing only `README.md`.
 ### Task 4: Final Verification
 
 **Files:**
+
 - Verify: `AGENTS.md`
 - Verify: `docs/roadmap/roadmap-process.md`
 - Verify: `README.md`
@@ -268,6 +272,7 @@ Tell the product owner:
 
 ```md
 Manual verification:
+
 1. Open AGENTS.md and confirm future agents are told to use `Phase N technical audit` as the default penultimate milestone issue.
 2. Open docs/roadmap/roadmap-process.md and confirm the roadmap now places `Phase 1 technical audit` before `Phase 1 UX/UI hardening`.
 3. Open README.md and confirm the roadmap workflow section links to the milestone technical audit design.
