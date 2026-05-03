@@ -803,17 +803,17 @@ export function App() {
             type: MarkerType.ArrowClosed,
             width: 16,
             height: 16,
-            color: "#0b6d60",
+            color: "#087c75",
           },
           style: {
-            stroke: "#0b6d60",
+            stroke: "#087c75",
             strokeWidth: 2,
           },
           labelBgPadding: [8, 4],
           labelBgBorderRadius: 6,
           labelBgStyle: {
-            fill: "#f8faf8",
-            fillOpacity: 0.94,
+            fill: "#ffffff",
+            fillOpacity: 0.96,
           },
         };
       }),
@@ -969,7 +969,7 @@ export function App() {
               preventScrolling={false}
               defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
-              <Background color="#c2d0ca" gap={28} size={1.25} />
+              <Background color="#d7dee6" gap={24} size={1} />
             </ReactFlow>
 
             {canvasNodes.length === 0 ? (
