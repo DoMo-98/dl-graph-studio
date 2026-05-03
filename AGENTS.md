@@ -15,8 +15,10 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 
 ## Task Selection
 
-- Before starting any task, first confirm the local workspace is clean, then switch to `main`, then run `git pull --ff-only` or an equivalent safe sync command on `main` so the local workspace is up to date with the remote.
-- If the workspace has local changes, switching to `main` cannot complete safely, or `git pull --ff-only` on `main` cannot complete safely, stop and report the state before making task changes.
+- Before starting any task, first confirm the current worktree is clean. Then fetch the remote base branch with `git fetch --prune origin main` and verify that the current branch is synchronized with `origin/main`.
+- If the current branch has no task commits and is only behind `origin/main`, fast-forward the current branch to `origin/main`.
+- If the current branch has local changes, local commits, or has diverged from `origin/main`, stop and report the state before making task changes. Do not switch this worktree to `main` just to synchronize, because the harness may already be operating in a generated worktree.
+- For traditional single-worktree workflows, switching to `main` and running `git pull --ff-only` is still acceptable when it can be done safely.
 - Do not start a new roadmap task without product-owner confirmation.
 - When asked for the next task, inspect the GitHub Project and propose one issue with the `ready` label.
 - Explain why the proposed issue is the best next task.
