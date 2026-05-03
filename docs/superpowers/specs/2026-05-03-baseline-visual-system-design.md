@@ -10,7 +10,7 @@ The visual pass must preserve that behavior while making the product feel like a
 
 The product owner selected Direction B from the generated visual exploration board: **Canvas-first Lab**.
 
-The direction should feel modern and workflow-oriented like n8n, without copying n8n branding, exact colors, logos, or proprietary UI. The editor should read as a focused desktop research tool where the canvas is the primary workspace and supporting panels stay compact.
+The direction should visually track Direction B closely, not merely take loose inspiration from it. The target is a desktop, canvas-first workflow editor that feels modern and n8n-like without copying n8n branding, exact colors, logos, or proprietary assets. Existing implemented functionality should be arranged and styled to match the Direction B composition as closely as practical. Do not add fake or non-functional controls just because they appear in the mockup.
 
 Generated direction artifact:
 
@@ -30,11 +30,13 @@ Generated direction artifact:
 
 ### App Shell
 
-Use a compact modern shell:
+Use a desktop workflow-editor shell that matches Direction B:
 
-- dark or near-charcoal navigation rail for contrast,
-- light main work area,
-- concise header with status and project context,
+- dark teal top app bar with brand, current project name, and status,
+- narrow left rail for existing navigation and project actions,
+- center canvas as the dominant workbench,
+- compact right inspector panel,
+- bottom drawer for existing connection data and validation feedback,
 - restrained shadows and borders,
 - 6-8px radii for controls and panels.
 
@@ -45,9 +47,10 @@ The shell should not become a marketing layout or a decorative hero surface.
 The canvas should become the dominant workspace:
 
 - light technical grid with subtle dots or crosshair marks,
-- less panel-like framing,
+- minimal panel framing,
 - enough breathing room for node movement,
 - clear connection paths and labels,
+- selected/composite states that visually resemble Direction B,
 - no unnecessary background gradients or decorative blobs.
 
 ### Nodes
@@ -69,13 +72,17 @@ Composite nodes should remain visually distinct through:
 
 ### Inspector And Project Actions
 
-The inspector should be compact, dense enough for repeated use, and visually aligned with nodes. Empty, selected, and parameter-editing states must remain clear.
+The inspector should live visually on the right side of the desktop workbench, matching Direction B's right panel. It should use only existing selected-node details and parameter editing.
 
-Export, import, and reset affordances should remain in the session panel, but styled as practical tool controls rather than large feature cards.
+Export, import, and reset affordances should move into the left rail/session area as compact existing project actions. They must remain real buttons/inputs wired to existing behavior.
+
+The connection list should become a bottom drawer/table when connections exist. Use only existing connection source/target/label/delete behavior; do not add unimplemented rule browsers, fake validation rows, or new connection metadata.
 
 ### Feedback
 
 Validation and connection feedback should be easy to notice without covering core controls. Error, success, neutral, selected, and focus states should use consistent tokens instead of one-off colors.
+
+Connection feedback should map to the existing alert state and can be positioned in the lower workbench area like Direction B's validation strip. Do not display persistent fake issue counts.
 
 ## Behavioral Constraints
 

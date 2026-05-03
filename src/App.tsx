@@ -53,12 +53,6 @@ type ConnectionValidationResult =
   | { isValid: true }
   | { isValid: false; message: string };
 
-const workspaceItems = [
-  { label: "Project", value: "Untitled graph" },
-  { label: "Mode", value: "Local workspace" },
-  { label: "Runtime", value: "Not configured" },
-];
-
 const defaultCanvasSize = { width: 960, height: 960 };
 const primitiveFlowNodeSize = { width: 228, height: 196 };
 const compositeFlowNodeSize = { width: 220, height: 180 };
@@ -822,7 +816,7 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar" aria-label="Primary">
+      <header className="app-topbar">
         <div className="brand-lockup">
           <div className="brand-mark" aria-hidden="true">
             <CircuitBoard size={22} strokeWidth={1.8} />
@@ -833,116 +827,69 @@ export function App() {
           </div>
         </div>
 
-        <nav className="nav-list" aria-label="Workspace sections">
-          <a className="nav-item active" href="#workspace" aria-current="page">
-            <PanelLeft size={18} aria-hidden="true" />
-            <span>Workspace</span>
-          </a>
-          <a className="nav-item" href="#components">
-            <Boxes size={18} aria-hidden="true" />
-            <span>Components</span>
-          </a>
-          <a className="nav-item" href="#experiments">
-            <FlaskConical size={18} aria-hidden="true" />
-            <span>Experiments</span>
-          </a>
-        </nav>
-      </aside>
+        <div className="topbar-project" aria-label="Current project">
+          <Folder size={15} aria-hidden="true" />
+          <span>Untitled graph</span>
+          <small>Local workspace</small>
+        </div>
 
-      <main id="workspace" className="workspace" aria-label="Workspace">
-        <header className="workspace-header">
-          <div>
+        <div className="status-pill">
+          <Activity size={16} aria-hidden="true" />
+          <span>Ready</span>
+        </div>
+      </header>
+
+      <main id="workspace" className="editor-shell" aria-label="Workspace">
+        <aside className="sidebar" aria-label="Primary">
+          <nav className="nav-list" aria-label="Workspace sections">
+            <a
+              className="nav-item active"
+              href="#workspace"
+              aria-current="page"
+            >
+              <PanelLeft size={18} aria-hidden="true" />
+              <span>Workspace</span>
+            </a>
+            <a className="nav-item" href="#components">
+              <Boxes size={18} aria-hidden="true" />
+              <span>Components</span>
+            </a>
+            <a className="nav-item" href="#experiments">
+              <FlaskConical size={18} aria-hidden="true" />
+              <span>Experiments</span>
+            </a>
+          </nav>
+
+          <div className="project-file-actions">
+            <button type="button" onClick={exportProject}>
+              <Download size={15} aria-hidden="true" />
+              <span>Export project</span>
+            </button>
+            <label className="project-file-import">
+              <Upload size={15} aria-hidden="true" />
+              <span>Import project</span>
+              <input
+                aria-label="Import project"
+                type="file"
+                accept=".dlgraph.json,.json,application/json"
+                onChange={importProject}
+              />
+            </label>
+            <button type="button" onClick={resetProject}>
+              <RotateCcw size={15} aria-hidden="true" />
+              <span>Reset project</span>
+            </button>
+          </div>
+
+          <p className={`project-file-status ${projectStatus.kind}`}>
+            {projectStatus.message}
+          </p>
+        </aside>
+
+        <section className="editor-main" aria-label="Project overview">
+          <div className="workspace-context">
             <p className="eyebrow">local workspace</p>
             <h2>Graph studio workspace</h2>
-          </div>
-          <div className="status-pill">
-            <Activity size={16} aria-hidden="true" />
-            <span>Ready</span>
-          </div>
-        </header>
-
-        <section className="workbench" aria-label="Project overview">
-          <div className="workspace-panel-stack">
-            <div className="workspace-panel">
-              <div className="panel-heading">
-                <Folder size={18} aria-hidden="true" />
-                <h3>Session</h3>
-              </div>
-              <dl className="meta-list">
-                {workspaceItems.map((item) => (
-                  <div className="meta-row" key={item.label}>
-                    <dt>{item.label}</dt>
-                    <dd>{item.value}</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="project-file-actions">
-                <button type="button" onClick={exportProject}>
-                  <Download size={15} aria-hidden="true" />
-                  <span>Export project</span>
-                </button>
-                <label className="project-file-import">
-                  <Upload size={15} aria-hidden="true" />
-                  <span>Import project</span>
-                  <input
-                    aria-label="Import project"
-                    type="file"
-                    accept=".dlgraph.json,.json,application/json"
-                    onChange={importProject}
-                  />
-                </label>
-                <button type="button" onClick={resetProject}>
-                  <RotateCcw size={15} aria-hidden="true" />
-                  <span>Reset project</span>
-                </button>
-              </div>
-              <p className={`project-file-status ${projectStatus.kind}`}>
-                {projectStatus.message}
-              </p>
-            </div>
-
-            <aside className="workspace-panel" aria-label="Node inspector">
-              <div className="panel-heading">
-                <Info size={18} aria-hidden="true" />
-                <h3>Inspector</h3>
-              </div>
-
-              {selectedNode ? (
-                <div className="inspector-details">
-                  <span className="architecture-node-kind">
-                    {selectedNode.kind}
-                  </span>
-                  <h4>{selectedNode.label}</h4>
-                  <ul>
-                    {getDisplayMetadata(selectedNode, graphNodes).map(
-                      (item) => (
-                        <li key={item}>{item}</li>
-                      ),
-                    )}
-                  </ul>
-                  {selectedNode.parameters.length > 0 ? (
-                    <div
-                      className="parameter-form"
-                      aria-label={`${selectedNode.label} parameters`}
-                    >
-                      {selectedNode.parameters.map((parameter) => (
-                        <ParameterControl
-                          key={parameter.id}
-                          nodeId={selectedNode.id}
-                          parameter={parameter}
-                          onChange={updateNodeParameter}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="inspector-empty">
-                  <p>No node selected</p>
-                  <span>Select a node on the canvas.</span>
-                </div>
-              )}
-            </aside>
           </div>
 
           <section
@@ -981,9 +928,18 @@ export function App() {
                 </div>
               </div>
             ) : null}
+          </section>
 
-            {canvasEdges.length > 0 ? (
-              <div className="connection-list" aria-label="Graph connections">
+          {canvasEdges.length > 0 ? (
+            <section
+              className="connection-drawer"
+              aria-label="Graph connections"
+            >
+              <header className="connection-drawer-header">
+                <h3>Connections</h3>
+                <span>{graphConnections.length}</span>
+              </header>
+              <div className="connection-list">
                 {graphConnections.map((connection) => {
                   const connectionLabel = getGraphConnectionLabel(
                     connection,
@@ -1006,16 +962,57 @@ export function App() {
                   );
                 })}
               </div>
-            ) : null}
+            </section>
+          ) : null}
 
-            {connectionFeedback ? (
-              <div className="connection-feedback" role="alert">
-                <AlertTriangle size={16} aria-hidden="true" />
-                <span>{connectionFeedback}</span>
-              </div>
-            ) : null}
-          </section>
+          {connectionFeedback ? (
+            <div className="connection-feedback" role="alert">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>{connectionFeedback}</span>
+            </div>
+          ) : null}
         </section>
+
+        <aside className="inspector-panel" aria-label="Node inspector">
+          <div className="panel-heading">
+            <Info size={18} aria-hidden="true" />
+            <h3>Inspector</h3>
+          </div>
+
+          {selectedNode ? (
+            <div className="inspector-details">
+              <span className="architecture-node-kind">
+                {selectedNode.kind}
+              </span>
+              <h4>{selectedNode.label}</h4>
+              <ul>
+                {getDisplayMetadata(selectedNode, graphNodes).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              {selectedNode.parameters.length > 0 ? (
+                <div
+                  className="parameter-form"
+                  aria-label={`${selectedNode.label} parameters`}
+                >
+                  {selectedNode.parameters.map((parameter) => (
+                    <ParameterControl
+                      key={parameter.id}
+                      nodeId={selectedNode.id}
+                      parameter={parameter}
+                      onChange={updateNodeParameter}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="inspector-empty">
+              <p>No node selected</p>
+              <span>Select a node on the canvas.</span>
+            </div>
+          )}
+        </aside>
       </main>
     </div>
   );
