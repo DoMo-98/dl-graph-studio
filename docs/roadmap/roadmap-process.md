@@ -69,7 +69,7 @@ Use this intake sequence:
 
 7. Ask the product owner to confirm issue creation, readiness, and priority.
 
-Ideas do not become implementation work until the product owner confirms the issue. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
+Intake confirmation can create or update the issue, mark it `Ready`, and set its priority, but it does not authorize implementation. Ideas become implementation work only when the product owner explicitly selects or confirms a ready issue for work under the Agent Cycle. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
 
 ## Milestone Technical Audit
 
