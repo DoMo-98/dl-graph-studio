@@ -10,6 +10,7 @@ import {
   Link2,
   PanelLeft,
   RotateCcw,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -258,6 +259,22 @@ function validateGraphConnection(
   return { isValid: true };
 }
 
+function getGraphConnectionLabel(
+  connection: GraphConnection,
+  nodes: GraphNode[],
+) {
+  const sourceNode = nodes.find((node) => node.id === connection.source);
+  const targetNode = nodes.find((node) => node.id === connection.target);
+
+  return `${sourceNode?.label ?? connection.source} -> ${
+    targetNode?.label ?? connection.target
+  }`;
+}
+
+function getDeleteConnectionLabel(connectionLabel: string) {
+  return `Delete connection ${connectionLabel.replace(" -> ", " to ")}`;
+}
+
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const selectNode = () => {
     data.onSelect(data.id);
@@ -483,6 +500,29 @@ export function App() {
     [addGraphConnection],
   );
 
+  const deleteGraphConnection = useCallback(
+    (connectionId: string) => {
+      const connection = graphConnections.find(
+        (candidateConnection) => candidateConnection.id === connectionId,
+      );
+
+      if (!connection) {
+        return;
+      }
+
+      const connectionLabel = getGraphConnectionLabel(connection, graphNodes);
+
+      setGraphConnections(
+        graphConnections.filter(
+          (candidateConnection) => candidateConnection.id !== connectionId,
+        ),
+      );
+      setConnectionSourceId(null);
+      setConnectionFeedback(`${connectionLabel} deleted.`);
+    },
+    [graphConnections, graphNodes],
+  );
+
   const resetProject = () => {
     setGraphNodes(createInitialGraphNodes());
     setGraphConnections([]);
@@ -613,15 +653,7 @@ export function App() {
   const canvasEdges: Edge[] = useMemo(
     () =>
       graphConnections.map((connection) => {
-        const sourceNode = graphNodes.find(
-          (node) => node.id === connection.source,
-        );
-        const targetNode = graphNodes.find(
-          (node) => node.id === connection.target,
-        );
-        const label = `${sourceNode?.label ?? connection.source} -> ${
-          targetNode?.label ?? connection.target
-        }`;
+        const label = getGraphConnectionLabel(connection, graphNodes);
 
         return {
           id: connection.id,
@@ -806,9 +838,27 @@ export function App() {
 
             {canvasEdges.length > 0 ? (
               <div className="connection-list" aria-label="Graph connections">
-                {canvasEdges.map((edge) => (
-                  <span key={edge.id}>{edge.label}</span>
-                ))}
+                {graphConnections.map((connection) => {
+                  const connectionLabel = getGraphConnectionLabel(
+                    connection,
+                    graphNodes,
+                  );
+
+                  return (
+                    <div className="connection-list-item" key={connection.id}>
+                      <span>{connectionLabel}</span>
+                      <button
+                        type="button"
+                        className="connection-delete-button"
+                        aria-label={getDeleteConnectionLabel(connectionLabel)}
+                        title={getDeleteConnectionLabel(connectionLabel)}
+                        onClick={() => deleteGraphConnection(connection.id)}
+                      >
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
 
