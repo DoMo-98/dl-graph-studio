@@ -17,7 +17,7 @@
 - Keep `src/projectFile.ts` unchanged.
 - Keep existing tests unless a visual-system change intentionally affects accessible labels or DOM contracts.
 - Use `docs/verification/issue-17/visual-reference-direction-b.png` as the approved single-image visual reference.
-- Keep `docs/verification/issue-17/visual-direction-board.png` only as the original comparison board.
+- Keep `docs/verification/issue-17/visual-exploration-board.png` only as the original comparison board.
 
 ## Task 1: Preserve Behavior Before Visual Edits
 
@@ -315,4 +315,4 @@ Expected: screenshot shows the implemented Direction B surface with visible canv
 - [x] Labels, roles, test ids, and connection label format remain stable.
 - [x] Primitive and composite nodes remain visually distinct.
 - [x] Selection, hover/focus, dragging, connection, validation, empty, and project status states are visually consistent.
-- [x] Before/after screenshots and the generated direction board are available under `docs/verification/issue-17/`.
+- [x] Before/after screenshots, the approved standalone reference, and the original exploration board are available under `docs/verification/issue-17/`.
