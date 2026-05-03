@@ -14,7 +14,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import {
   Background,
@@ -25,8 +25,10 @@ import {
 } from "@xyflow/react";
 import type {
   Connection,
+  CoordinateExtent,
   Edge,
   Node,
+  NodeChange,
   NodeProps,
   NodeTypes,
 } from "@xyflow/react";
@@ -36,11 +38,13 @@ import {
   createProjectFile,
   parseProjectFileContent,
   serializeProjectFile,
+  updateGraphNodePositions,
 } from "./projectFile";
 import type {
   CompositeNode,
   GraphNode,
   GraphConnection,
+  GraphNodePositionUpdate,
   PrimitiveNode,
   PrimitiveNodeParameter,
 } from "./projectFile";
@@ -54,6 +58,10 @@ const workspaceItems = [
   { label: "Mode", value: "Local workspace" },
   { label: "Runtime", value: "Not configured" },
 ];
+
+const defaultCanvasSize = { width: 960, height: 960 };
+const primitiveFlowNodeSize = { width: 228, height: 196 };
+const compositeFlowNodeSize = { width: 220, height: 180 };
 
 const primitiveNodes: PrimitiveNode[] = [
   {
@@ -138,6 +146,7 @@ const compositeNodes: CompositeNode[] = [
 
 type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
   isSelected: boolean;
+  isDragging: boolean;
   connectionSourceId: string | null;
   connectionSourceLabel: string | null;
   onSelect: (nodeId: string) => void;
@@ -149,6 +158,7 @@ type PrimitiveNodeData = Omit<PrimitiveNode, "position"> & {
 type PrimitiveFlowNode = Node<PrimitiveNodeData, "primitive">;
 type CompositeNodeData = Omit<CompositeNode, "position"> & {
   isSelected: boolean;
+  isDragging: boolean;
   onSelect: (nodeId: string) => void;
   displayMetadata: string[];
 };
@@ -275,6 +285,26 @@ function getDeleteConnectionLabel(connectionLabel: string) {
   return `Delete connection ${connectionLabel.replace(" -> ", " to ")}`;
 }
 
+function getFlowNodeSize(node: GraphNode) {
+  return node.type === "composite"
+    ? compositeFlowNodeSize
+    : primitiveFlowNodeSize;
+}
+
+function clampCanvasNodePosition(
+  position: GraphNode["position"],
+  node: GraphNode,
+  canvasNodeExtent: CoordinateExtent,
+): GraphNode["position"] {
+  const [[minX, minY], [maxX, maxY]] = canvasNodeExtent;
+  const nodeSize = getFlowNodeSize(node);
+
+  return {
+    x: Math.min(Math.max(position.x, minX), maxX - nodeSize.width),
+    y: Math.min(Math.max(position.y, minY), maxY - nodeSize.height),
+  };
+}
+
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const selectNode = () => {
     data.onSelect(data.id);
@@ -300,6 +330,8 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
       />
       <article
         className={`architecture-node${data.isSelected ? " selected" : ""}${
+          data.isDragging ? " moving" : ""
+        }${
           isConnectionSource ? " connection-source" : ""
         }${isConnectionTarget ? " connection-target" : ""}`}
         data-testid="architecture-node"
@@ -322,7 +354,7 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
         {isConnectionSource ? (
           <button
             type="button"
-            className="connection-button cancel"
+            className="connection-button cancel nodrag"
             aria-label={`Cancel connection from ${data.label}`}
             title={`Cancel connection from ${data.label}`}
             onClick={data.onCancelConnection}
@@ -332,7 +364,7 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
         ) : (
           <button
             type="button"
-            className="connection-button"
+            className="connection-button nodrag"
             aria-label={
               data.connectionSourceId
                 ? `Connect ${data.connectionSourceLabel} to ${data.label}`
@@ -378,7 +410,7 @@ function CompositeNodeCard({ data }: NodeProps<CompositeFlowNode>) {
     <article
       className={`architecture-node composite-node${
         data.isSelected ? " selected" : ""
-      }`}
+      }${data.isDragging ? " moving" : ""}`}
       data-testid="composite-node"
       role="button"
       tabIndex={0}
@@ -404,6 +436,8 @@ const nodeTypes: NodeTypes = {
 };
 
 export function App() {
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [canvasSize, setCanvasSize] = useState(defaultCanvasSize);
   const [graphNodes, setGraphNodes] = useState<GraphNode[]>(
     createInitialGraphNodes,
   );
@@ -414,6 +448,7 @@ export function App() {
     null,
   );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
@@ -425,6 +460,40 @@ export function App() {
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
     graphNodes.find((node) => node.id === connectionSourceId) ?? null;
+  const canvasNodeExtent = useMemo<CoordinateExtent>(
+    () => [
+      [0, 0],
+      [canvasSize.width, canvasSize.height],
+    ],
+    [canvasSize],
+  );
+
+  useEffect(() => {
+    const canvasElement = canvasRef.current;
+
+    if (!canvasElement) {
+      return;
+    }
+
+    const updateCanvasSize = () => {
+      setCanvasSize({
+        width: canvasElement.clientWidth || defaultCanvasSize.width,
+        height: canvasElement.clientHeight || defaultCanvasSize.height,
+      });
+    };
+
+    updateCanvasSize();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(updateCanvasSize);
+
+    resizeObserver.observe(canvasElement);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -500,6 +569,64 @@ export function App() {
     [addGraphConnection],
   );
 
+  const handleCanvasNodesChange = useCallback(
+    (changes: NodeChange<GraphFlowNode>[]) => {
+      const rawPositionUpdates = changes.flatMap(
+        (change): GraphNodePositionUpdate[] => {
+          if (change.type !== "position") {
+            return [];
+          }
+
+          const nextPosition = change.position ?? change.positionAbsolute;
+
+          if (nextPosition === undefined) {
+            return [];
+          }
+
+          return [
+            {
+              id: change.id,
+              position: nextPosition,
+            },
+          ];
+        },
+      );
+
+      if (rawPositionUpdates.length === 0) {
+        return;
+      }
+
+      setGraphNodes((currentNodes) => {
+        const rawPositionsByNodeId = new Map(
+          rawPositionUpdates.map((update) => [update.id, update.position]),
+        );
+        const positionUpdates = currentNodes.flatMap(
+          (node): GraphNodePositionUpdate[] => {
+            const nextPosition = rawPositionsByNodeId.get(node.id);
+
+            if (!nextPosition) {
+              return [];
+            }
+
+            return [
+              {
+                id: node.id,
+                position: clampCanvasNodePosition(
+                  nextPosition,
+                  node,
+                  canvasNodeExtent,
+                ),
+              },
+            ];
+          },
+        );
+
+        return updateGraphNodePositions(currentNodes, positionUpdates);
+      });
+    },
+    [canvasNodeExtent],
+  );
+
   const deleteGraphConnection = useCallback(
     (connectionId: string) => {
       const connection = graphConnections.find(
@@ -528,6 +655,7 @@ export function App() {
     setGraphConnections([]);
     setSelectedNodeId(null);
     setConnectionSourceId(null);
+    setDraggedNodeId(null);
     setProjectStatus({
       kind: "neutral",
       message: "Project reset to the default graph.",
@@ -574,6 +702,7 @@ export function App() {
       setGraphConnections(result.project.connections);
       setSelectedNodeId(null);
       setConnectionSourceId(null);
+      setDraggedNodeId(null);
       setProjectStatus({
         kind: "success",
         message: "Project loaded.",
@@ -591,12 +720,18 @@ export function App() {
   const canvasNodes: GraphFlowNode[] = useMemo(
     () =>
       graphNodes.map((node) => {
+        const nodeSize = getFlowNodeSize(node);
         const commonNode = {
           id: node.id,
           position: node.position,
+          width: nodeSize.width,
+          height: nodeSize.height,
+          initialWidth: nodeSize.width,
+          initialHeight: nodeSize.height,
+          measured: nodeSize,
           selected: selectedNodeId === node.id,
           selectable: true,
-          draggable: false,
+          draggable: true,
         };
 
         if (node.type === "composite") {
@@ -613,6 +748,7 @@ export function App() {
               memberNodeIds: node.memberNodeIds,
               displayMetadata: getDisplayMetadata(node, graphNodes),
               isSelected: selectedNodeId === node.id,
+              isDragging: draggedNodeId === node.id,
               onSelect: setSelectedNodeId,
             },
             className: "architecture-flow-node composite-flow-node",
@@ -631,6 +767,7 @@ export function App() {
             parameters: node.parameters,
             displayMetadata: getDisplayMetadata(node, graphNodes),
             isSelected: selectedNodeId === node.id,
+            isDragging: draggedNodeId === node.id,
             connectionSourceId,
             connectionSourceLabel: connectionSource?.label ?? null,
             onSelect: setSelectedNodeId,
@@ -645,6 +782,7 @@ export function App() {
       completeGraphConnection,
       connectionSource?.label,
       connectionSourceId,
+      draggedNodeId,
       graphNodes,
       selectedNodeId,
     ],
@@ -807,19 +945,27 @@ export function App() {
             </aside>
           </div>
 
-          <section className="graph-canvas" aria-label="Graph canvas">
+          <section
+            className="graph-canvas"
+            aria-label="Graph canvas"
+            ref={canvasRef}
+          >
             <ReactFlow
               nodes={canvasNodes}
               edges={canvasEdges}
               nodeTypes={nodeTypes}
               onConnect={handleReactFlowConnect}
-              nodesDraggable={false}
+              onNodesChange={handleCanvasNodesChange}
+              onNodeDragStart={(_, node) => setDraggedNodeId(node.id)}
+              onNodeDragStop={() => setDraggedNodeId(null)}
+              nodesDraggable={true}
               nodesConnectable={true}
               elementsSelectable={false}
               panOnDrag={false}
               zoomOnScroll={false}
               zoomOnPinch={false}
               zoomOnDoubleClick={false}
+              autoPanOnNodeDrag={false}
               preventScrolling={false}
               defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
