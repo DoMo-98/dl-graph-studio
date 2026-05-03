@@ -88,14 +88,16 @@ The workflow is semi-automatic:
 3. The agent proposes one `ready` issue and explains why it is the best next task.
 4. The product owner confirms or selects a different issue.
 5. The agent creates a branch named `codex/<issue-number>-<short-name>`.
-6. The agent implements only the issue scope.
-7. The agent runs the required verification.
-8. The agent opens a PR linked to the issue with `Closes #<issue-number>`.
-9. The product owner reviews product behavior, UX, and functionality.
-10. If changes are needed, the issue or PR moves to `Needs Iteration`.
-11. The agent iterates in the same PR.
-12. Once accepted, the PR is merged and the issue moves to `Done`.
-13. The agent proposes the next ready issue only after being asked or after the owner confirms continuing.
+6. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
+7. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
+8. The agent implements only the issue scope.
+9. The agent runs the required verification.
+10. The agent opens a PR linked to the issue with `Closes #<issue-number>`, and the issue moves to `In Review`.
+11. The product owner reviews product behavior, UX, and functionality.
+12. If changes are needed, the issue or PR moves to `Needs Iteration`.
+13. The agent iterates in the same PR.
+14. Once accepted, the PR is merged and the issue moves to `Done`.
+15. The agent proposes the next ready issue only after being asked or after the owner confirms continuing.
 
 During early product development, the agent must not start the next issue without explicit owner confirmation.
 
@@ -229,7 +231,7 @@ Automation should follow observed workflow friction, not precede it.
 ## Open Decisions
 
 - Which exact GitHub Project name to use.
-- Whether project state transitions will be manual at first or assisted by the GitHub connector.
+- Which exact command or connector workflow agents should prefer when updating GitHub Project status fields.
 - Which CI checks should become required once implementation starts.
 
 These decisions do not block adopting the workflow.
