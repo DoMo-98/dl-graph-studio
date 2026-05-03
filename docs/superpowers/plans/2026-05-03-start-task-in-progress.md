@@ -33,6 +33,7 @@
 ### Task 1: Update Agent Operating Rules
 
 **Files:**
+
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Verify the current file does not yet encode the branch-created trigger**
@@ -92,6 +93,7 @@ Expected: commit succeeds with only `AGENTS.md` changed.
 ### Task 2: Update Human Roadmap Process
 
 **Files:**
+
 - Modify: `docs/roadmap/roadmap-process.md`
 
 - [ ] **Step 1: Verify the current Agent Cycle still moves to `In Progress` at confirmation time**
@@ -161,6 +163,7 @@ Expected: commit succeeds with only `docs/roadmap/roadmap-process.md` changed.
 ### Task 3: Update Original Workflow Design
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md`
 
 - [ ] **Step 1: Verify the current Execution Cycle lacks the new explicit fallback**
@@ -233,6 +236,7 @@ Expected: commit succeeds with only `docs/superpowers/specs/2026-04-26-agent-roa
 ### Task 4: Final Verification
 
 **Files:**
+
 - Verify: `AGENTS.md`
 - Verify: `docs/roadmap/roadmap-process.md`
 - Verify: `docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md`
@@ -289,8 +293,8 @@ Expected:
 ```text
 The worktree is clean.
 The latest commits include:
+docs: format task in progress plan
 docs: clarify roadmap in progress transition
 docs: align roadmap process in progress timing
 docs: document task startup project transition
-docs: plan task in progress transition
 ```
