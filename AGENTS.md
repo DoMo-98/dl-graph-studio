@@ -10,6 +10,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - `docs/superpowers/specs/2026-04-26-agent-roadmap-workflow-design.md` is the workflow design source of truth.
 - `docs/superpowers/specs/2026-05-01-milestone-ux-ui-hardening-design.md` defines the milestone UX/UI hardening convention.
 - `docs/superpowers/specs/2026-05-03-milestone-technical-audit-design.md` defines the milestone technical audit convention.
+- `docs/superpowers/specs/2026-05-03-product-owner-idea-intake-design.md` defines the product-owner idea intake convention.
 - The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
@@ -26,6 +27,20 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
 - Before creating or updating a live roadmap issue outside GitHub's issue-template UI, use `.github/ISSUE_TEMPLATE/roadmap-task.md` as the canonical format and run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it to the Project as ready.
+
+## Product Owner Idea Intake
+
+- When the product owner proposes a new idea, treat it as idea intake by default, not as authorization to implement.
+- The default goal of intake is to convert the idea into a roadmap issue that is ready to execute.
+- Classify the idea before drafting work: UX/UI finding, technical audit finding, new roadmap task, or PRD-level idea.
+- If the idea is a small UX/UI finding in the current milestone, record it in `[Roadmap]: Phase N UX/UI hardening` when it fits that issue's scope.
+- If the idea is a milestone-local technical quality finding, record it in `[Roadmap]: Phase N technical audit` when it fits that issue's scope.
+- If the idea is a new roadmap task, draft a roadmap issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
+- If the idea changes high-level product direction, treat it as a PRD or planning discussion before creating executable issues.
+- Ask focused clarifying questions until the issue has objective, scope, out-of-scope, acceptance criteria, verification, milestone, labels, and an expected PR size that fits the normal 15-30 minute review window.
+- If the idea is too large for one reviewable PR, propose a split and recommend the first issue to create.
+- Before creating or updating a live roadmap issue outside GitHub's issue-template UI, run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
+- Ask the product owner to confirm issue creation, readiness, and priority before applying `ready`, adding the issue to the Project as ready, or starting implementation.
 
 ## Milestone UX/UI Hardening
 
