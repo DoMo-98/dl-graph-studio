@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 
@@ -32,9 +38,7 @@ const editedNodes: GraphNode[] = [
     label: "Dense",
     kind: "Layer",
     metadata: ["Role: transform"],
-    parameters: [
-      { id: "units", label: "Units", type: "number", value: 128 },
-    ],
+    parameters: [{ id: "units", label: "Units", type: "number", value: 128 }],
     position: { x: 320, y: 96 },
   },
 ];
@@ -179,17 +183,18 @@ describe("useProjectFileWorkflow", () => {
       const anchorClick = vi
         .spyOn(HTMLAnchorElement.prototype, "click")
         .mockImplementation(() => undefined);
-      vi.spyOn(document, "createElement").mockImplementation(
-        ((tagName: string, options?: ElementCreationOptions) => {
-          const element = originalCreateElement(tagName, options);
+      vi.spyOn(document, "createElement").mockImplementation(((
+        tagName: string,
+        options?: ElementCreationOptions,
+      ) => {
+        const element = originalCreateElement(tagName, options);
 
-          if (tagName.toLowerCase() === "a") {
-            createdAnchors.push(element as HTMLAnchorElement);
-          }
+        if (tagName.toLowerCase() === "a") {
+          createdAnchors.push(element as HTMLAnchorElement);
+        }
 
-          return element;
-        }) as typeof document.createElement,
-      );
+        return element;
+      }) as typeof document.createElement);
 
       render(
         <WorkflowHarness
@@ -247,9 +252,8 @@ describe("useProjectFileWorkflow", () => {
   it("imports a valid project, closes the menu, clears editor workflow state, and clears the input", async () => {
     render(<WorkflowHarness />);
 
-    const fileInput = screen.getByLabelText<HTMLInputElement>(
-      /import project file/i,
-    );
+    const fileInput =
+      screen.getByLabelText<HTMLInputElement>(/import project file/i);
     const projectFile = new File([createProjectContent()], "project.json", {
       type: "application/json",
     });
@@ -283,9 +287,8 @@ describe("useProjectFileWorkflow", () => {
   it("keeps the menu open and preserves editor workflow state after invalid import", async () => {
     render(<WorkflowHarness />);
 
-    const fileInput = screen.getByLabelText<HTMLInputElement>(
-      /import project file/i,
-    );
+    const fileInput =
+      screen.getByLabelText<HTMLInputElement>(/import project file/i);
     const invalidFile = new File(["not-json"], "project.json", {
       type: "application/json",
     });
@@ -319,9 +322,8 @@ describe("useProjectFileWorkflow", () => {
 
     render(<WorkflowHarness />);
 
-    const fileInput = screen.getByLabelText<HTMLInputElement>(
-      /import project file/i,
-    );
+    const fileInput =
+      screen.getByLabelText<HTMLInputElement>(/import project file/i);
 
     fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
     fireEvent.change(fileInput, { target: { files: [unreadableFile] } });

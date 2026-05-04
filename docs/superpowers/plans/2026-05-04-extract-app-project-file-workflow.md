@@ -30,6 +30,7 @@
 ### Task 1: Add Hook Boundary Tests
 
 **Files:**
+
 - Create: `src/useProjectFileWorkflow.test.tsx`
 - Read: `src/projectFile.ts`
 
@@ -38,7 +39,13 @@
 Create `src/useProjectFileWorkflow.test.tsx` with this content:
 
 ```tsx
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 
@@ -72,9 +79,7 @@ const editedNodes: GraphNode[] = [
     label: "Dense",
     kind: "Layer",
     metadata: ["Role: transform"],
-    parameters: [
-      { id: "units", label: "Units", type: "number", value: 128 },
-    ],
+    parameters: [{ id: "units", label: "Units", type: "number", value: 128 }],
     position: { x: 320, y: 96 },
   },
 ];
@@ -422,6 +427,7 @@ Expected: commit succeeds with only the new test file staged.
 ### Task 2: Implement `useProjectFileWorkflow`
 
 **Files:**
+
 - Create: `src/useProjectFileWorkflow.ts`
 - Test: `src/useProjectFileWorkflow.test.tsx`
 
@@ -579,11 +585,7 @@ export function useProjectFileWorkflow({
       setIsProjectActionsOpen(false);
       event.target.value = "";
     },
-    [
-      clearEditorProjectWorkflowState,
-      setGraphConnections,
-      setGraphNodes,
-    ],
+    [clearEditorProjectWorkflowState, setGraphConnections, setGraphNodes],
   );
 
   const resetProject = useCallback(() => {
@@ -639,6 +641,7 @@ Expected: commit succeeds with hook and adjusted tests.
 ### Task 3: Wire `App.tsx` To The Hook
 
 **Files:**
+
 - Modify: `src/App.tsx`
 - Test: `src/App.test.tsx`
 - Test: `src/App.nodeDrag.test.tsx`
@@ -743,7 +746,7 @@ onClick={() => fileInputRef.current?.click()}
 with:
 
 ```tsx
-onClick={openProjectImportPicker}
+onClick = { openProjectImportPicker };
 ```
 
 Keep the hidden input props unchanged except for using the hook-provided `fileInputRef` and `importProjectFile`.
@@ -784,6 +787,7 @@ Expected: commit succeeds with only `src/App.tsx` staged.
 ### Task 4: Full Verification And Cleanup
 
 **Files:**
+
 - Review: `src/App.tsx`
 - Review: `src/useProjectFileWorkflow.ts`
 - Review: `src/useProjectFileWorkflow.test.tsx`

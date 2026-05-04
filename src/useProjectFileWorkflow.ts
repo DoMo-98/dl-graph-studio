@@ -28,7 +28,7 @@ type UseProjectFileWorkflowOptions = {
 };
 
 export function readTextFile(file: File) {
-  if (file.text) {
+  if (typeof file.text === "function") {
     return file.text().then((result: unknown) => {
       if (typeof result === "string") {
         return result;
