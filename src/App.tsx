@@ -1,19 +1,15 @@
 import {
-  Activity,
   AlertTriangle,
   BookOpen,
   Box,
   ChevronsRight,
   CircuitBoard,
-  Download,
-  Folder,
   Grid,
   Hand,
   Info,
   Link2,
   MousePointer2,
   Play,
-  RotateCcw,
   Save,
   Settings,
   Share2,
@@ -21,16 +17,17 @@ import {
   Trash2,
   Undo2,
   Redo2,
-  Upload,
   X,
   MoreVertical,
-  Maximize,
-  Minimize,
-  Minus,
-  Plus,
-  Lock
 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import {
   Background,
@@ -50,12 +47,7 @@ import type {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import {
-  createProjectFile,
-  parseProjectFileContent,
-  serializeProjectFile,
-  updateGraphNodePositions,
-} from "./projectFile";
+import { updateGraphNodePositions } from "./projectFile";
 import type {
   CompositeNode,
   GraphNode,
@@ -174,10 +166,6 @@ type CompositeNodeData = Omit<CompositeNode, "position"> & {
 };
 type CompositeFlowNode = Node<CompositeNodeData, "composite">;
 type GraphFlowNode = PrimitiveFlowNode | CompositeFlowNode;
-type ProjectStatus = {
-  kind: "neutral" | "success" | "error";
-  message: string;
-};
 
 function createInitialGraphNodes() {
   return [...primitiveNodes, ...compositeNodes].map((node) => ({
@@ -218,20 +206,6 @@ function getDisplayMetadata(node: GraphNode, nodes: GraphNode[]) {
     ...node.parameters.map((parameter) => formatParameterSummary(parameter)),
     ...node.metadata,
   ];
-}
-
-function readProjectFile(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.addEventListener("load", () => {
-      resolve(String(reader.result ?? ""));
-    });
-    reader.addEventListener("error", () => {
-      reject(reader.error ?? new Error("Project file could not be read."));
-    });
-    reader.readAsText(file);
-  });
 }
 
 function validateGraphConnection(
@@ -301,6 +275,43 @@ function getFlowNodeSize(node: GraphNode) {
     : primitiveFlowNodeSize;
 }
 
+function getCanvasNodeExtent(size: {
+  width: number;
+  height: number;
+}): CoordinateExtent {
+  return [
+    [0, 0],
+    [size.width, size.height],
+  ];
+}
+
+function getCanvasElementNodeExtent(
+  graphCanvasElement: HTMLElement,
+): CoordinateExtent | null {
+  const { width: rectWidth, height: rectHeight } =
+    graphCanvasElement.getBoundingClientRect();
+  const width = graphCanvasElement.clientWidth || rectWidth;
+  const height = graphCanvasElement.clientHeight || rectHeight;
+
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+
+  return getCanvasNodeExtent({ width, height });
+}
+
+function areCanvasNodeExtentsEqual(
+  firstExtent: CoordinateExtent,
+  secondExtent: CoordinateExtent,
+) {
+  return (
+    firstExtent[0][0] === secondExtent[0][0] &&
+    firstExtent[0][1] === secondExtent[0][1] &&
+    firstExtent[1][0] === secondExtent[1][0] &&
+    firstExtent[1][1] === secondExtent[1][1]
+  );
+}
+
 function clampCanvasNodePosition(
   position: GraphNode["position"],
   node: GraphNode,
@@ -308,10 +319,12 @@ function clampCanvasNodePosition(
 ): GraphNode["position"] {
   const [[minX, minY], [maxX, maxY]] = canvasNodeExtent;
   const nodeSize = getFlowNodeSize(node);
+  const maxPositionX = Math.max(minX, maxX - nodeSize.width);
+  const maxPositionY = Math.max(minY, maxY - nodeSize.height);
 
   return {
-    x: Math.min(Math.max(position.x, minX), maxX - nodeSize.width),
-    y: Math.min(Math.max(position.y, minY), maxY - nodeSize.height),
+    x: Math.min(Math.max(position.x, minX), maxPositionX),
+    y: Math.min(Math.max(position.y, minY), maxPositionY),
   };
 }
 
@@ -460,21 +473,73 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
-  const [projectStatus, setProjectStatus] = useState<ProjectStatus>({
-    kind: "neutral",
-    message: "Export or import a local project file.",
-  });
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
     graphNodes.find((node) => node.id === connectionSourceId) ?? null;
-  const canvasNodeExtent = useMemo<CoordinateExtent>(
-    () => [
-      [0, 0],
-      [defaultCanvasSize.width, defaultCanvasSize.height],
-    ],
-    [],
+  const graphCanvasRef = useRef<HTMLElement | null>(null);
+  const [canvasNodeExtent, setCanvasNodeExtent] = useState<CoordinateExtent>(
+    () => getCanvasNodeExtent(defaultCanvasSize),
   );
+
+  useLayoutEffect(() => {
+    const graphCanvasElement = graphCanvasRef.current;
+
+    if (!graphCanvasElement) {
+      return;
+    }
+
+    const syncCanvasNodeExtent = () => {
+      const nextCanvasNodeExtent =
+        getCanvasElementNodeExtent(graphCanvasElement);
+
+      if (!nextCanvasNodeExtent) {
+        return;
+      }
+
+      setCanvasNodeExtent((currentCanvasNodeExtent) =>
+        areCanvasNodeExtentsEqual(currentCanvasNodeExtent, nextCanvasNodeExtent)
+          ? currentCanvasNodeExtent
+          : nextCanvasNodeExtent,
+      );
+    };
+
+    syncCanvasNodeExtent();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(syncCanvasNodeExtent);
+    resizeObserver.observe(graphCanvasElement);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    setGraphNodes((currentNodes) => {
+      const positionUpdates = currentNodes.map((node) => ({
+        id: node.id,
+        position: clampCanvasNodePosition(
+          node.position,
+          node,
+          canvasNodeExtent,
+        ),
+      }));
+      const hasChangedPosition = positionUpdates.some((update) => {
+        const currentNode = currentNodes.find((node) => node.id === update.id);
+
+        return (
+          currentNode?.position.x !== update.position.x ||
+          currentNode.position.y !== update.position.y
+        );
+      });
+
+      return hasChangedPosition
+        ? updateGraphNodePositions(currentNodes, positionUpdates)
+        : currentNodes;
+    });
+  }, [canvasNodeExtent]);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -577,6 +642,11 @@ export function App() {
         return;
       }
 
+      const activeCanvasNodeExtent = graphCanvasRef.current
+        ? (getCanvasElementNodeExtent(graphCanvasRef.current) ??
+          canvasNodeExtent)
+        : canvasNodeExtent;
+
       setGraphNodes((currentNodes) => {
         const rawPositionsByNodeId = new Map(
           rawPositionUpdates.map((update) => [update.id, update.position]),
@@ -595,7 +665,7 @@ export function App() {
                 position: clampCanvasNodePosition(
                   nextPosition,
                   node,
-                  canvasNodeExtent,
+                  activeCanvasNodeExtent,
                 ),
               },
             ];
@@ -630,73 +700,6 @@ export function App() {
     },
     [graphConnections, graphNodes],
   );
-
-  const resetProject = () => {
-    setGraphNodes(createInitialGraphNodes());
-    setGraphConnections([]);
-    setSelectedNodeId(null);
-    setConnectionSourceId(null);
-    setDraggedNodeId(null);
-    setProjectStatus({
-      kind: "neutral",
-      message: "Project reset to the default graph.",
-    });
-  };
-
-  const exportProject = () => {
-    const project = createProjectFile(graphNodes, graphConnections);
-    const blob = new Blob([serializeProjectFile(project)], {
-      type: "application/json",
-    });
-    const downloadUrl = URL.createObjectURL(blob);
-    const downloadLink = document.createElement("a");
-
-    downloadLink.href = downloadUrl;
-    downloadLink.download = "untitled-graph.dlgraph.json";
-    downloadLink.click();
-    URL.revokeObjectURL(downloadUrl);
-    setProjectStatus({
-      kind: "success",
-      message: "Project exported.",
-    });
-  };
-
-  const importProject = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-
-    if (!file) {
-      return;
-    }
-
-    try {
-      const result = parseProjectFileContent(await readProjectFile(file));
-
-      if (!result.ok) {
-        setProjectStatus({
-          kind: "error",
-          message: `Could not load project. ${result.message}`,
-        });
-        return;
-      }
-
-      setGraphNodes(result.project.nodes);
-      setGraphConnections(result.project.connections);
-      setSelectedNodeId(null);
-      setConnectionSourceId(null);
-      setDraggedNodeId(null);
-      setProjectStatus({
-        kind: "success",
-        message: "Project loaded.",
-      });
-    } catch {
-      setProjectStatus({
-        kind: "error",
-        message: "Could not load project. The file could not be read.",
-      });
-    } finally {
-      event.target.value = "";
-    }
-  };
 
   const canvasNodes: GraphFlowNode[] = useMemo(
     () =>
@@ -811,30 +814,47 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="app-topbar">
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+        <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
           <div className="brand-lockup">
             <div className="brand-mark" aria-hidden="true">
               <CircuitBoard size={18} strokeWidth={2} />
             </div>
             <div className="topbar-project" aria-label="Current project">
               <span>dl-graph-studio</span>
-              <span style={{color: '#94a3b8', margin: '0 8px'}}>Untitled graph</span>
-              <ChevronsRight size={14} color="#94a3b8"/>
+              <span style={{ color: "#94a3b8", margin: "0 8px" }}>
+                Untitled graph
+              </span>
+              <ChevronsRight size={14} color="#94a3b8" />
             </div>
           </div>
 
-          <div className="status-pill" style={{background: 'transparent', border: 'none', color: '#10b981', padding: 0}}>
-            <div style={{width: 6, height: 6, borderRadius: '50%', background: '#10b981'}}></div>
+          <div
+            className="status-pill"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#10b981",
+              padding: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#10b981",
+              }}
+            ></div>
             <span>Ready</span>
           </div>
         </div>
 
-        <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
-           <Undo2 size={18} color="#94a3b8" />
-           <Redo2 size={18} color="#94a3b8" />
-           <Play size={18} color="#ffffff" />
-           <Save size={18} color="#ffffff" />
-           <MoreVertical size={18} color="#ffffff" />
+        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+          <Undo2 size={18} color="#94a3b8" />
+          <Redo2 size={18} color="#94a3b8" />
+          <Play size={18} color="#ffffff" />
+          <Save size={18} color="#ffffff" />
+          <MoreVertical size={18} color="#ffffff" />
         </div>
       </header>
 
@@ -865,7 +885,11 @@ export function App() {
             </a>
           </nav>
 
-          <nav className="nav-list" aria-label="Utility actions" style={{marginTop: 'auto'}}>
+          <nav
+            className="nav-list"
+            aria-label="Utility actions"
+            style={{ marginTop: "auto" }}
+          >
             <a className="nav-item" href="#settings">
               <Settings size={20} aria-hidden="true" />
             </a>
@@ -884,6 +908,7 @@ export function App() {
           <section
             className="graph-canvas"
             aria-label="Graph canvas"
+            ref={graphCanvasRef}
           >
             <ReactFlow
               nodes={canvasNodes}
@@ -896,15 +921,12 @@ export function App() {
               nodesDraggable={true}
               nodesConnectable={true}
               elementsSelectable={false}
-              nodeExtent={canvasNodeExtent}
               panOnDrag={false}
               zoomOnScroll={false}
               zoomOnPinch={false}
               zoomOnDoubleClick={false}
               autoPanOnNodeDrag={false}
               preventScrolling={false}
-              fitView
-              fitViewOptions={{ padding: 0.1 }}
               defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
               <Background color="var(--canvas-grid)" gap={24} size={2} />
@@ -972,7 +994,9 @@ export function App() {
 
           {selectedNode ? (
             <div className="inspector-details">
-              <span className={`architecture-node-kind${selectedNode.type === 'composite' ? ' composite-inspector-tag' : ''}`}>
+              <span
+                className={`architecture-node-kind${selectedNode.type === "composite" ? " composite-inspector-tag" : ""}`}
+              >
                 {selectedNode.kind}
               </span>
               <h4>{selectedNode.label}</h4>

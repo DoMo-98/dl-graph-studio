@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
 
@@ -55,6 +55,7 @@ vi.mock("@xyflow/react", () => ({
       data-testid="react-flow"
       data-nodes-draggable={nodesDraggable}
       data-has-node-extent={nodeExtent !== undefined}
+      data-node-extent={JSON.stringify(nodeExtent)}
       data-auto-pan-on-node-drag={autoPanOnNodeDrag}
     >
       {nodes.map((node) => {
@@ -101,6 +102,42 @@ vi.mock("@xyflow/react", () => ({
 }));
 
 describe("App node dragging", () => {
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        if (this.classList.contains("graph-canvas")) {
+          return {
+            width: 640,
+            height: 520,
+            top: 0,
+            right: 640,
+            bottom: 520,
+            left: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          };
+        }
+
+        return {
+          width: 0,
+          height: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("updates primitive and composite positions and clamps within canvas bounds", () => {
     render(<App />);
 
@@ -110,7 +147,7 @@ describe("App node dragging", () => {
     );
     expect(screen.getByTestId("react-flow")).toHaveAttribute(
       "data-has-node-extent",
-      "true",
+      "false",
     );
     expect(screen.getByTestId("react-flow")).toHaveAttribute(
       "data-auto-pan-on-node-drag",
@@ -132,7 +169,7 @@ describe("App node dragging", () => {
     // Composite node is 220x180, canvas is dynamic but should be clamped
     const blockX = Number(denseBlockFlowNode.getAttribute("data-x"));
     const blockY = Number(denseBlockFlowNode.getAttribute("data-y"));
-    expect(blockX).toBeGreaterThan(0);
-    expect(blockY).toBeGreaterThan(0);
+    expect(blockX).toBe(420);
+    expect(blockY).toBe(340);
   });
 });

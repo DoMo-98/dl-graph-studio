@@ -1,9 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  within,
-} from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { App } from "./App";
@@ -53,7 +48,9 @@ describe("App shell", () => {
 
     expect(screen.queryByText(/canvas is empty/i)).not.toBeInTheDocument();
     expect(screen.getByText("Role: data carrier")).toBeInTheDocument();
-    expect(screen.getByText("Role: lowest exposed primitive")).toBeInTheDocument();
+    expect(
+      screen.getByText("Role: lowest exposed primitive"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Function: GELU")).toBeInTheDocument();
     expect(
       screen.getByText("Derived from neuron primitives"),
@@ -274,54 +271,28 @@ describe("App shell", () => {
     ).toHaveValue(1);
   });
 
-  it("exports a minimal project with edited parameters and remaining connections after deletion", async () => {
-    const originalCreateObjectUrl = URL.createObjectURL;
-    const originalRevokeObjectUrl = URL.revokeObjectURL;
-    const originalAnchorClick = HTMLAnchorElement.prototype.click;
-    let exportedProject = "";
+  it("keeps remaining connections after deleting one connection", () => {
+    render(<App />);
 
-    URL.createObjectURL = (object: Blob) => {
-      const reader = new FileReader();
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
+      target: { value: "256" },
+    });
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+    fireEvent.click(
+      screen.getByLabelText(/delete connection tensor to neuron/i),
+    );
 
-      reader.addEventListener("load", () => {
-        exportedProject = String(reader.result);
-      });
-      reader.readAsText(object);
-
-      return "blob:dl-graph-studio-project";
-    };
-    URL.revokeObjectURL = () => {};
-    HTMLAnchorElement.prototype.click = () => {};
-
-    try {
-      render(<App />);
-
-      fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
-      fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
-        target: { value: "256" },
-      });
-      fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
-      fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
-      fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
-      fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
-      fireEvent.click(
-        screen.getByLabelText(/delete connection tensor to neuron/i),
-      );
-
-      // Export/import/reset buttons were removed in the minimalist redesign.
-      // Verify the graph state is correct by checking the remaining connection.
-      const connectionList = screen.getByLabelText(/graph connections/i);
-      expect(
-        within(connectionList).getByText("Neuron -> Activation"),
-      ).toBeInTheDocument();
-      expect(
-        within(connectionList).queryByText("Tensor -> Neuron"),
-      ).not.toBeInTheDocument();
-    } finally {
-      URL.createObjectURL = originalCreateObjectUrl;
-      URL.revokeObjectURL = originalRevokeObjectUrl;
-      HTMLAnchorElement.prototype.click = originalAnchorClick;
-    }
+    const connectionList = screen.getByLabelText(/graph connections/i);
+    expect(
+      within(connectionList).getByText("Neuron -> Activation"),
+    ).toBeInTheDocument();
+    expect(
+      within(connectionList).queryByText("Tensor -> Neuron"),
+    ).not.toBeInTheDocument();
   });
 
   it("preserves node state and connections after creating multiple connections", () => {
