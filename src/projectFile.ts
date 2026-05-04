@@ -137,19 +137,15 @@ export function parseProjectFileContent(
     };
   }
 
-  const nodes = parsed.nodes.map(parseNode);
+  const parsedNodes = parseNodes(parsed.nodes);
 
-  if (nodes.some((node) => node === null)) {
+  if (!parsedNodes) {
     return { ok: false, message: "Project file contains invalid nodes." };
   }
 
-  const parsedNodes = nodes as GraphNode[];
-  const nodeIds = new Set(parsedNodes.map((node) => node.id));
-  const connections = parsed.connections.map((connection) =>
-    parseConnection(connection, nodeIds),
-  );
+  const connections = parseConnections(parsed.connections, parsedNodes);
 
-  if (connections.some((connection) => connection === null)) {
+  if (!connections) {
     return {
       ok: false,
       message: "Project file contains invalid connections.",
@@ -161,7 +157,7 @@ export function parseProjectFileContent(
     project: {
       version: PROJECT_FILE_VERSION,
       nodes: parsedNodes,
-      connections: connections as GraphConnection[],
+      connections,
     },
   };
 }
@@ -184,36 +180,60 @@ function cloneNode(node: GraphNode): GraphNode {
   return clonedNode;
 }
 
+function parseNodes(values: unknown[]): GraphNode[] | null {
+  const nodes: GraphNode[] = [];
+  const nodeIds = new Set<string>();
+
+  for (const value of values) {
+    const node = parseNode(value);
+
+    if (!node || nodeIds.has(node.id)) {
+      return null;
+    }
+
+    nodes.push(node);
+    nodeIds.add(node.id);
+  }
+
+  if (!validateCompositeMemberReferences(nodes, nodeIds)) {
+    return null;
+  }
+
+  return nodes;
+}
+
 function parseNode(value: unknown): GraphNode | null {
   if (!isRecord(value)) {
     return null;
   }
 
+  const { id, label, kind, metadata, parameters, position } = value;
+
   if (
-    !isString(value.id) ||
-    !isString(value.label) ||
-    !isString(value.kind) ||
-    !isStringArray(value.metadata) ||
-    !Array.isArray(value.parameters) ||
-    !isPosition(value.position)
+    !isString(id) ||
+    !isString(label) ||
+    !isString(kind) ||
+    !isStringArray(metadata) ||
+    !Array.isArray(parameters) ||
+    !isPosition(position)
   ) {
     return null;
   }
 
-  const parameters = value.parameters.map(parseParameter);
+  const parsedParameters = parseParameters(parameters);
 
-  if (parameters.some((parameter) => parameter === null)) {
+  if (!parsedParameters) {
     return null;
   }
 
   const nodeType = value.type ?? "primitive";
   const baseNode = {
-    id: value.id,
-    label: value.label,
-    kind: value.kind,
-    metadata: value.metadata,
-    parameters: parameters as PrimitiveNodeParameter[],
-    position: value.position,
+    id,
+    label,
+    kind,
+    metadata,
+    parameters: parsedParameters,
+    position,
   };
 
   if (nodeType === "primitive") {
@@ -232,6 +252,22 @@ function parseNode(value: unknown): GraphNode | null {
   }
 
   return null;
+}
+
+function parseParameters(values: unknown[]): PrimitiveNodeParameter[] | null {
+  const parameters: PrimitiveNodeParameter[] = [];
+
+  for (const value of values) {
+    const parameter = parseParameter(value);
+
+    if (!parameter) {
+      return null;
+    }
+
+    parameters.push(parameter);
+  }
+
+  return parameters;
 }
 
 function parseParameter(value: unknown): PrimitiveNodeParameter | null {
@@ -297,17 +333,70 @@ function parseParameter(value: unknown): PrimitiveNodeParameter | null {
   return null;
 }
 
+function validateCompositeMemberReferences(
+  nodes: GraphNode[],
+  nodeIds: Set<string>,
+) {
+  return nodes.every(
+    (node) =>
+      node.type !== "composite" ||
+      node.memberNodeIds.every((memberNodeId) => nodeIds.has(memberNodeId)),
+  );
+}
+
+function parseConnections(
+  values: unknown[],
+  nodes: GraphNode[],
+): GraphConnection[] | null {
+  const connections: GraphConnection[] = [];
+  const connectionIds = new Set<string>();
+  const targetsBySourceId = new Map<string, Set<string>>();
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+
+  for (const value of values) {
+    const connection = parseConnection(value, nodesById);
+
+    if (!connection || connectionIds.has(connection.id)) {
+      return null;
+    }
+
+    const targetsForSource =
+      targetsBySourceId.get(connection.source) ?? new Set<string>();
+
+    if (targetsForSource.has(connection.target)) {
+      return null;
+    }
+
+    connectionIds.add(connection.id);
+    targetsForSource.add(connection.target);
+    targetsBySourceId.set(connection.source, targetsForSource);
+    connections.push(connection);
+  }
+
+  return connections;
+}
+
 function parseConnection(
   value: unknown,
-  nodeIds: Set<string>,
+  nodesById: Map<string, GraphNode>,
 ): GraphConnection | null {
   if (
     !isRecord(value) ||
     !isString(value.id) ||
     !isString(value.source) ||
-    !isString(value.target) ||
-    !nodeIds.has(value.source) ||
-    !nodeIds.has(value.target)
+    !isString(value.target)
+  ) {
+    return null;
+  }
+
+  const sourceNode = nodesById.get(value.source);
+  const targetNode = nodesById.get(value.target);
+
+  if (
+    !sourceNode ||
+    !targetNode ||
+    value.source === value.target ||
+    targetNode.kind === "Data"
   ) {
     return null;
   }
