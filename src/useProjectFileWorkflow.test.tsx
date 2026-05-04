@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 
-import { useProjectFileWorkflow } from "./useProjectFileWorkflow";
+import { readTextFile, useProjectFileWorkflow } from "./useProjectFileWorkflow";
 import type { GraphConnection, GraphNode } from "./projectFile";
 
 afterEach(() => {
@@ -133,6 +133,16 @@ function WorkflowHarness({
 }
 
 describe("useProjectFileWorkflow", () => {
+  it("rejects file.text results that are not strings", async () => {
+    const nonTextFile = {
+      text: vi.fn().mockResolvedValue(42),
+    } as unknown as File;
+
+    await expect(readTextFile(nonTextFile)).rejects.toThrow(
+      "Project file could not be read as text.",
+    );
+  });
+
   it("exports the current project and closes the project actions menu", () => {
     const OriginalBlob = globalThis.Blob;
     const blobParts: BlobPart[][] = [];

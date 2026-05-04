@@ -29,7 +29,13 @@ type UseProjectFileWorkflowOptions = {
 
 export function readTextFile(file: File) {
   if (file.text) {
-    return file.text();
+    return file.text().then((result: unknown) => {
+      if (typeof result === "string") {
+        return result;
+      }
+
+      throw new Error("Project file could not be read as text.");
+    });
   }
 
   return new Promise<string>((resolve, reject) => {
