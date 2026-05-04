@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("App shell", () => {
   it("renders the graph studio workspace shell", () => {
@@ -10,6 +14,35 @@ describe("App shell", () => {
     expect(screen.getByText(/dl-graph-studio/i)).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveAccessibleName(/workspace/i);
     expect(screen.getAllByText(/local workspace/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows future topbar actions as disabled and exposes real project actions from the menu", () => {
+    render(<App />);
+
+    expect(
+      screen.getByRole("button", { name: /undo coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /redo coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /run graph coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /native save coming soon/i }),
+    ).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+
+    expect(
+      screen.getByRole("menuitem", { name: /import project/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /export project/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /reset project/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders deterministic primitive architecture nodes on the canvas", () => {
@@ -342,5 +375,90 @@ describe("App shell", () => {
 
     fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
     expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(384);
+  });
+
+  it("resets the project from the project actions menu", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
+      target: { value: "384" },
+    });
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /reset project/i }));
+
+    expect(
+      screen.queryByLabelText(/graph connections/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/project reset/i);
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(128);
+  });
+
+  it("imports a project file from the project actions menu", async () => {
+    render(<App />);
+
+    const projectFile = new File(
+      [
+        JSON.stringify({
+          version: 1,
+          nodes: [
+            {
+              id: "imported-tensor",
+              type: "primitive",
+              label: "Imported Tensor",
+              kind: "Data",
+              metadata: ["Role: imported data carrier"],
+              parameters: [
+                {
+                  id: "shape",
+                  label: "Shape",
+                  type: "text",
+                  value: "batch, features",
+                },
+              ],
+              position: { x: 40, y: 40 },
+            },
+          ],
+          connections: [],
+        }),
+      ],
+      "imported-project.json",
+      { type: "application/json" },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.change(screen.getByLabelText(/import project file/i), {
+      target: { files: [projectFile] },
+    });
+
+    expect(await screen.findByText("Imported Tensor")).toBeInTheDocument();
+    expect(screen.queryByText("Dense / Linear")).not.toBeInTheDocument();
+  });
+
+  it("exports the current project from the project actions menu", () => {
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn(() => "blob:project-file"),
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      () => undefined,
+    );
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /export project/i }));
+
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:project-file");
   });
 });

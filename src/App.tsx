@@ -10,6 +10,7 @@ import {
   Link2,
   MousePointer2,
   Play,
+  RotateCcw,
   Save,
   Settings,
   Share2,
@@ -19,6 +20,8 @@ import {
   Redo2,
   X,
   MoreVertical,
+  Download,
+  Upload,
 } from "lucide-react";
 import {
   useCallback,
@@ -47,7 +50,12 @@ import type {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import { updateGraphNodePositions } from "./projectFile";
+import {
+  createProjectFile,
+  parseProjectFileContent,
+  serializeProjectFile,
+  updateGraphNodePositions,
+} from "./projectFile";
 import type {
   CompositeNode,
   GraphNode,
@@ -300,6 +308,29 @@ function getCanvasElementNodeExtent(
   return getCanvasNodeExtent({ width, height });
 }
 
+function readTextFile(file: File) {
+  if (typeof file.text === "function") {
+    return file.text();
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Project file could not be read as text."));
+    });
+    reader.addEventListener("error", () => {
+      reject(new Error("Project file could not be read."));
+    });
+    reader.readAsText(file);
+  });
+}
+
 function areCanvasNodeExtentsEqual(
   firstExtent: CoordinateExtent,
   secondExtent: CoordinateExtent,
@@ -473,6 +504,9 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
+  const [isProjectActionsOpen, setIsProjectActionsOpen] = useState(false);
+  const [projectToast, setProjectToast] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
@@ -540,6 +574,16 @@ export function App() {
         : currentNodes;
     });
   }, [canvasNodeExtent]);
+
+  useEffect(() => {
+    if (!projectToast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setProjectToast(null), 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [projectToast]);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -701,6 +745,70 @@ export function App() {
     [graphConnections, graphNodes],
   );
 
+  const exportProjectFile = () => {
+    const project = createProjectFile(graphNodes, graphConnections);
+    const blob = new Blob([serializeProjectFile(project)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = url;
+    downloadLink.download = "dl-graph-studio-project.json";
+    document.body.append(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    URL.revokeObjectURL(url);
+
+    setProjectToast("Project exported.");
+    setIsProjectActionsOpen(false);
+  };
+
+  const importProjectFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    let content: string;
+
+    try {
+      content = await readTextFile(file);
+    } catch {
+      setProjectToast("Project file could not be read.");
+      event.target.value = "";
+      return;
+    }
+
+    const result = parseProjectFileContent(content);
+
+    if (!result.ok) {
+      setProjectToast(result.message);
+      event.target.value = "";
+      return;
+    }
+
+    setGraphNodes(result.project.nodes);
+    setGraphConnections(result.project.connections);
+    setSelectedNodeId(null);
+    setConnectionSourceId(null);
+    setConnectionFeedback(null);
+    setProjectToast("Project imported.");
+    setIsProjectActionsOpen(false);
+    event.target.value = "";
+  };
+
+  const resetProject = () => {
+    setGraphNodes(createInitialGraphNodes());
+    setGraphConnections([]);
+    setSelectedNodeId(null);
+    setConnectionSourceId(null);
+    setConnectionFeedback(null);
+    setProjectToast("Project reset.");
+    setIsProjectActionsOpen(false);
+  };
+
   const canvasNodes: GraphFlowNode[] = useMemo(
     () =>
       graphNodes.map((node) => {
@@ -849,14 +957,104 @@ export function App() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-          <Undo2 size={18} color="#94a3b8" />
-          <Redo2 size={18} color="#94a3b8" />
-          <Play size={18} color="#ffffff" />
-          <Save size={18} color="#ffffff" />
-          <MoreVertical size={18} color="#ffffff" />
+        <div className="topbar-actions" aria-label="Editor actions">
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Undo coming soon"
+            aria-label="Undo coming soon"
+          >
+            <Undo2 size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Redo coming soon"
+            aria-label="Redo coming soon"
+          >
+            <Redo2 size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Run graph coming soon"
+            aria-label="Run graph coming soon"
+          >
+            <Play size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Native save coming soon"
+            aria-label="Native save coming soon"
+          >
+            <Save size={18} aria-hidden="true" />
+          </button>
+          <div className="project-actions-menu">
+            <button
+              type="button"
+              className="topbar-icon-button"
+              aria-label="Project actions"
+              title="Project actions"
+              aria-expanded={isProjectActionsOpen}
+              aria-haspopup="menu"
+              onClick={() =>
+                setIsProjectActionsOpen((currentValue) => !currentValue)
+              }
+            >
+              <MoreVertical size={18} aria-hidden="true" />
+            </button>
+
+            {isProjectActionsOpen ? (
+              <div className="project-actions-popover" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={15} aria-hidden="true" />
+                  <span>Import project</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={exportProjectFile}
+                >
+                  <Download size={15} aria-hidden="true" />
+                  <span>Export project</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="danger"
+                  onClick={resetProject}
+                >
+                  <RotateCcw size={15} aria-hidden="true" />
+                  <span>Reset project</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+          <input
+            ref={fileInputRef}
+            className="visually-hidden"
+            type="file"
+            accept="application/json,.json"
+            aria-label="Import project file"
+            onChange={importProjectFile}
+          />
         </div>
       </header>
+
+      {projectToast ? (
+        <div className="project-toast" role="status">
+          {projectToast}
+        </div>
+      ) : null}
 
       <main id="workspace" className="editor-shell" aria-label="Workspace">
         <aside className="sidebar" aria-label="Primary">
