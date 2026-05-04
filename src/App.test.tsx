@@ -1,7 +1,32 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+
+const originalGetBoundingClientRect =
+  HTMLElement.prototype.getBoundingClientRect;
+
+beforeEach(() => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+    function getBoundingClientRect(this: HTMLElement) {
+      if (this.classList.contains("graph-canvas")) {
+        return {
+          width: 960,
+          height: 960,
+          top: 0,
+          right: 960,
+          bottom: 960,
+          left: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      }
+
+      return originalGetBoundingClientRect.call(this);
+    },
+  );
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
