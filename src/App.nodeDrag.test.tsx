@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -33,6 +33,7 @@ type MockReactFlowProps = {
       positionAbsolute: { x: number; y: number };
     }>,
   ) => void;
+  onConnect?: (connection: { source: string; target: string }) => void;
   children: ReactNode;
 };
 
@@ -49,6 +50,7 @@ vi.mock("@xyflow/react", () => ({
     nodeExtent,
     autoPanOnNodeDrag,
     onNodesChange,
+    onConnect,
     children,
   }: MockReactFlowProps) => (
     <div
@@ -96,6 +98,12 @@ vi.mock("@xyflow/react", () => ({
       {edges.map((edge) => (
         <span key={edge.id}>{edge.label}</span>
       ))}
+      <button
+        type="button"
+        onClick={() => onConnect?.({ source: "tensor", target: "neuron" })}
+      >
+        Connect Tensor to Neuron through React Flow
+      </button>
       {children}
     </div>
   ),
@@ -138,16 +146,25 @@ describe("App node dragging", () => {
     vi.restoreAllMocks();
   });
 
-  it("updates primitive and composite positions and clamps within canvas bounds", () => {
+  it("passes the canvas extent to React Flow and persists unclamped node positions from drag changes", async () => {
     render(<App />);
 
     expect(screen.getByTestId("react-flow")).toHaveAttribute(
       "data-nodes-draggable",
       "true",
     );
+    await waitFor(() =>
+      expect(screen.getByTestId("react-flow")).toHaveAttribute(
+        "data-node-extent",
+        JSON.stringify([
+          [0, 0],
+          [640, 520],
+        ]),
+      ),
+    );
     expect(screen.getByTestId("react-flow")).toHaveAttribute(
       "data-has-node-extent",
-      "false",
+      "true",
     );
     expect(screen.getByTestId("react-flow")).toHaveAttribute(
       "data-auto-pan-on-node-drag",
@@ -162,14 +179,23 @@ describe("App node dragging", () => {
     expect(tensorFlowNode).toHaveAttribute("data-x", "128");
     expect(tensorFlowNode).toHaveAttribute("data-y", "112");
 
-    // Move Dense Block (clamped from 1500,1500 to canvas bounds)
+    // Move Dense Block to the oversized mock position and let React Flow own bounds.
     fireEvent.click(screen.getByRole("button", { name: "Move Dense Block" }));
 
     const denseBlockFlowNode = screen.getByTestId("flow-node-dense-block");
-    // Composite node is 220x180, canvas is dynamic but should be clamped
-    const blockX = Number(denseBlockFlowNode.getAttribute("data-x"));
-    const blockY = Number(denseBlockFlowNode.getAttribute("data-y"));
-    expect(blockX).toBe(420);
-    expect(blockY).toBe(340);
+    expect(denseBlockFlowNode).toHaveAttribute("data-x", "1500");
+    expect(denseBlockFlowNode).toHaveAttribute("data-y", "1500");
+  });
+
+  it("creates a visible connection from the React Flow onConnect adapter path", () => {
+    render(<App />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /connect tensor to neuron through react flow/i,
+      }),
+    );
+
+    expect(screen.getAllByText("Tensor -> Neuron").length).toBeGreaterThan(0);
   });
 });

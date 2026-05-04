@@ -1,7 +1,171 @@
 import { describe, expect, it } from "vitest";
 
-import { updateGraphNodePositions } from "./projectFile";
-import type { GraphNode } from "./projectFile";
+import {
+  parseProjectFileContent,
+  updateGraphNodePositions,
+} from "./projectFile";
+import type { GraphConnection, GraphNode, ProjectFile } from "./projectFile";
+
+function createValidProjectFile(
+  overrides: Partial<ProjectFile> = {},
+): ProjectFile {
+  return {
+    version: 1,
+    nodes: [
+      {
+        id: "input",
+        type: "primitive",
+        label: "Input Tensor",
+        kind: "Data",
+        metadata: ["Role: model input"],
+        parameters: [
+          { id: "shape", label: "Shape", type: "text", value: "dynamic" },
+        ],
+        position: { x: 80, y: 96 },
+      },
+      {
+        id: "dense",
+        type: "primitive",
+        label: "Dense Layer",
+        kind: "Layer",
+        metadata: ["Role: transform"],
+        parameters: [
+          { id: "units", label: "Units", type: "number", value: 64 },
+        ],
+        position: { x: 320, y: 96 },
+      },
+      {
+        id: "block",
+        type: "composite",
+        label: "Feature Block",
+        kind: "Composite",
+        metadata: ["Role: reusable block"],
+        parameters: [],
+        memberNodeIds: ["input", "dense"],
+        position: { x: 560, y: 160 },
+      },
+    ],
+    connections: [{ id: "input-to-dense", source: "input", target: "dense" }],
+    ...overrides,
+  };
+}
+
+function parseProject(project: ProjectFile) {
+  return parseProjectFileContent(JSON.stringify(project));
+}
+
+function duplicateConnection(
+  overrides: Partial<GraphConnection>,
+): GraphConnection {
+  return {
+    id: "second-connection",
+    source: "dense",
+    target: "block",
+    ...overrides,
+  };
+}
+
+describe("parseProjectFileContent", () => {
+  it("rejects duplicate node ids", () => {
+    const project = createValidProjectFile({
+      nodes: [
+        ...createValidProjectFile().nodes,
+        {
+          id: "input",
+          type: "primitive",
+          label: "Duplicate Input",
+          kind: "Data",
+          metadata: [],
+          parameters: [],
+          position: { x: 100, y: 100 },
+        },
+      ],
+    });
+
+    expect(parseProject(project)).toEqual({
+      ok: false,
+      message: "Project file contains invalid nodes.",
+    });
+  });
+
+  it("rejects duplicate connection ids", () => {
+    const project = createValidProjectFile({
+      connections: [
+        ...createValidProjectFile().connections,
+        duplicateConnection({ id: "input-to-dense" }),
+      ],
+    });
+
+    expect(parseProject(project)).toEqual({
+      ok: false,
+      message: "Project file contains invalid connections.",
+    });
+  });
+
+  it("rejects self-connections", () => {
+    const project = createValidProjectFile({
+      connections: [duplicateConnection({ source: "dense", target: "dense" })],
+    });
+
+    expect(parseProject(project)).toEqual({
+      ok: false,
+      message: "Project file contains invalid connections.",
+    });
+  });
+
+  it("rejects duplicate source-target connection pairs", () => {
+    const project = createValidProjectFile({
+      connections: [
+        ...createValidProjectFile().connections,
+        duplicateConnection({
+          id: "duplicate-input-to-dense",
+          source: "input",
+          target: "dense",
+        }),
+      ],
+    });
+
+    expect(parseProject(project)).toEqual({
+      ok: false,
+      message: "Project file contains invalid connections.",
+    });
+  });
+
+  it("rejects imported connections into a Data node", () => {
+    const project = createValidProjectFile({
+      connections: [duplicateConnection({ source: "dense", target: "input" })],
+    });
+
+    expect(parseProject(project)).toEqual({
+      ok: false,
+      message: "Project file contains invalid connections.",
+    });
+  });
+
+  it("rejects composite nodes that reference missing member node ids", () => {
+    const project = createValidProjectFile({
+      nodes: createValidProjectFile().nodes.map((node) =>
+        node.id === "block" && node.type === "composite"
+          ? { ...node, memberNodeIds: ["input", "missing-node"] }
+          : node,
+      ),
+    });
+
+    expect(parseProject(project)).toEqual({
+      ok: false,
+      message: "Project file contains invalid nodes.",
+    });
+  });
+
+  it("parses a valid primitive and composite project with a valid connection", () => {
+    const project = createValidProjectFile();
+
+    expect(parseProject(project)).toEqual({
+      ok: true,
+      project,
+    });
+  });
+});
 
 describe("updateGraphNodePositions", () => {
   it("updates primitive and composite node positions while preserving graph data", () => {

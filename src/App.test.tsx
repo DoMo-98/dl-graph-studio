@@ -5,6 +5,7 @@ import { App } from "./App";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("App shell", () => {
@@ -212,6 +213,54 @@ describe("App shell", () => {
     expect(
       within(inspector).getByRole("spinbutton", { name: /units/i }),
     ).toHaveValue(256);
+  });
+
+  it("updates the Tensor shape text parameter in the inspector and node card", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/tensor primitive node/i));
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+    const shapeInput = within(inspector).getByRole("textbox", {
+      name: /shape/i,
+    });
+
+    fireEvent.change(shapeInput, {
+      target: { value: "batch, sequence, features" },
+    });
+
+    expect(shapeInput).toHaveValue("batch, sequence, features");
+    expect(
+      within(inspector).getByText("Shape: batch, sequence, features"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText(/tensor primitive node/i)).getByText(
+        "Shape: batch, sequence, features",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("updates the Neuron bias boolean parameter in the inspector and node card", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/neuron primitive node/i));
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+    const biasCheckbox = within(inspector).getByRole("checkbox", {
+      name: /bias/i,
+    });
+
+    fireEvent.click(biasCheckbox);
+
+    expect(biasCheckbox).not.toBeChecked();
+    expect(within(inspector).getByText("Bias: disabled")).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText(/neuron primitive node/i)).getByText(
+        "Bias: disabled",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("creates visible in-memory connections between primitive nodes", () => {
@@ -441,24 +490,107 @@ describe("App shell", () => {
   });
 
   it("exports the current project from the project actions menu", () => {
+    const OriginalBlob = globalThis.Blob;
+    const blobParts: BlobPart[][] = [];
+    const createObjectURLDescriptor = Object.getOwnPropertyDescriptor(
+      URL,
+      "createObjectURL",
+    );
+    const revokeObjectURLDescriptor = Object.getOwnPropertyDescriptor(
+      URL,
+      "revokeObjectURL",
+    );
+    const createObjectURL = vi.fn(() => "blob:project-file");
+    const revokeObjectURL = vi.fn();
+
+    vi.stubGlobal(
+      "Blob",
+      vi.fn((parts?: BlobPart[], options?: BlobPropertyBag) => {
+        blobParts.push(parts ?? []);
+        return new OriginalBlob(parts, options);
+      }),
+    );
     Object.defineProperty(URL, "createObjectURL", {
       configurable: true,
-      value: vi.fn(() => "blob:project-file"),
+      value: createObjectURL,
     });
     Object.defineProperty(URL, "revokeObjectURL", {
       configurable: true,
-      value: vi.fn(),
+      value: revokeObjectURL,
     });
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
-      () => undefined,
-    );
+    try {
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => undefined,
+      );
 
-    render(<App />);
+      render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /export project/i }));
+      fireEvent.click(screen.getByLabelText(/tensor primitive node/i));
+      fireEvent.change(screen.getByRole("textbox", { name: /shape/i }), {
+        target: { value: "batch, features" },
+      });
+      fireEvent.click(screen.getByLabelText(/neuron primitive node/i));
+      fireEvent.click(screen.getByRole("checkbox", { name: /bias/i }));
+      fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+      fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
 
-    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:project-file");
+      fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+      fireEvent.click(
+        screen.getByRole("menuitem", { name: /export project/i }),
+      );
+
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+      expect(revokeObjectURL).toHaveBeenCalledWith("blob:project-file");
+      expect(blobParts).toHaveLength(1);
+
+      const [serializedProject] = blobParts[0];
+      expect(typeof serializedProject).toBe("string");
+
+      const exportedProject = JSON.parse(serializedProject as string);
+      const exportedTensor = exportedProject.nodes.find(
+        (node: { id: string }) => node.id === "tensor",
+      );
+      const exportedNeuron = exportedProject.nodes.find(
+        (node: { id: string }) => node.id === "neuron",
+      );
+
+      expect(exportedTensor.parameters).toContainEqual({
+        id: "shape",
+        label: "Shape",
+        type: "text",
+        value: "batch, features",
+      });
+      expect(exportedNeuron.parameters).toContainEqual({
+        id: "bias",
+        label: "Bias",
+        type: "boolean",
+        value: false,
+      });
+      expect(exportedProject.connections).toContainEqual({
+        id: "connection-tensor-neuron",
+        source: "tensor",
+        target: "neuron",
+      });
+    } finally {
+      if (createObjectURLDescriptor) {
+        Object.defineProperty(
+          URL,
+          "createObjectURL",
+          createObjectURLDescriptor,
+        );
+      } else {
+        Reflect.deleteProperty(URL, "createObjectURL");
+      }
+
+      if (revokeObjectURLDescriptor) {
+        Object.defineProperty(
+          URL,
+          "revokeObjectURL",
+          revokeObjectURLDescriptor,
+        );
+      } else {
+        Reflect.deleteProperty(URL, "revokeObjectURL");
+      }
+    }
   });
 });

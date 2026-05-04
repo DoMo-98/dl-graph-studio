@@ -343,22 +343,6 @@ function areCanvasNodeExtentsEqual(
   );
 }
 
-function clampCanvasNodePosition(
-  position: GraphNode["position"],
-  node: GraphNode,
-  canvasNodeExtent: CoordinateExtent,
-): GraphNode["position"] {
-  const [[minX, minY], [maxX, maxY]] = canvasNodeExtent;
-  const nodeSize = getFlowNodeSize(node);
-  const maxPositionX = Math.max(minX, maxX - nodeSize.width);
-  const maxPositionY = Math.max(minY, maxY - nodeSize.height);
-
-  return {
-    x: Math.min(Math.max(position.x, minX), maxPositionX),
-    y: Math.min(Math.max(position.y, minY), maxPositionY),
-  };
-}
-
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const selectNode = () => {
     data.onSelect(data.id);
@@ -489,6 +473,30 @@ const nodeTypes: NodeTypes = {
   composite: CompositeNodeCard,
 };
 
+function updatePrimitiveParameterValue(
+  parameter: PrimitiveNodeParameter,
+  nextValue: PrimitiveNodeParameter["value"],
+): PrimitiveNodeParameter {
+  switch (parameter.type) {
+    case "boolean":
+      return typeof nextValue === "boolean"
+        ? { ...parameter, value: nextValue }
+        : parameter;
+    case "number":
+      return typeof nextValue === "number"
+        ? { ...parameter, value: nextValue }
+        : parameter;
+    case "select":
+      return typeof nextValue === "string"
+        ? { ...parameter, value: nextValue }
+        : parameter;
+    case "text":
+      return typeof nextValue === "string"
+        ? { ...parameter, value: nextValue }
+        : parameter;
+  }
+}
+
 export function App() {
   const [graphNodes, setGraphNodes] = useState<GraphNode[]>(
     createInitialGraphNodes,
@@ -551,31 +559,6 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    setGraphNodes((currentNodes) => {
-      const positionUpdates = currentNodes.map((node) => ({
-        id: node.id,
-        position: clampCanvasNodePosition(
-          node.position,
-          node,
-          canvasNodeExtent,
-        ),
-      }));
-      const hasChangedPosition = positionUpdates.some((update) => {
-        const currentNode = currentNodes.find((node) => node.id === update.id);
-
-        return (
-          currentNode?.position.x !== update.position.x ||
-          currentNode.position.y !== update.position.y
-        );
-      });
-
-      return hasChangedPosition
-        ? updateGraphNodePositions(currentNodes, positionUpdates)
-        : currentNodes;
-    });
-  }, [canvasNodeExtent]);
-
-  useEffect(() => {
     if (!projectToast) {
       return;
     }
@@ -588,7 +571,7 @@ export function App() {
   const updateNodeParameter = (
     nodeId: string,
     parameterId: string,
-    nextValue: string | number | boolean,
+    nextValue: PrimitiveNodeParameter["value"],
   ) => {
     setGraphNodes((currentNodes) =>
       currentNodes.map((node) => {
@@ -600,7 +583,7 @@ export function App() {
           ...node,
           parameters: node.parameters.map((parameter) =>
             parameter.id === parameterId
-              ? ({ ...parameter, value: nextValue } as PrimitiveNodeParameter)
+              ? updatePrimitiveParameterValue(parameter, nextValue)
               : parameter,
           ),
         };
@@ -686,11 +669,6 @@ export function App() {
         return;
       }
 
-      const activeCanvasNodeExtent = graphCanvasRef.current
-        ? (getCanvasElementNodeExtent(graphCanvasRef.current) ??
-          canvasNodeExtent)
-        : canvasNodeExtent;
-
       setGraphNodes((currentNodes) => {
         const rawPositionsByNodeId = new Map(
           rawPositionUpdates.map((update) => [update.id, update.position]),
@@ -706,11 +684,7 @@ export function App() {
             return [
               {
                 id: node.id,
-                position: clampCanvasNodePosition(
-                  nextPosition,
-                  node,
-                  activeCanvasNodeExtent,
-                ),
+                position: nextPosition,
               },
             ];
           },
@@ -719,7 +693,7 @@ export function App() {
         return updateGraphNodePositions(currentNodes, positionUpdates);
       });
     },
-    [canvasNodeExtent],
+    [],
   );
 
   const deleteGraphConnection = useCallback(
@@ -1112,6 +1086,7 @@ export function App() {
               nodes={canvasNodes}
               edges={canvasEdges}
               nodeTypes={nodeTypes}
+              nodeExtent={canvasNodeExtent}
               onConnect={handleReactFlowConnect}
               onNodesChange={handleCanvasNodesChange}
               onNodeDragStart={(_, node) => setDraggedNodeId(node.id)}
@@ -1237,7 +1212,7 @@ type ParameterControlProps = {
   onChange: (
     nodeId: string,
     parameterId: string,
-    nextValue: string | number | boolean,
+    nextValue: PrimitiveNodeParameter["value"],
   ) => void;
 };
 
