@@ -116,7 +116,9 @@ function WorkflowHarness({
         {graphNodes.map((node) => node.id).join(",")}
       </output>
       <output aria-label="connections">
-        {graphConnections.map((connection) => connection.id).join(",")}
+        {graphConnections.length === 0
+          ? "none"
+          : graphConnections.map((connection) => connection.id).join(",")}
       </output>
       <output aria-label="selected">{selectedNodeId ?? "none"}</output>
       <output aria-label="connection source">
@@ -144,6 +146,8 @@ describe("useProjectFileWorkflow", () => {
     );
     const createObjectURL = vi.fn(() => "blob:project-file");
     const revokeObjectURL = vi.fn();
+    const createdAnchors: HTMLAnchorElement[] = [];
+    const originalCreateElement = document.createElement.bind(document);
 
     vi.stubGlobal(
       "Blob",
@@ -162,8 +166,19 @@ describe("useProjectFileWorkflow", () => {
     });
 
     try {
-      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
-        () => undefined,
+      const anchorClick = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => undefined);
+      vi.spyOn(document, "createElement").mockImplementation(
+        ((tagName: string, options?: ElementCreationOptions) => {
+          const element = originalCreateElement(tagName, options);
+
+          if (tagName.toLowerCase() === "a") {
+            createdAnchors.push(element as HTMLAnchorElement);
+          }
+
+          return element;
+        }) as typeof document.createElement,
       );
 
       render(
@@ -178,10 +193,16 @@ describe("useProjectFileWorkflow", () => {
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
       expect(revokeObjectURL).toHaveBeenCalledWith("blob:project-file");
+      expect(anchorClick).toHaveBeenCalledTimes(1);
+      expect(createdAnchors).toHaveLength(1);
+      expect(createdAnchors[0]).toHaveAttribute(
+        "download",
+        "dl-graph-studio-project.json",
+      );
       expect(screen.getByLabelText("toast")).toHaveTextContent(
         "Project exported.",
       );
-      expect(screen.getByLabelText("menu state")).toHaveTextContent("closed");
+      expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
       expect(blobParts).toHaveLength(1);
 
       const [serializedProject] = blobParts[0];
@@ -227,23 +248,25 @@ describe("useProjectFileWorkflow", () => {
     fireEvent.change(fileInput, { target: { files: [projectFile] } });
 
     await waitFor(() =>
-      expect(screen.getByLabelText("nodes")).toHaveTextContent("dense"),
+      expect(screen.getByLabelText("nodes")).toHaveTextContent(
+        /^tensor,dense$/,
+      ),
     );
     expect(screen.getByLabelText("connections")).toHaveTextContent(
-      "connection-tensor-dense",
+      /^connection-tensor-dense$/,
     );
     expect(screen.getByLabelText("toast")).toHaveTextContent(
       "Project imported.",
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent("closed");
-    expect(screen.getByLabelText("selected")).toHaveTextContent("none");
+    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
+    expect(screen.getByLabelText("selected")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("connection source")).toHaveTextContent(
-      "none",
+      /^none$/,
     );
     expect(screen.getByLabelText("connection feedback")).toHaveTextContent(
-      "none",
+      /^none$/,
     );
-    expect(screen.getByLabelText("dragged")).toHaveTextContent("none");
+    expect(screen.getByLabelText("dragged")).toHaveTextContent(/^none$/);
     expect(fileInput).toHaveValue("");
   });
 
@@ -265,16 +288,17 @@ describe("useProjectFileWorkflow", () => {
         "Project file is not valid JSON.",
       ),
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent("open");
-    expect(screen.getByLabelText("nodes")).toHaveTextContent("tensor");
-    expect(screen.getByLabelText("selected")).toHaveTextContent("tensor");
+    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^open$/);
+    expect(screen.getByLabelText("nodes")).toHaveTextContent(/^tensor$/);
+    expect(screen.getByLabelText("connections")).toHaveTextContent(/^none$/);
+    expect(screen.getByLabelText("selected")).toHaveTextContent(/^tensor$/);
     expect(screen.getByLabelText("connection source")).toHaveTextContent(
-      "tensor",
+      /^tensor$/,
     );
     expect(screen.getByLabelText("connection feedback")).toHaveTextContent(
-      "Existing feedback",
+      /^Existing feedback$/,
     );
-    expect(screen.getByLabelText("dragged")).toHaveTextContent("tensor");
+    expect(screen.getByLabelText("dragged")).toHaveTextContent(/^tensor$/);
     expect(fileInput).toHaveValue("");
   });
 
@@ -297,8 +321,8 @@ describe("useProjectFileWorkflow", () => {
         "Project file could not be read.",
       ),
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent("open");
-    expect(screen.getByLabelText("dragged")).toHaveTextContent("tensor");
+    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^open$/);
+    expect(screen.getByLabelText("dragged")).toHaveTextContent(/^tensor$/);
     expect(fileInput).toHaveValue("");
   });
 
@@ -313,18 +337,18 @@ describe("useProjectFileWorkflow", () => {
     fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
     fireEvent.click(screen.getByRole("button", { name: /reset/i }));
 
-    expect(screen.getByLabelText("nodes")).toHaveTextContent("tensor");
-    expect(screen.getByLabelText("connections")).toHaveTextContent("");
+    expect(screen.getByLabelText("nodes")).toHaveTextContent(/^tensor$/);
+    expect(screen.getByLabelText("connections")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("toast")).toHaveTextContent("Project reset.");
-    expect(screen.getByLabelText("menu state")).toHaveTextContent("closed");
-    expect(screen.getByLabelText("selected")).toHaveTextContent("none");
+    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
+    expect(screen.getByLabelText("selected")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("connection source")).toHaveTextContent(
-      "none",
+      /^none$/,
     );
     expect(screen.getByLabelText("connection feedback")).toHaveTextContent(
-      "none",
+      /^none$/,
     );
-    expect(screen.getByLabelText("dragged")).toHaveTextContent("none");
+    expect(screen.getByLabelText("dragged")).toHaveTextContent(/^none$/);
   });
 
   it("clears project toasts after three seconds", () => {
@@ -340,7 +364,7 @@ describe("useProjectFileWorkflow", () => {
       vi.advanceTimersByTime(3000);
     });
 
-    expect(screen.getByLabelText("toast")).toHaveTextContent("none");
+    expect(screen.getByLabelText("toast")).toHaveTextContent(/^none$/);
 
     vi.useRealTimers();
   });
