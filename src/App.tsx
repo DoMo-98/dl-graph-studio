@@ -1,20 +1,36 @@
 import {
   Activity,
   AlertTriangle,
-  Boxes,
+  BookOpen,
+  Box,
+  ChevronsRight,
   CircuitBoard,
   Download,
-  FlaskConical,
   Folder,
+  Grid,
+  Hand,
   Info,
   Link2,
-  PanelLeft,
+  MousePointer2,
+  Play,
   RotateCcw,
+  Save,
+  Settings,
+  Share2,
+  SlidersHorizontal,
   Trash2,
+  Undo2,
+  Redo2,
   Upload,
   X,
+  MoreVertical,
+  Maximize,
+  Minimize,
+  Minus,
+  Plus,
+  Lock
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import {
   Background,
@@ -54,7 +70,7 @@ type ConnectionValidationResult =
   | { isValid: false; message: string };
 
 const defaultCanvasSize = { width: 960, height: 960 };
-const primitiveFlowNodeSize = { width: 228, height: 196 };
+const primitiveFlowNodeSize = { width: 228, height: 156 };
 const compositeFlowNodeSize = { width: 220, height: 180 };
 
 const primitiveNodes: PrimitiveNode[] = [
@@ -74,7 +90,7 @@ const primitiveNodes: PrimitiveNode[] = [
     type: "primitive",
     label: "Neuron",
     kind: "Foundation",
-    metadata: ["Lowest exposed primitive", "Parameters: weights + bias"],
+    metadata: ["Role: lowest exposed primitive", "Parameters: weights + bias"],
     parameters: [
       {
         id: "units",
@@ -430,8 +446,6 @@ const nodeTypes: NodeTypes = {
 };
 
 export function App() {
-  const canvasRef = useRef<HTMLElement | null>(null);
-  const [canvasSize, setCanvasSize] = useState(defaultCanvasSize);
   const [graphNodes, setGraphNodes] = useState<GraphNode[]>(
     createInitialGraphNodes,
   );
@@ -457,37 +471,10 @@ export function App() {
   const canvasNodeExtent = useMemo<CoordinateExtent>(
     () => [
       [0, 0],
-      [canvasSize.width, canvasSize.height],
+      [defaultCanvasSize.width, defaultCanvasSize.height],
     ],
-    [canvasSize],
+    [],
   );
-
-  useEffect(() => {
-    const canvasElement = canvasRef.current;
-
-    if (!canvasElement) {
-      return;
-    }
-
-    const updateCanvasSize = () => {
-      setCanvasSize({
-        width: canvasElement.clientWidth || defaultCanvasSize.width,
-        height: canvasElement.clientHeight || defaultCanvasSize.height,
-      });
-    };
-
-    updateCanvasSize();
-
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(updateCanvasSize);
-
-    resizeObserver.observe(canvasElement);
-
-    return () => resizeObserver.disconnect();
-  }, []);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -797,16 +784,23 @@ export function App() {
             type: MarkerType.ArrowClosed,
             width: 16,
             height: 16,
-            color: "#087c75",
+            color: "#22d3ee",
           },
           style: {
-            stroke: "#087c75",
+            stroke: "#22d3ee",
             strokeWidth: 2,
+            filter: "drop-shadow(0 0 5px rgba(34, 211, 238, 0.4))",
           },
           labelBgPadding: [8, 4],
           labelBgBorderRadius: 6,
+          labelStyle: {
+            fill: "#f8fafc",
+            fontWeight: 600,
+          },
           labelBgStyle: {
-            fill: "#ffffff",
+            fill: "#0f172a",
+            stroke: "#334155",
+            strokeWidth: 1,
             fillOpacity: 0.96,
           },
         };
@@ -817,73 +811,68 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="app-topbar">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <CircuitBoard size={22} strokeWidth={1.8} />
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <div className="brand-lockup">
+            <div className="brand-mark" aria-hidden="true">
+              <CircuitBoard size={18} strokeWidth={2} />
+            </div>
+            <div className="topbar-project" aria-label="Current project">
+              <span>dl-graph-studio</span>
+              <span style={{color: '#94a3b8', margin: '0 8px'}}>Untitled graph</span>
+              <ChevronsRight size={14} color="#94a3b8"/>
+            </div>
           </div>
-          <div>
-            <p className="eyebrow">desktop lab</p>
-            <h1>dl-graph-studio</h1>
+
+          <div className="status-pill" style={{background: 'transparent', border: 'none', color: '#10b981', padding: 0}}>
+            <div style={{width: 6, height: 6, borderRadius: '50%', background: '#10b981'}}></div>
+            <span>Ready</span>
           </div>
         </div>
 
-        <div className="topbar-project" aria-label="Current project">
-          <Folder size={15} aria-hidden="true" />
-          <span>Untitled graph</span>
-          <small>Local workspace</small>
-        </div>
-
-        <div className="status-pill">
-          <Activity size={16} aria-hidden="true" />
-          <span>Ready</span>
+        <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
+           <Undo2 size={18} color="#94a3b8" />
+           <Redo2 size={18} color="#94a3b8" />
+           <Play size={18} color="#ffffff" />
+           <Save size={18} color="#ffffff" />
+           <MoreVertical size={18} color="#ffffff" />
         </div>
       </header>
 
       <main id="workspace" className="editor-shell" aria-label="Workspace">
         <aside className="sidebar" aria-label="Primary">
           <nav className="nav-list" aria-label="Workspace sections">
-            <a
-              className="nav-item active"
-              href="#workspace"
-              aria-current="page"
-            >
-              <PanelLeft size={18} aria-hidden="true" />
-              <span>Workspace</span>
+            <a className="nav-item active" href="#select" aria-current="page">
+              <MousePointer2 size={20} aria-hidden="true" />
             </a>
-            <a className="nav-item" href="#components">
-              <Boxes size={18} aria-hidden="true" />
-              <span>Components</span>
+            <a className="nav-item" href="#pan">
+              <Hand size={20} aria-hidden="true" />
             </a>
-            <a className="nav-item" href="#experiments">
-              <FlaskConical size={18} aria-hidden="true" />
-              <span>Experiments</span>
+            <div className="nav-separator"></div>
+            <a className="nav-item" href="#share">
+              <Share2 size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#grid">
+              <Grid size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#box">
+              <Box size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#sliders">
+              <SlidersHorizontal size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#book">
+              <BookOpen size={20} aria-hidden="true" />
             </a>
           </nav>
 
-          <div className="project-file-actions">
-            <button type="button" onClick={exportProject}>
-              <Download size={15} aria-hidden="true" />
-              <span>Export project</span>
-            </button>
-            <label className="project-file-import">
-              <Upload size={15} aria-hidden="true" />
-              <span>Import project</span>
-              <input
-                aria-label="Import project"
-                type="file"
-                accept=".dlgraph.json,.json,application/json"
-                onChange={importProject}
-              />
-            </label>
-            <button type="button" onClick={resetProject}>
-              <RotateCcw size={15} aria-hidden="true" />
-              <span>Reset project</span>
-            </button>
-          </div>
-
-          <p className={`project-file-status ${projectStatus.kind}`}>
-            {projectStatus.message}
-          </p>
+          <nav className="nav-list" aria-label="Utility actions" style={{marginTop: 'auto'}}>
+            <a className="nav-item" href="#settings">
+              <Settings size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#collapse">
+              <ChevronsRight size={20} aria-hidden="true" />
+            </a>
+          </nav>
         </aside>
 
         <section className="editor-main" aria-label="Project overview">
@@ -895,7 +884,6 @@ export function App() {
           <section
             className="graph-canvas"
             aria-label="Graph canvas"
-            ref={canvasRef}
           >
             <ReactFlow
               nodes={canvasNodes}
@@ -908,15 +896,18 @@ export function App() {
               nodesDraggable={true}
               nodesConnectable={true}
               elementsSelectable={false}
+              nodeExtent={canvasNodeExtent}
               panOnDrag={false}
               zoomOnScroll={false}
               zoomOnPinch={false}
               zoomOnDoubleClick={false}
               autoPanOnNodeDrag={false}
               preventScrolling={false}
+              fitView
+              fitViewOptions={{ padding: 0.1 }}
               defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
-              <Background color="#d7dee6" gap={24} size={1} />
+              <Background color="var(--canvas-grid)" gap={24} size={2} />
             </ReactFlow>
 
             {canvasNodes.length === 0 ? (
@@ -981,7 +972,7 @@ export function App() {
 
           {selectedNode ? (
             <div className="inspector-details">
-              <span className="architecture-node-kind">
+              <span className={`architecture-node-kind${selectedNode.type === 'composite' ? ' composite-inspector-tag' : ''}`}>
                 {selectedNode.kind}
               </span>
               <h4>{selectedNode.label}</h4>
