@@ -44,7 +44,7 @@ const editedConnections: GraphConnection[] = [
 ];
 
 function createProjectContent(
-  nodes: GraphNode[] = editedNodes,
+  nodes: GraphNode[] = [...initialNodes, ...editedNodes],
   connections: GraphConnection[] = editedConnections,
 ) {
   return JSON.stringify({
