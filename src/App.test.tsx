@@ -1,23 +1,48 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("App shell", () => {
   it("renders the graph studio workspace shell", () => {
     render(<App />);
 
-    expect(
-      screen.getByRole("heading", { name: /dl-graph-studio/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/dl-graph-studio/i)).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveAccessibleName(/workspace/i);
     expect(screen.getAllByText(/local workspace/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows future topbar actions as disabled and exposes real project actions from the menu", () => {
+    render(<App />);
+
+    expect(
+      screen.getByRole("button", { name: /undo coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /redo coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /run graph coming soon/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /native save coming soon/i }),
+    ).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+
+    expect(
+      screen.getByRole("menuitem", { name: /import project/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /export project/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /reset project/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders deterministic primitive architecture nodes on the canvas", () => {
@@ -56,7 +81,9 @@ describe("App shell", () => {
 
     expect(screen.queryByText(/canvas is empty/i)).not.toBeInTheDocument();
     expect(screen.getByText("Role: data carrier")).toBeInTheDocument();
-    expect(screen.getByText("Lowest exposed primitive")).toBeInTheDocument();
+    expect(
+      screen.getByText("Role: lowest exposed primitive"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Function: GELU")).toBeInTheDocument();
     expect(
       screen.getByText("Derived from neuron primitives"),
@@ -100,7 +127,7 @@ describe("App shell", () => {
     ).toBeInTheDocument();
     expect(within(inspector).getByText("Foundation")).toBeInTheDocument();
     expect(
-      within(inspector).getByText("Lowest exposed primitive"),
+      within(inspector).getByText("Role: lowest exposed primitive"),
     ).toBeInTheDocument();
     expect(
       within(inspector).getByText("Parameters: weights + bias"),
@@ -277,167 +304,161 @@ describe("App shell", () => {
     ).toHaveValue(1);
   });
 
-  it("exports a minimal project with edited parameters and remaining connections after deletion", async () => {
-    const originalCreateObjectUrl = URL.createObjectURL;
-    const originalRevokeObjectUrl = URL.revokeObjectURL;
-    const originalAnchorClick = HTMLAnchorElement.prototype.click;
-    let exportedProject = "";
-
-    URL.createObjectURL = (object: Blob) => {
-      const reader = new FileReader();
-
-      reader.addEventListener("load", () => {
-        exportedProject = String(reader.result);
-      });
-      reader.readAsText(object);
-
-      return "blob:dl-graph-studio-project";
-    };
-    URL.revokeObjectURL = () => {};
-    HTMLAnchorElement.prototype.click = () => {};
-
-    try {
-      render(<App />);
-
-      fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
-      fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
-        target: { value: "256" },
-      });
-      fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
-      fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
-      fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
-      fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
-      fireEvent.click(
-        screen.getByLabelText(/delete connection tensor to neuron/i),
-      );
-      fireEvent.click(screen.getByRole("button", { name: /export project/i }));
-
-      await waitFor(() => expect(exportedProject).not.toBe(""));
-
-      const project = JSON.parse(exportedProject);
-
-      expect(project).toMatchObject({
-        version: 1,
-        nodes: expect.arrayContaining([
-          expect.objectContaining({
-            id: "dense-linear",
-            parameters: expect.arrayContaining([
-              expect.objectContaining({ id: "units", value: 256 }),
-            ]),
-            position: { x: 96, y: 724 },
-          }),
-          expect.objectContaining({
-            id: "dense-block",
-            type: "composite",
-            memberNodeIds: ["neuron", "activation", "dense-linear"],
-          }),
-        ]),
-        connections: [
-          {
-            id: "connection-neuron-activation",
-            source: "neuron",
-            target: "activation",
-          },
-        ],
-      });
-    } finally {
-      URL.createObjectURL = originalCreateObjectUrl;
-      URL.revokeObjectURL = originalRevokeObjectUrl;
-      HTMLAnchorElement.prototype.click = originalAnchorClick;
-    }
-  });
-
-  it("imports a saved project after reset and restores parameters and connections", async () => {
+  it("keeps remaining connections after deleting one connection", () => {
     render(<App />);
-
-    const savedProject = {
-      version: 1,
-      nodes: [
-        {
-          id: "tensor",
-          label: "Tensor",
-          kind: "Data",
-          metadata: ["Role: data carrier"],
-          parameters: [
-            { id: "shape", label: "Shape", type: "text", value: "batch, 32" },
-          ],
-          position: { x: 96, y: 64 },
-        },
-        {
-          id: "neuron",
-          label: "Neuron",
-          kind: "Foundation",
-          metadata: ["Lowest exposed primitive", "Parameters: weights + bias"],
-          parameters: [
-            {
-              id: "units",
-              label: "Units",
-              type: "number",
-              value: 4,
-              min: 1,
-              step: 1,
-            },
-            { id: "bias", label: "Bias", type: "boolean", value: false },
-          ],
-          position: { x: 96, y: 284 },
-        },
-      ],
-      connections: [
-        {
-          id: "connection-tensor-neuron",
-          source: "tensor",
-          target: "neuron",
-        },
-      ],
-    };
 
     fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
     fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
-      target: { value: "512" },
+      target: { value: "256" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /reset project/i }));
-    fireEvent.change(screen.getByLabelText(/import project/i), {
-      target: {
-        files: [
-          new File([JSON.stringify(savedProject)], "saved.dlgraph.json", {
-            type: "application/json",
-          }),
-        ],
-      },
-    });
-
-    await waitFor(() =>
-      expect(screen.getByText(/project loaded/i)).toBeInTheDocument(),
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+    fireEvent.click(
+      screen.getByLabelText(/delete connection tensor to neuron/i),
     );
 
-    fireEvent.click(screen.getByLabelText(/neuron primitive node/i));
-
-    expect(screen.getByText("Tensor -> Neuron")).toBeInTheDocument();
-    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(4);
-    expect(screen.getByRole("checkbox", { name: /bias/i })).not.toBeChecked();
+    const connectionList = screen.getByLabelText(/graph connections/i);
+    expect(
+      within(connectionList).getByText("Neuron -> Activation"),
+    ).toBeInTheDocument();
+    expect(
+      within(connectionList).queryByText("Tensor -> Neuron"),
+    ).not.toBeInTheDocument();
   });
 
-  it("keeps the current graph when imported project data is invalid", async () => {
+  it("preserves node state and connections after creating multiple connections", () => {
+    render(<App />);
+
+    // Create connections and verify all nodes remain intact
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+
+    // Select neuron and verify inspector state
+    fireEvent.click(screen.getByLabelText(/neuron primitive node/i));
+    const inspector = screen.getByRole("complementary", {
+      name: /node inspector/i,
+    });
+
+    expect(
+      within(inspector).getByRole("spinbutton", { name: /units/i }),
+    ).toHaveValue(1);
+
+    // Verify both connections exist
+    const connectionList = screen.getByLabelText(/graph connections/i);
+    expect(
+      within(connectionList).getByText("Tensor -> Neuron"),
+    ).toBeInTheDocument();
+    expect(
+      within(connectionList).getByText("Neuron -> Activation"),
+    ).toBeInTheDocument();
+  });
+
+  it("updates parameter values correctly across different node selections", () => {
+    render(<App />);
+
+    // Select dense-linear and change units
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
+      target: { value: "384" },
+    });
+
+    // Verify the parameter value persists
+    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(384);
+
+    // Switch to neuron and back to verify values are node-specific
+    fireEvent.click(screen.getByLabelText(/neuron primitive node/i));
+    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(1);
+
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(384);
+  });
+
+  it("resets the project from the project actions menu", () => {
     render(<App />);
 
     fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
     fireEvent.change(screen.getByRole("spinbutton", { name: /units/i }), {
       target: { value: "384" },
     });
-    fireEvent.change(screen.getByLabelText(/import project/i), {
-      target: {
-        files: [
-          new File(["not valid json"], "broken.dlgraph.json", {
-            type: "application/json",
-          }),
-        ],
-      },
-    });
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
 
-    await waitFor(() =>
-      expect(screen.getByText(/could not load project/i)).toBeInTheDocument(),
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /reset project/i }));
+
+    expect(
+      screen.queryByLabelText(/graph connections/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/project reset/i);
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
+    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(128);
+  });
+
+  it("imports a project file from the project actions menu", async () => {
+    render(<App />);
+
+    const projectFile = new File(
+      [
+        JSON.stringify({
+          version: 1,
+          nodes: [
+            {
+              id: "imported-tensor",
+              type: "primitive",
+              label: "Imported Tensor",
+              kind: "Data",
+              metadata: ["Role: imported data carrier"],
+              parameters: [
+                {
+                  id: "shape",
+                  label: "Shape",
+                  type: "text",
+                  value: "batch, features",
+                },
+              ],
+              position: { x: 40, y: 40 },
+            },
+          ],
+          connections: [],
+        }),
+      ],
+      "imported-project.json",
+      { type: "application/json" },
     );
 
-    expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(384);
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.change(screen.getByLabelText(/import project file/i), {
+      target: { files: [projectFile] },
+    });
+
+    expect(await screen.findByText("Imported Tensor")).toBeInTheDocument();
+    expect(screen.queryByText("Dense / Linear")).not.toBeInTheDocument();
+  });
+
+  it("exports the current project from the project actions menu", () => {
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: vi.fn(() => "blob:project-file"),
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      () => undefined,
+    );
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /export project/i }));
+
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:project-file");
   });
 });

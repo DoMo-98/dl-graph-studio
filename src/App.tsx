@@ -1,20 +1,36 @@
 import {
-  Activity,
   AlertTriangle,
-  Boxes,
+  BookOpen,
+  Box,
+  ChevronsRight,
   CircuitBoard,
-  Download,
-  FlaskConical,
-  Folder,
+  Grid,
+  Hand,
   Info,
   Link2,
-  PanelLeft,
+  MousePointer2,
+  Play,
   RotateCcw,
+  Save,
+  Settings,
+  Share2,
+  SlidersHorizontal,
   Trash2,
-  Upload,
+  Undo2,
+  Redo2,
   X,
+  MoreVertical,
+  Download,
+  Upload,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import {
   Background,
@@ -53,14 +69,8 @@ type ConnectionValidationResult =
   | { isValid: true }
   | { isValid: false; message: string };
 
-const workspaceItems = [
-  { label: "Project", value: "Untitled graph" },
-  { label: "Mode", value: "Local workspace" },
-  { label: "Runtime", value: "Not configured" },
-];
-
 const defaultCanvasSize = { width: 960, height: 960 };
-const primitiveFlowNodeSize = { width: 228, height: 196 };
+const primitiveFlowNodeSize = { width: 228, height: 156 };
 const compositeFlowNodeSize = { width: 220, height: 180 };
 
 const primitiveNodes: PrimitiveNode[] = [
@@ -80,7 +90,7 @@ const primitiveNodes: PrimitiveNode[] = [
     type: "primitive",
     label: "Neuron",
     kind: "Foundation",
-    metadata: ["Lowest exposed primitive", "Parameters: weights + bias"],
+    metadata: ["Role: lowest exposed primitive", "Parameters: weights + bias"],
     parameters: [
       {
         id: "units",
@@ -164,10 +174,6 @@ type CompositeNodeData = Omit<CompositeNode, "position"> & {
 };
 type CompositeFlowNode = Node<CompositeNodeData, "composite">;
 type GraphFlowNode = PrimitiveFlowNode | CompositeFlowNode;
-type ProjectStatus = {
-  kind: "neutral" | "success" | "error";
-  message: string;
-};
 
 function createInitialGraphNodes() {
   return [...primitiveNodes, ...compositeNodes].map((node) => ({
@@ -208,20 +214,6 @@ function getDisplayMetadata(node: GraphNode, nodes: GraphNode[]) {
     ...node.parameters.map((parameter) => formatParameterSummary(parameter)),
     ...node.metadata,
   ];
-}
-
-function readProjectFile(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.addEventListener("load", () => {
-      resolve(String(reader.result ?? ""));
-    });
-    reader.addEventListener("error", () => {
-      reject(reader.error ?? new Error("Project file could not be read."));
-    });
-    reader.readAsText(file);
-  });
 }
 
 function validateGraphConnection(
@@ -291,6 +283,66 @@ function getFlowNodeSize(node: GraphNode) {
     : primitiveFlowNodeSize;
 }
 
+function getCanvasNodeExtent(size: {
+  width: number;
+  height: number;
+}): CoordinateExtent {
+  return [
+    [0, 0],
+    [size.width, size.height],
+  ];
+}
+
+function getCanvasElementNodeExtent(
+  graphCanvasElement: HTMLElement,
+): CoordinateExtent | null {
+  const { width: rectWidth, height: rectHeight } =
+    graphCanvasElement.getBoundingClientRect();
+  const width = graphCanvasElement.clientWidth || rectWidth;
+  const height = graphCanvasElement.clientHeight || rectHeight;
+
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+
+  return getCanvasNodeExtent({ width, height });
+}
+
+function readTextFile(file: File) {
+  if (typeof file.text === "function") {
+    return file.text();
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Project file could not be read as text."));
+    });
+    reader.addEventListener("error", () => {
+      reject(new Error("Project file could not be read."));
+    });
+    reader.readAsText(file);
+  });
+}
+
+function areCanvasNodeExtentsEqual(
+  firstExtent: CoordinateExtent,
+  secondExtent: CoordinateExtent,
+) {
+  return (
+    firstExtent[0][0] === secondExtent[0][0] &&
+    firstExtent[0][1] === secondExtent[0][1] &&
+    firstExtent[1][0] === secondExtent[1][0] &&
+    firstExtent[1][1] === secondExtent[1][1]
+  );
+}
+
 function clampCanvasNodePosition(
   position: GraphNode["position"],
   node: GraphNode,
@@ -298,10 +350,12 @@ function clampCanvasNodePosition(
 ): GraphNode["position"] {
   const [[minX, minY], [maxX, maxY]] = canvasNodeExtent;
   const nodeSize = getFlowNodeSize(node);
+  const maxPositionX = Math.max(minX, maxX - nodeSize.width);
+  const maxPositionY = Math.max(minY, maxY - nodeSize.height);
 
   return {
-    x: Math.min(Math.max(position.x, minX), maxX - nodeSize.width),
-    y: Math.min(Math.max(position.y, minY), maxY - nodeSize.height),
+    x: Math.min(Math.max(position.x, minX), maxPositionX),
+    y: Math.min(Math.max(position.y, minY), maxPositionY),
   };
 }
 
@@ -436,8 +490,6 @@ const nodeTypes: NodeTypes = {
 };
 
 export function App() {
-  const canvasRef = useRef<HTMLElement | null>(null);
-  const [canvasSize, setCanvasSize] = useState(defaultCanvasSize);
   const [graphNodes, setGraphNodes] = useState<GraphNode[]>(
     createInitialGraphNodes,
   );
@@ -452,48 +504,86 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
-  const [projectStatus, setProjectStatus] = useState<ProjectStatus>({
-    kind: "neutral",
-    message: "Export or import a local project file.",
-  });
+  const [isProjectActionsOpen, setIsProjectActionsOpen] = useState(false);
+  const [projectToast, setProjectToast] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
     graphNodes.find((node) => node.id === connectionSourceId) ?? null;
-  const canvasNodeExtent = useMemo<CoordinateExtent>(
-    () => [
-      [0, 0],
-      [canvasSize.width, canvasSize.height],
-    ],
-    [canvasSize],
+  const graphCanvasRef = useRef<HTMLElement | null>(null);
+  const [canvasNodeExtent, setCanvasNodeExtent] = useState<CoordinateExtent>(
+    () => getCanvasNodeExtent(defaultCanvasSize),
   );
 
-  useEffect(() => {
-    const canvasElement = canvasRef.current;
+  useLayoutEffect(() => {
+    const graphCanvasElement = graphCanvasRef.current;
 
-    if (!canvasElement) {
+    if (!graphCanvasElement) {
       return;
     }
 
-    const updateCanvasSize = () => {
-      setCanvasSize({
-        width: canvasElement.clientWidth || defaultCanvasSize.width,
-        height: canvasElement.clientHeight || defaultCanvasSize.height,
-      });
+    const syncCanvasNodeExtent = () => {
+      const nextCanvasNodeExtent =
+        getCanvasElementNodeExtent(graphCanvasElement);
+
+      if (!nextCanvasNodeExtent) {
+        return;
+      }
+
+      setCanvasNodeExtent((currentCanvasNodeExtent) =>
+        areCanvasNodeExtentsEqual(currentCanvasNodeExtent, nextCanvasNodeExtent)
+          ? currentCanvasNodeExtent
+          : nextCanvasNodeExtent,
+      );
     };
 
-    updateCanvasSize();
+    syncCanvasNodeExtent();
 
     if (typeof ResizeObserver === "undefined") {
       return;
     }
 
-    const resizeObserver = new ResizeObserver(updateCanvasSize);
-
-    resizeObserver.observe(canvasElement);
+    const resizeObserver = new ResizeObserver(syncCanvasNodeExtent);
+    resizeObserver.observe(graphCanvasElement);
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  useEffect(() => {
+    setGraphNodes((currentNodes) => {
+      const positionUpdates = currentNodes.map((node) => ({
+        id: node.id,
+        position: clampCanvasNodePosition(
+          node.position,
+          node,
+          canvasNodeExtent,
+        ),
+      }));
+      const hasChangedPosition = positionUpdates.some((update) => {
+        const currentNode = currentNodes.find((node) => node.id === update.id);
+
+        return (
+          currentNode?.position.x !== update.position.x ||
+          currentNode.position.y !== update.position.y
+        );
+      });
+
+      return hasChangedPosition
+        ? updateGraphNodePositions(currentNodes, positionUpdates)
+        : currentNodes;
+    });
+  }, [canvasNodeExtent]);
+
+  useEffect(() => {
+    if (!projectToast) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => setProjectToast(null), 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [projectToast]);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -596,6 +686,11 @@ export function App() {
         return;
       }
 
+      const activeCanvasNodeExtent = graphCanvasRef.current
+        ? (getCanvasElementNodeExtent(graphCanvasRef.current) ??
+          canvasNodeExtent)
+        : canvasNodeExtent;
+
       setGraphNodes((currentNodes) => {
         const rawPositionsByNodeId = new Map(
           rawPositionUpdates.map((update) => [update.id, update.position]),
@@ -614,7 +709,7 @@ export function App() {
                 position: clampCanvasNodePosition(
                   nextPosition,
                   node,
-                  canvasNodeExtent,
+                  activeCanvasNodeExtent,
                 ),
               },
             ];
@@ -650,71 +745,68 @@ export function App() {
     [graphConnections, graphNodes],
   );
 
-  const resetProject = () => {
-    setGraphNodes(createInitialGraphNodes());
-    setGraphConnections([]);
-    setSelectedNodeId(null);
-    setConnectionSourceId(null);
-    setDraggedNodeId(null);
-    setProjectStatus({
-      kind: "neutral",
-      message: "Project reset to the default graph.",
-    });
-  };
-
-  const exportProject = () => {
+  const exportProjectFile = () => {
     const project = createProjectFile(graphNodes, graphConnections);
     const blob = new Blob([serializeProjectFile(project)], {
       type: "application/json",
     });
-    const downloadUrl = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const downloadLink = document.createElement("a");
 
-    downloadLink.href = downloadUrl;
-    downloadLink.download = "untitled-graph.dlgraph.json";
+    downloadLink.href = url;
+    downloadLink.download = "dl-graph-studio-project.json";
+    document.body.append(downloadLink);
     downloadLink.click();
-    URL.revokeObjectURL(downloadUrl);
-    setProjectStatus({
-      kind: "success",
-      message: "Project exported.",
-    });
+    downloadLink.remove();
+    URL.revokeObjectURL(url);
+
+    setProjectToast("Project exported.");
+    setIsProjectActionsOpen(false);
   };
 
-  const importProject = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
+  const importProjectFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
+    let content: string;
+
     try {
-      const result = parseProjectFileContent(await readProjectFile(file));
-
-      if (!result.ok) {
-        setProjectStatus({
-          kind: "error",
-          message: `Could not load project. ${result.message}`,
-        });
-        return;
-      }
-
-      setGraphNodes(result.project.nodes);
-      setGraphConnections(result.project.connections);
-      setSelectedNodeId(null);
-      setConnectionSourceId(null);
-      setDraggedNodeId(null);
-      setProjectStatus({
-        kind: "success",
-        message: "Project loaded.",
-      });
+      content = await readTextFile(file);
     } catch {
-      setProjectStatus({
-        kind: "error",
-        message: "Could not load project. The file could not be read.",
-      });
-    } finally {
+      setProjectToast("Project file could not be read.");
       event.target.value = "";
+      return;
     }
+
+    const result = parseProjectFileContent(content);
+
+    if (!result.ok) {
+      setProjectToast(result.message);
+      event.target.value = "";
+      return;
+    }
+
+    setGraphNodes(result.project.nodes);
+    setGraphConnections(result.project.connections);
+    setSelectedNodeId(null);
+    setConnectionSourceId(null);
+    setConnectionFeedback(null);
+    setProjectToast("Project imported.");
+    setIsProjectActionsOpen(false);
+    event.target.value = "";
+  };
+
+  const resetProject = () => {
+    setGraphNodes(createInitialGraphNodes());
+    setGraphConnections([]);
+    setSelectedNodeId(null);
+    setConnectionSourceId(null);
+    setConnectionFeedback(null);
+    setProjectToast("Project reset.");
+    setIsProjectActionsOpen(false);
   };
 
   const canvasNodes: GraphFlowNode[] = useMemo(
@@ -803,17 +895,24 @@ export function App() {
             type: MarkerType.ArrowClosed,
             width: 16,
             height: 16,
-            color: "#0b6d60",
+            color: "#22d3ee",
           },
           style: {
-            stroke: "#0b6d60",
+            stroke: "#22d3ee",
             strokeWidth: 2,
+            filter: "drop-shadow(0 0 5px rgba(34, 211, 238, 0.4))",
           },
           labelBgPadding: [8, 4],
           labelBgBorderRadius: 6,
+          labelStyle: {
+            fill: "#f8fafc",
+            fontWeight: 600,
+          },
           labelBgStyle: {
-            fill: "#f8faf8",
-            fillOpacity: 0.94,
+            fill: "#0f172a",
+            stroke: "#334155",
+            strokeWidth: 1,
+            fillOpacity: 0.96,
           },
         };
       }),
@@ -822,133 +921,192 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar" aria-label="Primary">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            <CircuitBoard size={22} strokeWidth={1.8} />
+      <header className="app-topbar">
+        <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+          <div className="brand-lockup">
+            <div className="brand-mark" aria-hidden="true">
+              <CircuitBoard size={18} strokeWidth={2} />
+            </div>
+            <div className="topbar-project" aria-label="Current project">
+              <span>dl-graph-studio</span>
+              <span style={{ color: "#94a3b8", margin: "0 8px" }}>
+                Untitled graph
+              </span>
+              <ChevronsRight size={14} color="#94a3b8" />
+            </div>
           </div>
-          <div>
-            <p className="eyebrow">desktop lab</p>
-            <h1>dl-graph-studio</h1>
+
+          <div
+            className="status-pill"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#10b981",
+              padding: 0,
+            }}
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#10b981",
+              }}
+            ></div>
+            <span>Ready</span>
           </div>
         </div>
 
-        <nav className="nav-list" aria-label="Workspace sections">
-          <a className="nav-item active" href="#workspace" aria-current="page">
-            <PanelLeft size={18} aria-hidden="true" />
-            <span>Workspace</span>
-          </a>
-          <a className="nav-item" href="#components">
-            <Boxes size={18} aria-hidden="true" />
-            <span>Components</span>
-          </a>
-          <a className="nav-item" href="#experiments">
-            <FlaskConical size={18} aria-hidden="true" />
-            <span>Experiments</span>
-          </a>
-        </nav>
-      </aside>
+        <div className="topbar-actions" aria-label="Editor actions">
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Undo coming soon"
+            aria-label="Undo coming soon"
+          >
+            <Undo2 size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Redo coming soon"
+            aria-label="Redo coming soon"
+          >
+            <Redo2 size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Run graph coming soon"
+            aria-label="Run graph coming soon"
+          >
+            <Play size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="topbar-icon-button future-action"
+            disabled
+            title="Native save coming soon"
+            aria-label="Native save coming soon"
+          >
+            <Save size={18} aria-hidden="true" />
+          </button>
+          <div className="project-actions-menu">
+            <button
+              type="button"
+              className="topbar-icon-button"
+              aria-label="Project actions"
+              title="Project actions"
+              aria-expanded={isProjectActionsOpen}
+              aria-haspopup="menu"
+              onClick={() =>
+                setIsProjectActionsOpen((currentValue) => !currentValue)
+              }
+            >
+              <MoreVertical size={18} aria-hidden="true" />
+            </button>
 
-      <main id="workspace" className="workspace" aria-label="Workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">local workspace</p>
-            <h2>Graph studio workspace</h2>
-          </div>
-          <div className="status-pill">
-            <Activity size={16} aria-hidden="true" />
-            <span>Ready</span>
-          </div>
-        </header>
-
-        <section className="workbench" aria-label="Project overview">
-          <div className="workspace-panel-stack">
-            <div className="workspace-panel">
-              <div className="panel-heading">
-                <Folder size={18} aria-hidden="true" />
-                <h3>Session</h3>
-              </div>
-              <dl className="meta-list">
-                {workspaceItems.map((item) => (
-                  <div className="meta-row" key={item.label}>
-                    <dt>{item.label}</dt>
-                    <dd>{item.value}</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="project-file-actions">
-                <button type="button" onClick={exportProject}>
+            {isProjectActionsOpen ? (
+              <div className="project-actions-popover" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={15} aria-hidden="true" />
+                  <span>Import project</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={exportProjectFile}
+                >
                   <Download size={15} aria-hidden="true" />
                   <span>Export project</span>
                 </button>
-                <label className="project-file-import">
-                  <Upload size={15} aria-hidden="true" />
-                  <span>Import project</span>
-                  <input
-                    aria-label="Import project"
-                    type="file"
-                    accept=".dlgraph.json,.json,application/json"
-                    onChange={importProject}
-                  />
-                </label>
-                <button type="button" onClick={resetProject}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="danger"
+                  onClick={resetProject}
+                >
                   <RotateCcw size={15} aria-hidden="true" />
                   <span>Reset project</span>
                 </button>
               </div>
-              <p className={`project-file-status ${projectStatus.kind}`}>
-                {projectStatus.message}
-              </p>
-            </div>
+            ) : null}
+          </div>
+          <input
+            ref={fileInputRef}
+            className="visually-hidden"
+            type="file"
+            accept="application/json,.json"
+            aria-label="Import project file"
+            onChange={importProjectFile}
+          />
+        </div>
+      </header>
 
-            <aside className="workspace-panel" aria-label="Node inspector">
-              <div className="panel-heading">
-                <Info size={18} aria-hidden="true" />
-                <h3>Inspector</h3>
-              </div>
+      {projectToast ? (
+        <div className="project-toast" role="status">
+          {projectToast}
+        </div>
+      ) : null}
 
-              {selectedNode ? (
-                <div className="inspector-details">
-                  <span className="architecture-node-kind">
-                    {selectedNode.kind}
-                  </span>
-                  <h4>{selectedNode.label}</h4>
-                  <ul>
-                    {getDisplayMetadata(selectedNode, graphNodes).map(
-                      (item) => (
-                        <li key={item}>{item}</li>
-                      ),
-                    )}
-                  </ul>
-                  {selectedNode.parameters.length > 0 ? (
-                    <div
-                      className="parameter-form"
-                      aria-label={`${selectedNode.label} parameters`}
-                    >
-                      {selectedNode.parameters.map((parameter) => (
-                        <ParameterControl
-                          key={parameter.id}
-                          nodeId={selectedNode.id}
-                          parameter={parameter}
-                          onChange={updateNodeParameter}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="inspector-empty">
-                  <p>No node selected</p>
-                  <span>Select a node on the canvas.</span>
-                </div>
-              )}
-            </aside>
+      <main id="workspace" className="editor-shell" aria-label="Workspace">
+        <aside className="sidebar" aria-label="Primary">
+          <nav className="nav-list" aria-label="Workspace sections">
+            <a className="nav-item active" href="#select" aria-current="page">
+              <MousePointer2 size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#pan">
+              <Hand size={20} aria-hidden="true" />
+            </a>
+            <div className="nav-separator"></div>
+            <a className="nav-item" href="#share">
+              <Share2 size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#grid">
+              <Grid size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#box">
+              <Box size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#sliders">
+              <SlidersHorizontal size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#book">
+              <BookOpen size={20} aria-hidden="true" />
+            </a>
+          </nav>
+
+          <nav
+            className="nav-list"
+            aria-label="Utility actions"
+            style={{ marginTop: "auto" }}
+          >
+            <a className="nav-item" href="#settings">
+              <Settings size={20} aria-hidden="true" />
+            </a>
+            <a className="nav-item" href="#collapse">
+              <ChevronsRight size={20} aria-hidden="true" />
+            </a>
+          </nav>
+        </aside>
+
+        <section className="editor-main" aria-label="Project overview">
+          <div className="workspace-context">
+            <p className="eyebrow">local workspace</p>
+            <h2>Graph studio workspace</h2>
           </div>
 
           <section
             className="graph-canvas"
             aria-label="Graph canvas"
-            ref={canvasRef}
+            ref={graphCanvasRef}
           >
             <ReactFlow
               nodes={canvasNodes}
@@ -969,7 +1127,7 @@ export function App() {
               preventScrolling={false}
               defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             >
-              <Background color="#c2d0ca" gap={28} size={1.25} />
+              <Background color="var(--canvas-grid)" gap={24} size={2} />
             </ReactFlow>
 
             {canvasNodes.length === 0 ? (
@@ -981,9 +1139,18 @@ export function App() {
                 </div>
               </div>
             ) : null}
+          </section>
 
-            {canvasEdges.length > 0 ? (
-              <div className="connection-list" aria-label="Graph connections">
+          {canvasEdges.length > 0 ? (
+            <section
+              className="connection-drawer"
+              aria-label="Graph connections"
+            >
+              <header className="connection-drawer-header">
+                <h3>Connections</h3>
+                <span>{graphConnections.length}</span>
+              </header>
+              <div className="connection-list">
                 {graphConnections.map((connection) => {
                   const connectionLabel = getGraphConnectionLabel(
                     connection,
@@ -1006,16 +1173,59 @@ export function App() {
                   );
                 })}
               </div>
-            ) : null}
+            </section>
+          ) : null}
 
-            {connectionFeedback ? (
-              <div className="connection-feedback" role="alert">
-                <AlertTriangle size={16} aria-hidden="true" />
-                <span>{connectionFeedback}</span>
-              </div>
-            ) : null}
-          </section>
+          {connectionFeedback ? (
+            <div className="connection-feedback" role="alert">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>{connectionFeedback}</span>
+            </div>
+          ) : null}
         </section>
+
+        <aside className="inspector-panel" aria-label="Node inspector">
+          <div className="panel-heading">
+            <Info size={18} aria-hidden="true" />
+            <h3>Inspector</h3>
+          </div>
+
+          {selectedNode ? (
+            <div className="inspector-details">
+              <span
+                className={`architecture-node-kind${selectedNode.type === "composite" ? " composite-inspector-tag" : ""}`}
+              >
+                {selectedNode.kind}
+              </span>
+              <h4>{selectedNode.label}</h4>
+              <ul>
+                {getDisplayMetadata(selectedNode, graphNodes).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              {selectedNode.parameters.length > 0 ? (
+                <div
+                  className="parameter-form"
+                  aria-label={`${selectedNode.label} parameters`}
+                >
+                  {selectedNode.parameters.map((parameter) => (
+                    <ParameterControl
+                      key={parameter.id}
+                      nodeId={selectedNode.id}
+                      parameter={parameter}
+                      onChange={updateNodeParameter}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="inspector-empty">
+              <p>No node selected</p>
+              <span>Select a node on the canvas.</span>
+            </div>
+          )}
+        </aside>
       </main>
     </div>
   );

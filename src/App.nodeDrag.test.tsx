@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentType, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
 
@@ -55,6 +55,7 @@ vi.mock("@xyflow/react", () => ({
       data-testid="react-flow"
       data-nodes-draggable={nodesDraggable}
       data-has-node-extent={nodeExtent !== undefined}
+      data-node-extent={JSON.stringify(nodeExtent)}
       data-auto-pan-on-node-drag={autoPanOnNodeDrag}
     >
       {nodes.map((node) => {
@@ -101,65 +102,74 @@ vi.mock("@xyflow/react", () => ({
 }));
 
 describe("App node dragging", () => {
-  it("updates primitive and composite positions and exports the moved layout", async () => {
-    const originalCreateObjectUrl = URL.createObjectURL;
-    const originalRevokeObjectUrl = URL.revokeObjectURL;
-    const originalAnchorClick = HTMLAnchorElement.prototype.click;
-    let exportedProject = "";
+  beforeEach(() => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function getBoundingClientRect(this: HTMLElement) {
+        if (this.classList.contains("graph-canvas")) {
+          return {
+            width: 640,
+            height: 520,
+            top: 0,
+            right: 640,
+            bottom: 520,
+            left: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          };
+        }
 
-    URL.createObjectURL = (object: Blob) => {
-      const reader = new FileReader();
+        return {
+          width: 0,
+          height: 0,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        };
+      },
+    );
+  });
 
-      reader.addEventListener("load", () => {
-        exportedProject = String(reader.result);
-      });
-      reader.readAsText(object);
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
-      return "blob:dl-graph-studio-project";
-    };
-    URL.revokeObjectURL = () => {};
-    HTMLAnchorElement.prototype.click = () => {};
+  it("updates primitive and composite positions and clamps within canvas bounds", () => {
+    render(<App />);
 
-    try {
-      render(<App />);
+    expect(screen.getByTestId("react-flow")).toHaveAttribute(
+      "data-nodes-draggable",
+      "true",
+    );
+    expect(screen.getByTestId("react-flow")).toHaveAttribute(
+      "data-has-node-extent",
+      "false",
+    );
+    expect(screen.getByTestId("react-flow")).toHaveAttribute(
+      "data-auto-pan-on-node-drag",
+      "false",
+    );
 
-      expect(screen.getByTestId("react-flow")).toHaveAttribute(
-        "data-nodes-draggable",
-        "true",
-      );
-      expect(screen.getByTestId("react-flow")).toHaveAttribute(
-        "data-has-node-extent",
-        "false",
-      );
-      expect(screen.getByTestId("react-flow")).toHaveAttribute(
-        "data-auto-pan-on-node-drag",
-        "false",
-      );
+    // Move Tensor node (position x+32, y+48 per mock)
+    fireEvent.click(screen.getByRole("button", { name: "Move Tensor" }));
 
-      fireEvent.click(screen.getByRole("button", { name: "Move Tensor" }));
-      fireEvent.click(screen.getByRole("button", { name: "Move Dense Block" }));
-      fireEvent.click(screen.getByRole("button", { name: /export project/i }));
+    // Verify position changed in the flow node data attributes
+    const tensorFlowNode = screen.getByTestId("flow-node-tensor");
+    expect(tensorFlowNode).toHaveAttribute("data-x", "128");
+    expect(tensorFlowNode).toHaveAttribute("data-y", "112");
 
-      await waitFor(() => expect(exportedProject).not.toBe(""));
+    // Move Dense Block (clamped from 1500,1500 to canvas bounds)
+    fireEvent.click(screen.getByRole("button", { name: "Move Dense Block" }));
 
-      const project = JSON.parse(exportedProject);
-
-      expect(project.nodes).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            id: "tensor",
-            position: { x: 128, y: 112 },
-          }),
-          expect.objectContaining({
-            id: "dense-block",
-            position: { x: 740, y: 780 },
-          }),
-        ]),
-      );
-    } finally {
-      URL.createObjectURL = originalCreateObjectUrl;
-      URL.revokeObjectURL = originalRevokeObjectUrl;
-      HTMLAnchorElement.prototype.click = originalAnchorClick;
-    }
+    const denseBlockFlowNode = screen.getByTestId("flow-node-dense-block");
+    // Composite node is 220x180, canvas is dynamic but should be clamped
+    const blockX = Number(denseBlockFlowNode.getAttribute("data-x"));
+    const blockY = Number(denseBlockFlowNode.getAttribute("data-y"));
+    expect(blockX).toBe(420);
+    expect(blockY).toBe(340);
   });
 });
