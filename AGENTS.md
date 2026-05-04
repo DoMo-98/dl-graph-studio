@@ -34,6 +34,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 ## Product Owner Idea Intake
 
 - When the product owner proposes a new idea, treat it as idea intake by default, not as authorization to implement.
+- Messages phrased as ideas, preferences, or wishes, such as "I would like...", "it would be nice if...", or "we should...", must always be treated as idea intake and never as implementation authorization.
 - The default goal of intake is to convert the idea into a roadmap issue that is ready to execute.
 - Classify the idea before drafting work: UX/UI finding, technical audit finding, new roadmap task, or PRD-level idea.
 - If the idea is a small UX/UI finding in the current milestone, record it in `[Roadmap]: Phase N UX/UI hardening` when it fits that issue's scope.
