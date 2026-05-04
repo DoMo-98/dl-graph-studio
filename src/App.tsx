@@ -23,14 +23,7 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import {
   Background,
@@ -50,12 +43,7 @@ import type {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import {
-  createProjectFile,
-  parseProjectFileContent,
-  serializeProjectFile,
-  updateGraphNodePositions,
-} from "./projectFile";
+import { updateGraphNodePositions } from "./projectFile";
 import type {
   CompositeNode,
   GraphNode,
@@ -64,6 +52,7 @@ import type {
   PrimitiveNode,
   PrimitiveNodeParameter,
 } from "./projectFile";
+import { useProjectFileWorkflow } from "./useProjectFileWorkflow";
 
 type ConnectionValidationResult =
   | { isValid: true }
@@ -307,29 +296,6 @@ function getCanvasElementNodeExtent(
   }
 
   return getCanvasNodeExtent({ width, height });
-}
-
-function readTextFile(file: File) {
-  if (typeof file.text === "function") {
-    return file.text();
-  }
-
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.addEventListener("load", () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-        return;
-      }
-
-      reject(new Error("Project file could not be read as text."));
-    });
-    reader.addEventListener("error", () => {
-      reject(new Error("Project file could not be read."));
-    });
-    reader.readAsText(file);
-  });
 }
 
 function areCanvasNodeExtentsEqual(
@@ -579,16 +545,33 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
-  const [isProjectActionsOpen, setIsProjectActionsOpen] = useState(false);
-  const [projectToast, setProjectToast] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const graphCanvasRef = useRef<HTMLElement | null>(null);
+  const [canvasNodeExtent, setCanvasNodeExtent] =
+    useState<CoordinateExtent | null>(null);
+  const {
+    isProjectActionsOpen,
+    setIsProjectActionsOpen,
+    projectToast,
+    fileInputRef,
+    openProjectImportPicker,
+    exportProjectFile,
+    importProjectFile,
+    resetProject,
+  } = useProjectFileWorkflow({
+    graphNodes,
+    graphConnections,
+    setGraphNodes,
+    setGraphConnections,
+    createInitialGraphNodes,
+    clearSelectedNode: () => setSelectedNodeId(null),
+    clearConnectionSource: () => setConnectionSourceId(null),
+    clearConnectionFeedback: () => setConnectionFeedback(null),
+    clearDraggedNode: () => setDraggedNodeId(null),
+  });
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
     graphNodes.find((node) => node.id === connectionSourceId) ?? null;
-  const graphCanvasRef = useRef<HTMLElement | null>(null);
-  const [canvasNodeExtent, setCanvasNodeExtent] =
-    useState<CoordinateExtent | null>(null);
 
   useLayoutEffect(() => {
     const graphCanvasElement = graphCanvasRef.current;
@@ -633,16 +616,6 @@ export function App() {
       clampGraphNodesToCanvas(currentNodes, canvasNodeExtent),
     );
   }, [canvasNodeExtent, graphNodes]);
-
-  useEffect(() => {
-    if (!projectToast) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => setProjectToast(null), 3000);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [projectToast]);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -794,70 +767,6 @@ export function App() {
     },
     [graphConnections, graphNodes],
   );
-
-  const exportProjectFile = () => {
-    const project = createProjectFile(graphNodes, graphConnections);
-    const blob = new Blob([serializeProjectFile(project)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement("a");
-
-    downloadLink.href = url;
-    downloadLink.download = "dl-graph-studio-project.json";
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-    URL.revokeObjectURL(url);
-
-    setProjectToast("Project exported.");
-    setIsProjectActionsOpen(false);
-  };
-
-  const importProjectFile = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    let content: string;
-
-    try {
-      content = await readTextFile(file);
-    } catch {
-      setProjectToast("Project file could not be read.");
-      event.target.value = "";
-      return;
-    }
-
-    const result = parseProjectFileContent(content);
-
-    if (!result.ok) {
-      setProjectToast(result.message);
-      event.target.value = "";
-      return;
-    }
-
-    setGraphNodes(result.project.nodes);
-    setGraphConnections(result.project.connections);
-    setSelectedNodeId(null);
-    setConnectionSourceId(null);
-    setConnectionFeedback(null);
-    setProjectToast("Project imported.");
-    setIsProjectActionsOpen(false);
-    event.target.value = "";
-  };
-
-  const resetProject = () => {
-    setGraphNodes(createInitialGraphNodes());
-    setGraphConnections([]);
-    setSelectedNodeId(null);
-    setConnectionSourceId(null);
-    setConnectionFeedback(null);
-    setProjectToast("Project reset.");
-    setIsProjectActionsOpen(false);
-  };
 
   const canvasNodes: GraphFlowNode[] = useMemo(
     () =>
@@ -1068,7 +977,7 @@ export function App() {
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openProjectImportPicker}
                 >
                   <Upload size={15} aria-hidden="true" />
                   <span>Import project</span>
