@@ -43,8 +43,10 @@ const editedConnections: GraphConnection[] = [
   { id: "connection-tensor-dense", source: "tensor", target: "dense" },
 ];
 
+const editedProjectNodes: GraphNode[] = [initialNodes[0], editedNodes[0]];
+
 function createProjectContent(
-  nodes: GraphNode[] = [...initialNodes, ...editedNodes],
+  nodes: GraphNode[] = editedProjectNodes,
   connections: GraphConnection[] = editedConnections,
 ) {
   return JSON.stringify({
@@ -166,7 +168,7 @@ describe("useProjectFileWorkflow", () => {
 
       render(
         <WorkflowHarness
-          initialGraphNodes={editedNodes}
+          initialGraphNodes={editedProjectNodes}
           initialGraphConnections={editedConnections}
         />,
       );
@@ -185,7 +187,7 @@ describe("useProjectFileWorkflow", () => {
       const [serializedProject] = blobParts[0];
       expect(JSON.parse(serializedProject as string)).toEqual({
         version: 1,
-        nodes: editedNodes,
+        nodes: editedProjectNodes,
         connections: editedConnections,
       });
     } finally {
@@ -303,7 +305,7 @@ describe("useProjectFileWorkflow", () => {
   it("resets the project, closes the menu, and clears editor workflow state", () => {
     render(
       <WorkflowHarness
-        initialGraphNodes={editedNodes}
+        initialGraphNodes={editedProjectNodes}
         initialGraphConnections={editedConnections}
       />,
     );
