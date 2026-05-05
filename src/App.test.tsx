@@ -33,6 +33,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function expectConnectionLabelHidden(container: HTMLElement, label: string) {
+  const connectionLabel = within(container).queryByText(label);
+
+  if (connectionLabel) {
+    expect(connectionLabel).not.toBeVisible();
+    return;
+  }
+
+  expect(connectionLabel).not.toBeInTheDocument();
+}
+
 describe("App shell", () => {
   it("renders the graph studio workspace shell", () => {
     render(<App />);
@@ -298,6 +309,69 @@ describe("App shell", () => {
 
     expect(screen.getByText("Tensor -> Neuron")).toBeInTheDocument();
     expect(screen.getByText("Neuron -> Activation")).toBeInTheDocument();
+  });
+
+  it("collapses and expands the connections panel without losing existing connections", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+
+    const connectionPanel = screen.getByLabelText(/graph connections/i);
+    const collapseButton = within(connectionPanel).getByRole("button", {
+      name: /collapse connections panel/i,
+    });
+
+    expect(collapseButton).toHaveAttribute("aria-expanded", "true");
+    expect(
+      within(connectionPanel).getByText("Tensor -> Neuron"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(collapseButton);
+
+    const expandButton = within(connectionPanel).getByRole("button", {
+      name: /expand connections panel/i,
+    });
+
+    expect(expandButton).toHaveAttribute("aria-expanded", "false");
+    expectConnectionLabelHidden(connectionPanel, "Tensor -> Neuron");
+
+    fireEvent.click(expandButton);
+
+    expect(
+      within(connectionPanel).getByText("Tensor -> Neuron"),
+    ).toBeInTheDocument();
+    expect(
+      within(connectionPanel).getByRole("button", {
+        name: /delete connection tensor to neuron/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the connections panel collapsed when new connections are added", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+
+    const connectionPanel = screen.getByLabelText(/graph connections/i);
+    fireEvent.click(
+      within(connectionPanel).getByRole("button", {
+        name: /collapse connections panel/i,
+      }),
+    );
+
+    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+
+    expect(
+      within(connectionPanel).getByRole("button", {
+        name: /expand connections panel/i,
+      }),
+    ).toHaveAttribute("aria-expanded", "false");
+    expect(within(connectionPanel).getByText("2")).toBeInTheDocument();
+    expectConnectionLabelHidden(connectionPanel, "Tensor -> Neuron");
+    expectConnectionLabelHidden(connectionPanel, "Neuron -> Activation");
   });
 
   it("deletes one chosen connection while preserving nodes and other connections", () => {
