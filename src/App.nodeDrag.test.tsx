@@ -30,6 +30,15 @@ type MockReactFlowProps = {
   nodesDraggable?: boolean;
   nodeExtent?: unknown;
   autoPanOnNodeDrag?: boolean;
+  panOnDrag?: boolean;
+  zoomOnScroll?: boolean;
+  zoomOnPinch?: boolean;
+  zoomOnDoubleClick?: boolean;
+  preventScrolling?: boolean;
+  fitView?: boolean;
+  fitViewOptions?: unknown;
+  minZoom?: number;
+  maxZoom?: number;
   onNodesChange?: (
     changes: Array<{
       id: string;
@@ -45,6 +54,14 @@ let graphCanvasSize = { width: 640, height: 520 };
 
 vi.mock("@xyflow/react", () => ({
   Background: () => <div data-testid="flow-background" />,
+  Controls: ({ fitViewOptions }: { fitViewOptions?: unknown }) => (
+    <div
+      data-testid="flow-controls"
+      data-fit-view-options={JSON.stringify(fitViewOptions)}
+    >
+      React Flow controls
+    </div>
+  ),
   Handle: () => null,
   MarkerType: { ArrowClosed: "arrowclosed" },
   Position: { Left: "left", Right: "right" },
@@ -55,6 +72,15 @@ vi.mock("@xyflow/react", () => ({
     nodesDraggable,
     nodeExtent,
     autoPanOnNodeDrag,
+    panOnDrag,
+    zoomOnScroll,
+    zoomOnPinch,
+    zoomOnDoubleClick,
+    preventScrolling,
+    fitView,
+    fitViewOptions,
+    minZoom,
+    maxZoom,
     onNodesChange,
     onConnect,
     children,
@@ -70,6 +96,15 @@ vi.mock("@xyflow/react", () => ({
         data-node-extent={JSON.stringify(nodeExtent)}
         data-initial-node-extent={JSON.stringify(initialNodeExtent.current)}
         data-auto-pan-on-node-drag={autoPanOnNodeDrag}
+        data-pan-on-drag={panOnDrag}
+        data-zoom-on-scroll={zoomOnScroll}
+        data-zoom-on-pinch={zoomOnPinch}
+        data-zoom-on-double-click={zoomOnDoubleClick}
+        data-prevent-scrolling={preventScrolling}
+        data-fit-view={fitView}
+        data-fit-view-options={JSON.stringify(fitViewOptions)}
+        data-min-zoom={minZoom}
+        data-max-zoom={maxZoom}
       >
         {nodes.map((node) => {
           const FlowNode = nodeTypes[node.type];
@@ -200,6 +235,22 @@ describe("App node dragging", () => {
     );
     expect(reactFlow).toHaveAttribute("data-has-node-extent", "true");
     expect(reactFlow).toHaveAttribute("data-auto-pan-on-node-drag", "false");
+    expect(reactFlow).toHaveAttribute("data-pan-on-drag", "true");
+    expect(reactFlow).toHaveAttribute("data-zoom-on-scroll", "true");
+    expect(reactFlow).toHaveAttribute("data-zoom-on-pinch", "true");
+    expect(reactFlow).toHaveAttribute("data-zoom-on-double-click", "false");
+    expect(reactFlow).toHaveAttribute("data-prevent-scrolling", "true");
+    expect(reactFlow).toHaveAttribute("data-fit-view", "true");
+    expect(reactFlow).toHaveAttribute("data-min-zoom", "0.6");
+    expect(reactFlow).toHaveAttribute("data-max-zoom", "1.5");
+    expect(reactFlow).toHaveAttribute(
+      "data-fit-view-options",
+      JSON.stringify({ padding: 0.18 }),
+    );
+    expect(screen.getByTestId("flow-controls")).toHaveAttribute(
+      "data-fit-view-options",
+      JSON.stringify({ padding: 0.18 }),
+    );
     expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
       "data-node-extent",
       JSON.stringify([
