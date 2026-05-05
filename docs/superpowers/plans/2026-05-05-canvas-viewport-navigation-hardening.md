@@ -29,6 +29,7 @@ No new files, dependencies, provider components, minimap, custom toolbar, graph 
 ## Task 1: Cover Viewport Controls In The React Flow Adapter Test
 
 **Files:**
+
 - Modify: `src/App.nodeDrag.test.tsx`
 
 - [ ] **Step 1: Extend the test mock types before changing app code**
@@ -156,6 +157,7 @@ git commit -m "test: cover canvas viewport navigation controls"
 ## Task 2: Enable React Flow Viewport Navigation
 
 **Files:**
+
 - Modify: `src/App.tsx`
 
 - [ ] **Step 1: Import React Flow Controls**
@@ -250,6 +252,7 @@ git commit -m "feat: enable canvas viewport navigation"
 ## Task 3: Style React Flow Controls For The Existing Canvas
 
 **Files:**
+
 - Modify: `src/styles.css`
 
 - [ ] **Step 1: Add control styles**
@@ -314,6 +317,7 @@ git commit -m "style: align canvas viewport controls"
 ## Task 4: Run Full Automated Verification
 
 **Files:**
+
 - No planned file changes.
 
 - [ ] **Step 1: Run the issue verification commands**
@@ -352,6 +356,7 @@ If no files changed, do not create an empty commit.
 ## Task 5: Manual Browser Verification And PR Evidence
 
 **Files:**
+
 - Create screenshots or video/GIF under an issue-specific verification path only if the project convention requires storing them in-repo for the PR.
 
 - [ ] **Step 1: Start the dev server**
