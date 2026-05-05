@@ -23,6 +23,7 @@ No new runtime files, hooks, dependencies, or project-model changes are needed.
 ### Task 1: Add Failing Tests For Collapse Behavior
 
 **Files:**
+
 - Modify: `src/App.test.tsx`
 
 - [ ] **Step 1: Add the collapse behavior test after `creates visible in-memory connections between primitive nodes`**
@@ -30,42 +31,44 @@ No new runtime files, hooks, dependencies, or project-model changes are needed.
 Insert this test immediately after the existing test that starts at `src/App.test.tsx:291`:
 
 ```tsx
-  it("collapses and expands the connections panel without losing existing connections", () => {
-    render(<App />);
+it("collapses and expands the connections panel without losing existing connections", () => {
+  render(<App />);
 
-    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
-    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+  fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+  fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
 
-    const connectionPanel = screen.getByLabelText(/graph connections/i);
-    const collapseButton = within(connectionPanel).getByRole("button", {
-      name: /collapse connections panel/i,
-    });
-
-    expect(collapseButton).toHaveAttribute("aria-expanded", "true");
-    expect(within(connectionPanel).getByText("Tensor -> Neuron")).toBeInTheDocument();
-
-    fireEvent.click(collapseButton);
-
-    const expandButton = within(connectionPanel).getByRole("button", {
-      name: /expand connections panel/i,
-    });
-
-    expect(expandButton).toHaveAttribute("aria-expanded", "false");
-    expect(
-      within(connectionPanel).queryByText("Tensor -> Neuron"),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(expandButton);
-
-    expect(
-      within(connectionPanel).getByText("Tensor -> Neuron"),
-    ).toBeInTheDocument();
-    expect(
-      within(connectionPanel).getByRole("button", {
-        name: /delete connection tensor to neuron/i,
-      }),
-    ).toBeInTheDocument();
+  const connectionPanel = screen.getByLabelText(/graph connections/i);
+  const collapseButton = within(connectionPanel).getByRole("button", {
+    name: /collapse connections panel/i,
   });
+
+  expect(collapseButton).toHaveAttribute("aria-expanded", "true");
+  expect(
+    within(connectionPanel).getByText("Tensor -> Neuron"),
+  ).toBeInTheDocument();
+
+  fireEvent.click(collapseButton);
+
+  const expandButton = within(connectionPanel).getByRole("button", {
+    name: /expand connections panel/i,
+  });
+
+  expect(expandButton).toHaveAttribute("aria-expanded", "false");
+  expect(
+    within(connectionPanel).queryByText("Tensor -> Neuron"),
+  ).not.toBeInTheDocument();
+
+  fireEvent.click(expandButton);
+
+  expect(
+    within(connectionPanel).getByText("Tensor -> Neuron"),
+  ).toBeInTheDocument();
+  expect(
+    within(connectionPanel).getByRole("button", {
+      name: /delete connection tensor to neuron/i,
+    }),
+  ).toBeInTheDocument();
+});
 ```
 
 - [ ] **Step 2: Add the collapsed-state persistence test after the test from Step 1**
@@ -73,35 +76,35 @@ Insert this test immediately after the existing test that starts at `src/App.tes
 Insert this second test immediately after the first new test:
 
 ```tsx
-  it("keeps the connections panel collapsed when new connections are added", () => {
-    render(<App />);
+it("keeps the connections panel collapsed when new connections are added", () => {
+  render(<App />);
 
-    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
-    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+  fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+  fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
 
-    const connectionPanel = screen.getByLabelText(/graph connections/i);
-    fireEvent.click(
-      within(connectionPanel).getByRole("button", {
-        name: /collapse connections panel/i,
-      }),
-    );
+  const connectionPanel = screen.getByLabelText(/graph connections/i);
+  fireEvent.click(
+    within(connectionPanel).getByRole("button", {
+      name: /collapse connections panel/i,
+    }),
+  );
 
-    fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
-    fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
+  fireEvent.click(screen.getByLabelText(/start connection from neuron/i));
+  fireEvent.click(screen.getByLabelText(/connect neuron to activation/i));
 
-    expect(
-      within(connectionPanel).getByRole("button", {
-        name: /expand connections panel/i,
-      }),
-    ).toHaveAttribute("aria-expanded", "false");
-    expect(within(connectionPanel).getByText("2")).toBeInTheDocument();
-    expect(
-      within(connectionPanel).queryByText("Tensor -> Neuron"),
-    ).not.toBeInTheDocument();
-    expect(
-      within(connectionPanel).queryByText("Neuron -> Activation"),
-    ).not.toBeInTheDocument();
-  });
+  expect(
+    within(connectionPanel).getByRole("button", {
+      name: /expand connections panel/i,
+    }),
+  ).toHaveAttribute("aria-expanded", "false");
+  expect(within(connectionPanel).getByText("2")).toBeInTheDocument();
+  expect(
+    within(connectionPanel).queryByText("Tensor -> Neuron"),
+  ).not.toBeInTheDocument();
+  expect(
+    within(connectionPanel).queryByText("Neuron -> Activation"),
+  ).not.toBeInTheDocument();
+});
 ```
 
 - [ ] **Step 3: Run the focused tests and verify they fail for the missing toggle**
@@ -119,6 +122,7 @@ Expected: FAIL because no button named `Collapse connections panel` exists yet.
 ### Task 2: Implement The Connections Drawer Toggle
 
 **Files:**
+
 - Modify: `src/App.tsx`
 
 - [ ] **Step 1: Import a compact expand/collapse icon**
@@ -161,19 +165,19 @@ import {
 Add this state after the existing `connectionSourceId` state in `src/App.tsx`:
 
 ```tsx
-  const [isConnectionsPanelCollapsed, setIsConnectionsPanelCollapsed] =
-    useState(false);
+const [isConnectionsPanelCollapsed, setIsConnectionsPanelCollapsed] =
+  useState(false);
 ```
 
 The surrounding state block should read:
 
 ```tsx
-  const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
-    null,
-  );
-  const [isConnectionsPanelCollapsed, setIsConnectionsPanelCollapsed] =
-    useState(false);
-  const graphCanvasRef = useRef<HTMLElement | null>(null);
+const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
+  null,
+);
+const [isConnectionsPanelCollapsed, setIsConnectionsPanelCollapsed] =
+  useState(false);
+const graphCanvasRef = useRef<HTMLElement | null>(null);
 ```
 
 - [ ] **Step 3: Add a toggle label constant before the JSX return**
@@ -181,9 +185,9 @@ The surrounding state block should read:
 Add this constant after `canvasEdges` is computed and before `return (`. If `canvasEdges` is already near the JSX return, keep this local to the render preparation area:
 
 ```tsx
-  const connectionsPanelToggleLabel = isConnectionsPanelCollapsed
-    ? "Expand connections panel"
-    : "Collapse connections panel";
+const connectionsPanelToggleLabel = isConnectionsPanelCollapsed
+  ? "Expand connections panel"
+  : "Collapse connections panel";
 ```
 
 - [ ] **Step 4: Replace the connections drawer markup**
@@ -191,58 +195,60 @@ Add this constant after `canvasEdges` is computed and before `return (`. If `can
 Replace the current block that starts with `{canvasEdges.length > 0 ? (` and renders `<section className="connection-drawer" aria-label="Graph connections">` with this markup:
 
 ```tsx
-          {canvasEdges.length > 0 ? (
-            <section
-              className={`connection-drawer${isConnectionsPanelCollapsed ? " collapsed" : ""}`}
-              aria-label="Graph connections"
-            >
-              <header className="connection-drawer-header">
-                <div className="connection-drawer-summary">
-                  <h3>Connections</h3>
-                  <span>{graphConnections.length}</span>
-                </div>
+{
+  canvasEdges.length > 0 ? (
+    <section
+      className={`connection-drawer${isConnectionsPanelCollapsed ? " collapsed" : ""}`}
+      aria-label="Graph connections"
+    >
+      <header className="connection-drawer-header">
+        <div className="connection-drawer-summary">
+          <h3>Connections</h3>
+          <span>{graphConnections.length}</span>
+        </div>
+        <button
+          type="button"
+          className="connection-drawer-toggle"
+          aria-expanded={!isConnectionsPanelCollapsed}
+          aria-label={connectionsPanelToggleLabel}
+          title={connectionsPanelToggleLabel}
+          onClick={() =>
+            setIsConnectionsPanelCollapsed(
+              (currentIsCollapsed) => !currentIsCollapsed,
+            )
+          }
+        >
+          <ChevronDown size={16} aria-hidden="true" />
+        </button>
+      </header>
+      {!isConnectionsPanelCollapsed ? (
+        <div className="connection-list">
+          {graphConnections.map((connection) => {
+            const connectionLabel = getGraphConnectionLabel(
+              connection,
+              graphNodes,
+            );
+
+            return (
+              <div className="connection-list-item" key={connection.id}>
+                <span>{connectionLabel}</span>
                 <button
                   type="button"
-                  className="connection-drawer-toggle"
-                  aria-expanded={!isConnectionsPanelCollapsed}
-                  aria-label={connectionsPanelToggleLabel}
-                  title={connectionsPanelToggleLabel}
-                  onClick={() =>
-                    setIsConnectionsPanelCollapsed(
-                      (currentIsCollapsed) => !currentIsCollapsed,
-                    )
-                  }
+                  className="connection-delete-button"
+                  aria-label={getDeleteConnectionLabel(connectionLabel)}
+                  title={getDeleteConnectionLabel(connectionLabel)}
+                  onClick={() => deleteGraphConnection(connection.id)}
                 >
-                  <ChevronDown size={16} aria-hidden="true" />
+                  <Trash2 size={13} aria-hidden="true" />
                 </button>
-              </header>
-              {!isConnectionsPanelCollapsed ? (
-                <div className="connection-list">
-                  {graphConnections.map((connection) => {
-                    const connectionLabel = getGraphConnectionLabel(
-                      connection,
-                      graphNodes,
-                    );
-
-                    return (
-                      <div className="connection-list-item" key={connection.id}>
-                        <span>{connectionLabel}</span>
-                        <button
-                          type="button"
-                          className="connection-delete-button"
-                          aria-label={getDeleteConnectionLabel(connectionLabel)}
-                          title={getDeleteConnectionLabel(connectionLabel)}
-                          onClick={() => deleteGraphConnection(connection.id)}
-                        >
-                          <Trash2 size={13} aria-hidden="true" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </section>
-          ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </section>
+  ) : null;
+}
 ```
 
 - [ ] **Step 5: Run the focused tests**
@@ -260,6 +266,7 @@ Expected: PASS for the two new tests. If the command also runs unrelated tests w
 ### Task 3: Style The Compact Drawer State
 
 **Files:**
+
 - Modify: `src/styles.css`
 
 - [ ] **Step 1: Update the drawer header styles**
@@ -356,6 +363,7 @@ Expected: PASS.
 ### Task 4: Run Full Verification
 
 **Files:**
+
 - Verify: `src/App.test.tsx`
 - Verify: `src/App.tsx`
 - Verify: `src/styles.css`

@@ -1149,17 +1149,12 @@ export function App() {
                     );
 
                     return (
-                      <div
-                        className="connection-list-item"
-                        key={connection.id}
-                      >
+                      <div className="connection-list-item" key={connection.id}>
                         <span>{connectionLabel}</span>
                         <button
                           type="button"
                           className="connection-delete-button"
-                          aria-label={getDeleteConnectionLabel(
-                            connectionLabel,
-                          )}
+                          aria-label={getDeleteConnectionLabel(connectionLabel)}
                           title={getDeleteConnectionLabel(connectionLabel)}
                           onClick={() => deleteGraphConnection(connection.id)}
                         >
