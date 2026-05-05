@@ -544,6 +544,39 @@ h4 {
   color: var(--ink-soft);
 }
 
+.graph-canvas .react-flow__controls {
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+}
+
+.graph-canvas .react-flow__controls-button {
+  width: 34px;
+  height: 34px;
+  color: var(--ink);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.graph-canvas .react-flow__controls-button:last-child {
+  border-bottom: 0;
+}
+
+.graph-canvas .react-flow__controls-button:hover,
+.graph-canvas .react-flow__controls-button:focus-visible {
+  color: #ffffff;
+  background: var(--teal-strong);
+  outline: none;
+}
+
+.graph-canvas .react-flow__controls-button svg {
+  max-width: 16px;
+  max-height: 16px;
+  fill: currentColor;
+}
+
 .graph-canvas .react-flow__node.architecture-flow-node {
   width: 228px;
   background: transparent;
