@@ -27,6 +27,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import {
   Background,
+  Controls,
   Handle,
   MarkerType,
   Position,
@@ -1085,15 +1086,23 @@ export function App() {
                 nodesDraggable={true}
                 nodesConnectable={true}
                 elementsSelectable={false}
-                panOnDrag={false}
-                zoomOnScroll={false}
-                zoomOnPinch={false}
+                panOnDrag={true}
+                zoomOnScroll={true}
+                zoomOnPinch={true}
                 zoomOnDoubleClick={false}
                 autoPanOnNodeDrag={false}
-                preventScrolling={false}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                preventScrolling={true}
+                fitView={true}
+                fitViewOptions={{ padding: 0.18 }}
+                minZoom={0.6}
+                maxZoom={1.5}
               >
                 <Background color="var(--canvas-grid)" gap={24} size={2} />
+                <Controls
+                  fitViewOptions={{ padding: 0.18 }}
+                  showInteractive={false}
+                  position="bottom-left"
+                />
               </ReactFlow>
             ) : null}
 
