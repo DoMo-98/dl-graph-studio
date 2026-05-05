@@ -23,13 +23,16 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If the current branch has local changes, local commits, or has diverged from `origin/main`, stop and report the state before making task changes. Do not switch this worktree to `main` just to synchronize, because the harness may already be operating in a generated worktree.
 - For traditional single-worktree workflows, switching to `main` and running `git pull --ff-only` is still acceptable when it can be done safely.
 - Do not start a new roadmap task without product-owner confirmation.
-- When asked for the next task, inspect the GitHub Project and propose one issue with the `ready` label.
+- When asked for the next task, inspect the GitHub Project and propose one open issue whose `dl-graph-studio Roadmap` Project status is exactly `Ready` and whose issue labels include `ready`. Do not treat the `ready` label alone as sufficient, because labels can be stale after a Project status change.
+- If no issue is currently executable under the `Ready` plus `ready` rule, still provide the product owner with the best viable alternative. First consider open issues in the GitHub Project and explain what status, scope, readiness, or product-owner confirmation is missing before it can become executable.
+- If no open issue is a useful alternative, investigate enough project context to recommend a viable next roadmap task. Use the PRD, roadmap docs, relevant specs, recent completed issues or pull requests, milestone state, and visible product gaps to propose a concrete task candidate.
+- When proposing a non-executable alternative, clearly label it as preparation or prioritization work, not an implementation task, and do not begin implementation until the product owner confirms issue creation or readiness and the normal roadmap workflow is satisfied.
 - Explain why the proposed issue is the best next task.
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
-- Before creating or updating a live roadmap issue outside GitHub's issue-template UI, use `.github/ISSUE_TEMPLATE/roadmap-task.md` as the canonical format and run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it to the Project as ready.
-- After the product owner confirms a ready issue and the agent creates the local branch `codex/<issue-number>-<short-name>`, immediately attempt to move the confirmed issue from `Ready` to `In Progress` in the `dl-graph-studio Roadmap` GitHub Project before making implementation edits.
-- If the GitHub Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, report the limitation and request the manual move of issue `#<issue-number>` to `In Progress`, or get explicit product-owner approval to continue despite the temporary Project mismatch.
+- Before creating or updating a live roadmap issue outside GitHub's issue-template UI, use `.github/ISSUE_TEMPLATE/roadmap-task.md` as the canonical format and run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it to the Project in the appropriate confirmed status.
+- After the product owner confirms a ready issue and the agent creates the local branch `codex/<issue-number>-<short-name>`, immediately attempt to move the confirmed issue from `Ready` to `In Progress` in the `dl-graph-studio Roadmap` GitHub Project before making implementation edits, unless the product owner explicitly authorizes continuing under the Project blocker policy below.
+- If a GitHub Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, GitHub availability, or another blocker, report the limitation and ask the product owner for the permissions, authorization, or project metadata needed for the agent to complete the update, or for explicit authorization to continue while the Project status remains temporarily unchanged. Do not request a manual Project move unless the product owner explicitly chooses that fallback.
 
 ## Product Owner Idea Intake
 
@@ -44,7 +47,8 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - Ask focused clarifying questions until the issue has objective, scope, out-of-scope, acceptance criteria, verification, milestone, labels, and an expected PR size that fits the normal 15-30 minute review window.
 - If the idea is too large for one reviewable PR, propose a split and recommend the first issue to create.
 - Before creating or updating a live roadmap issue outside GitHub's issue-template UI, run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
-- Ask the product owner to confirm issue creation, readiness, and priority before applying `ready`, adding the issue to the Project as ready, or starting implementation.
+- Ask the product owner to confirm issue creation, readiness, priority, and intended Project status before applying `ready`, adding the issue to the `dl-graph-studio Roadmap` Project, or starting implementation.
+- When creating a roadmap issue, add it to the `dl-graph-studio Roadmap` Project in the confirmed status before treating the issue as ready for roadmap execution. If Project placement fails, ask the product owner for the permissions, authorization, or project metadata needed for the agent to complete the placement, or for explicit authorization to continue while the Project status remains temporarily unchanged, instead of asking for a manual Project update.
 
 ## Milestone UX/UI Hardening
 
