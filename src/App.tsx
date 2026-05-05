@@ -23,8 +23,13 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { ChangeEvent, KeyboardEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
 import {
   Background,
   Controls,
@@ -32,15 +37,11 @@ import {
   MarkerType,
   Position,
   ReactFlow,
-} from "@xyflow/react";
-import type {
-  Connection,
-  CoordinateExtent,
-  Edge,
-  Node,
-  NodeChange,
-  NodeProps,
-  NodeTypes,
+  type Connection,
+  type Edge,
+  type Node,
+  type NodeChange,
+  type NodeProps,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -61,8 +62,6 @@ type ConnectionValidationResult =
 
 const primitiveFlowNodeSize = { width: 228, height: 156 };
 const compositeFlowNodeSize = { width: 220, height: 180 };
-const primitiveNodeVisualOverflow = { left: 6, right: 12, bottom: 12 };
-const compositeNodeVisualOverflow = { left: 0, right: 0, bottom: 0 };
 
 const primitiveNodes: PrimitiveNode[] = [
   {
@@ -274,109 +273,6 @@ function getFlowNodeSize(node: GraphNode) {
     : primitiveFlowNodeSize;
 }
 
-function getCanvasNodeExtent(size: {
-  width: number;
-  height: number;
-}): CoordinateExtent {
-  return [
-    [0, 0],
-    [size.width, size.height],
-  ];
-}
-
-function getCanvasElementNodeExtent(
-  graphCanvasElement: HTMLElement,
-): CoordinateExtent | null {
-  const { width: rectWidth, height: rectHeight } =
-    graphCanvasElement.getBoundingClientRect();
-  const width = graphCanvasElement.clientWidth || rectWidth;
-  const height = graphCanvasElement.clientHeight || rectHeight;
-
-  if (width <= 0 || height <= 0) {
-    return null;
-  }
-
-  return getCanvasNodeExtent({ width, height });
-}
-
-function areCanvasNodeExtentsEqual(
-  firstExtent: CoordinateExtent | null,
-  secondExtent: CoordinateExtent,
-) {
-  return Boolean(
-    firstExtent &&
-    firstExtent[0][0] === secondExtent[0][0] &&
-    firstExtent[0][1] === secondExtent[0][1] &&
-    firstExtent[1][0] === secondExtent[1][0] &&
-    firstExtent[1][1] === secondExtent[1][1],
-  );
-}
-
-function getCanvasNodeExtentKey(canvasNodeExtent: CoordinateExtent) {
-  return `${canvasNodeExtent[0][0]}:${canvasNodeExtent[0][1]}:${canvasNodeExtent[1][0]}:${canvasNodeExtent[1][1]}`;
-}
-
-function getGraphNodeVisualOverflow(node: GraphNode) {
-  return node.type === "composite"
-    ? compositeNodeVisualOverflow
-    : primitiveNodeVisualOverflow;
-}
-
-function getGraphNodeExtent(
-  node: GraphNode,
-  canvasNodeExtent: CoordinateExtent,
-): CoordinateExtent {
-  const [[minX, minY], [maxX, maxY]] = canvasNodeExtent;
-  const overflow = getGraphNodeVisualOverflow(node);
-
-  // React Flow clamps the measured node body; reserve only each node type's visible overflow.
-  return [
-    [minX + overflow.left, minY],
-    [maxX - overflow.right, maxY - overflow.bottom],
-  ];
-}
-
-function clampCanvasNodePosition(
-  position: GraphNode["position"],
-  node: GraphNode,
-  canvasNodeExtent: CoordinateExtent,
-): GraphNode["position"] {
-  const [[minX, minY], [maxX, maxY]] = getGraphNodeExtent(
-    node,
-    canvasNodeExtent,
-  );
-  const nodeSize = getFlowNodeSize(node);
-  const maxPositionX = maxX - nodeSize.width;
-  const maxPositionY = maxY - nodeSize.height;
-
-  return {
-    x: Math.min(Math.max(position.x, minX), maxPositionX),
-    y: Math.min(Math.max(position.y, minY), maxPositionY),
-  };
-}
-
-function clampGraphNodesToCanvas(
-  nodes: GraphNode[],
-  canvasNodeExtent: CoordinateExtent,
-) {
-  const positionUpdates = nodes.map((node) => ({
-    id: node.id,
-    position: clampCanvasNodePosition(node.position, node, canvasNodeExtent),
-  }));
-  const hasChangedPosition = positionUpdates.some((update) => {
-    const currentNode = nodes.find((node) => node.id === update.id);
-
-    return (
-      currentNode?.position.x !== update.position.x ||
-      currentNode.position.y !== update.position.y
-    );
-  });
-
-  return hasChangedPosition
-    ? updateGraphNodePositions(nodes, positionUpdates)
-    : nodes;
-}
-
 function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const selectNode = () => {
     data.onSelect(data.id);
@@ -502,7 +398,7 @@ function CompositeNodeCard({ data }: NodeProps<CompositeFlowNode>) {
   );
 }
 
-const nodeTypes: NodeTypes = {
+const nodeTypes = {
   primitive: PrimitiveNodeCard,
   composite: CompositeNodeCard,
 };
@@ -546,9 +442,6 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
-  const graphCanvasRef = useRef<HTMLElement | null>(null);
-  const [canvasNodeExtent, setCanvasNodeExtent] =
-    useState<CoordinateExtent | null>(null);
   const {
     isProjectActionsOpen,
     setIsProjectActionsOpen,
@@ -573,50 +466,6 @@ export function App() {
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
   const connectionSource =
     graphNodes.find((node) => node.id === connectionSourceId) ?? null;
-
-  useLayoutEffect(() => {
-    const graphCanvasElement = graphCanvasRef.current;
-
-    if (!graphCanvasElement) {
-      return;
-    }
-
-    const syncCanvasNodeExtent = () => {
-      const nextCanvasNodeExtent =
-        getCanvasElementNodeExtent(graphCanvasElement);
-
-      if (!nextCanvasNodeExtent) {
-        return;
-      }
-
-      setCanvasNodeExtent((currentCanvasNodeExtent) =>
-        areCanvasNodeExtentsEqual(currentCanvasNodeExtent, nextCanvasNodeExtent)
-          ? currentCanvasNodeExtent
-          : nextCanvasNodeExtent,
-      );
-    };
-
-    syncCanvasNodeExtent();
-
-    if (typeof ResizeObserver === "undefined") {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(syncCanvasNodeExtent);
-    resizeObserver.observe(graphCanvasElement);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!canvasNodeExtent || graphNodes.length === 0) {
-      return;
-    }
-
-    setGraphNodes((currentNodes) =>
-      clampGraphNodesToCanvas(currentNodes, canvasNodeExtent),
-    );
-  }, [canvasNodeExtent, graphNodes]);
 
   const updateNodeParameter = (
     nodeId: string,
@@ -776,9 +625,6 @@ export function App() {
         const commonNode = {
           id: node.id,
           position: node.position,
-          ...(canvasNodeExtent
-            ? { extent: getGraphNodeExtent(node, canvasNodeExtent) }
-            : {}),
           width: nodeSize.width,
           height: nodeSize.height,
           initialWidth: nodeSize.width,
@@ -837,7 +683,6 @@ export function App() {
       completeGraphConnection,
       connectionSource?.label,
       connectionSourceId,
-      canvasNodeExtent,
       draggedNodeId,
       graphNodes,
       selectedNodeId,
@@ -1067,44 +912,36 @@ export function App() {
             <h2>Graph studio workspace</h2>
           </div>
 
-          <section
-            className="graph-canvas"
-            aria-label="Graph canvas"
-            ref={graphCanvasRef}
-          >
-            {canvasNodeExtent ? (
-              <ReactFlow
-                key={getCanvasNodeExtentKey(canvasNodeExtent)}
-                nodes={canvasNodes}
-                edges={canvasEdges}
-                nodeTypes={nodeTypes}
-                nodeExtent={canvasNodeExtent}
-                onConnect={handleReactFlowConnect}
-                onNodesChange={handleCanvasNodesChange}
-                onNodeDragStart={(_, node) => setDraggedNodeId(node.id)}
-                onNodeDragStop={() => setDraggedNodeId(null)}
-                nodesDraggable={true}
-                nodesConnectable={true}
-                elementsSelectable={false}
-                panOnDrag={true}
-                zoomOnScroll={true}
-                zoomOnPinch={true}
-                zoomOnDoubleClick={false}
-                autoPanOnNodeDrag={false}
-                preventScrolling={true}
-                fitView={true}
+          <section className="graph-canvas" aria-label="Graph canvas">
+            <ReactFlow
+              nodes={canvasNodes}
+              edges={canvasEdges}
+              nodeTypes={nodeTypes}
+              onConnect={handleReactFlowConnect}
+              onNodesChange={handleCanvasNodesChange}
+              onNodeDragStart={(_, node) => setDraggedNodeId(node.id)}
+              onNodeDragStop={() => setDraggedNodeId(null)}
+              nodesDraggable={true}
+              nodesConnectable={true}
+              elementsSelectable={false}
+              panOnDrag={true}
+              zoomOnScroll={true}
+              zoomOnPinch={true}
+              zoomOnDoubleClick={false}
+              autoPanOnNodeDrag={false}
+              preventScrolling={true}
+              fitView={true}
+              fitViewOptions={{ padding: 0.18 }}
+              minZoom={0.6}
+              maxZoom={1.5}
+            >
+              <Background color="var(--canvas-grid)" gap={24} size={2} />
+              <Controls
                 fitViewOptions={{ padding: 0.18 }}
-                minZoom={0.6}
-                maxZoom={1.5}
-              >
-                <Background color="var(--canvas-grid)" gap={24} size={2} />
-                <Controls
-                  fitViewOptions={{ padding: 0.18 }}
-                  showInteractive={false}
-                  position="bottom-left"
-                />
-              </ReactFlow>
-            ) : null}
+                showInteractive={false}
+                position="bottom-left"
+              />
+            </ReactFlow>
 
             {canvasNodes.length === 0 ? (
               <div className="canvas-empty-state">
