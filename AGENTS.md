@@ -23,7 +23,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If the current branch has local changes, local commits, or has diverged from `origin/main`, stop and report the state before making task changes. Do not switch this worktree to `main` just to synchronize, because the harness may already be operating in a generated worktree.
 - For traditional single-worktree workflows, switching to `main` and running `git pull --ff-only` is still acceptable when it can be done safely.
 - Do not start a new roadmap task without product-owner confirmation.
-- When asked for the next task, inspect the GitHub Project and propose one issue with the `ready` label.
+- When asked for the next task, inspect the GitHub Project and propose one open issue whose `dl-graph-studio Roadmap` Project status is exactly `Ready` and whose issue labels include `ready`. Do not treat the `ready` label alone as sufficient, because labels can be stale after a Project status change.
 - Explain why the proposed issue is the best next task.
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
