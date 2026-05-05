@@ -733,12 +733,28 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   min-height: 38px;
-  padding: 0 12px;
+  padding: 0 8px 0 12px;
   border-bottom: 1px solid var(--surface-muted);
 }
 
-.connection-drawer-header span {
+.connection-drawer.collapsed .connection-drawer-header {
+  border-bottom: 0;
+}
+
+.connection-drawer-summary {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.connection-drawer-summary h3 {
+  margin: 0;
+}
+
+.connection-drawer-summary span {
   display: inline-grid;
   min-width: 20px;
   height: 20px;
@@ -748,6 +764,36 @@ h4 {
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 800;
+}
+
+.connection-drawer-toggle {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--teal-strong);
+  background: var(--teal-soft);
+  border: 1px solid rgba(19, 168, 158, 0.25);
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.connection-drawer-toggle:hover,
+.connection-drawer-toggle:focus-visible {
+  color: #ffffff;
+  background: var(--teal);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(19 168 158 / 20%);
+}
+
+.connection-drawer.collapsed .connection-drawer-toggle svg {
+  transform: rotate(180deg);
 }
 
 .connection-list {
@@ -989,6 +1035,9 @@ h4 {
 @media (max-width: 820px) {
   .app-shell {
     grid-template-rows: auto auto;
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
   }
 
   .app-topbar {

@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   BookOpen,
   Box,
+  ChevronDown,
   ChevronsRight,
   CircuitBoard,
   Grid,
@@ -545,6 +546,8 @@ export function App() {
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
     null,
   );
+  const [isConnectionsPanelCollapsed, setIsConnectionsPanelCollapsed] =
+    useState(false);
   const graphCanvasRef = useRef<HTMLElement | null>(null);
   const [canvasNodeExtent, setCanvasNodeExtent] =
     useState<CoordinateExtent | null>(null);
@@ -882,6 +885,10 @@ export function App() {
     [graphConnections, graphNodes],
   );
 
+  const connectionsPanelToggleLabel = isConnectionsPanelCollapsed
+    ? "Expand connections panel"
+    : "Collapse connections panel";
+
   return (
     <div className="app-shell">
       <header className="app-topbar">
@@ -1110,36 +1117,54 @@ export function App() {
 
           {canvasEdges.length > 0 ? (
             <section
-              className="connection-drawer"
+              className={`connection-drawer${isConnectionsPanelCollapsed ? " collapsed" : ""}`}
               aria-label="Graph connections"
             >
               <header className="connection-drawer-header">
-                <h3>Connections</h3>
-                <span>{graphConnections.length}</span>
+                <div className="connection-drawer-summary">
+                  <h3>Connections</h3>
+                  <span>{graphConnections.length}</span>
+                </div>
+                <button
+                  type="button"
+                  className="connection-drawer-toggle"
+                  aria-expanded={!isConnectionsPanelCollapsed}
+                  aria-label={connectionsPanelToggleLabel}
+                  title={connectionsPanelToggleLabel}
+                  onClick={() =>
+                    setIsConnectionsPanelCollapsed(
+                      (currentIsCollapsed) => !currentIsCollapsed,
+                    )
+                  }
+                >
+                  <ChevronDown size={16} aria-hidden="true" />
+                </button>
               </header>
-              <div className="connection-list">
-                {graphConnections.map((connection) => {
-                  const connectionLabel = getGraphConnectionLabel(
-                    connection,
-                    graphNodes,
-                  );
+              {!isConnectionsPanelCollapsed ? (
+                <div className="connection-list">
+                  {graphConnections.map((connection) => {
+                    const connectionLabel = getGraphConnectionLabel(
+                      connection,
+                      graphNodes,
+                    );
 
-                  return (
-                    <div className="connection-list-item" key={connection.id}>
-                      <span>{connectionLabel}</span>
-                      <button
-                        type="button"
-                        className="connection-delete-button"
-                        aria-label={getDeleteConnectionLabel(connectionLabel)}
-                        title={getDeleteConnectionLabel(connectionLabel)}
-                        onClick={() => deleteGraphConnection(connection.id)}
-                      >
-                        <Trash2 size={13} aria-hidden="true" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                    return (
+                      <div className="connection-list-item" key={connection.id}>
+                        <span>{connectionLabel}</span>
+                        <button
+                          type="button"
+                          className="connection-delete-button"
+                          aria-label={getDeleteConnectionLabel(connectionLabel)}
+                          title={getDeleteConnectionLabel(connectionLabel)}
+                          onClick={() => deleteGraphConnection(connection.id)}
+                        >
+                          <Trash2 size={13} aria-hidden="true" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
             </section>
           ) : null}
 
