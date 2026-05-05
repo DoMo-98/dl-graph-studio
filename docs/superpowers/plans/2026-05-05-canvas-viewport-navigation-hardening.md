@@ -10,6 +10,13 @@
 
 ---
 
+> **Scope update:** The bounded node placement parts of this original plan were
+> superseded after the PR added viewport navigation. Use
+> `docs/superpowers/plans/2026-05-05-free-canvas-node-placement.md` for the
+> follow-up implementation that removes `nodeExtent`, per-node `extent`, and
+> resize-time position clamping while preserving pan, zoom, controls, and
+> fit-view.
+
 ## File Structure
 
 - Modify `src/App.tsx`
