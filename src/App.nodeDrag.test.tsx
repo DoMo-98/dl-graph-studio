@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { useRef } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -211,29 +211,15 @@ describe("App node dragging", () => {
     vi.restoreAllMocks();
   });
 
-  it("passes a visual-safe canvas extent to React Flow and persists clamped node positions from drag changes", async () => {
+  it("passes viewport controls to React Flow and persists free node positions from drag changes", async () => {
     render(<App />);
 
     const reactFlow = await screen.findByTestId("react-flow");
 
     expect(reactFlow).toHaveAttribute("data-nodes-draggable", "true");
-    await waitFor(() =>
-      expect(reactFlow).toHaveAttribute(
-        "data-node-extent",
-        JSON.stringify([
-          [0, 0],
-          [640, 520],
-        ]),
-      ),
-    );
-    expect(reactFlow).toHaveAttribute(
-      "data-initial-node-extent",
-      JSON.stringify([
-        [0, 0],
-        [640, 520],
-      ]),
-    );
-    expect(reactFlow).toHaveAttribute("data-has-node-extent", "true");
+    expect(reactFlow).toHaveAttribute("data-has-node-extent", "false");
+    expect(reactFlow).not.toHaveAttribute("data-node-extent");
+    expect(reactFlow).not.toHaveAttribute("data-initial-node-extent");
     expect(reactFlow).toHaveAttribute("data-auto-pan-on-node-drag", "false");
     expect(reactFlow).toHaveAttribute("data-pan-on-drag", "true");
     expect(reactFlow).toHaveAttribute("data-zoom-on-scroll", "true");
@@ -251,77 +237,45 @@ describe("App node dragging", () => {
       "data-fit-view-options",
       JSON.stringify({ padding: 0.18 }),
     );
-    expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
+    expect(screen.getByTestId("flow-node-tensor")).not.toHaveAttribute(
       "data-node-extent",
-      JSON.stringify([
-        [6, 0],
-        [628, 508],
-      ]),
     );
-    expect(screen.getByTestId("flow-node-dense-block")).toHaveAttribute(
+    expect(screen.getByTestId("flow-node-dense-block")).not.toHaveAttribute(
       "data-node-extent",
-      JSON.stringify([
-        [0, 0],
-        [640, 520],
-      ]),
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId("flow-node-activation")).toHaveAttribute(
-        "data-y",
-        "352",
-      ),
-    );
-    expect(screen.getByTestId("flow-node-dense-linear")).toHaveAttribute(
-      "data-y",
-      "352",
     );
 
-    // Move Tensor node (position x+32, y+48 per mock)
     fireEvent.click(screen.getByRole("button", { name: "Move Tensor" }));
 
-    // Verify position changed in the flow node data attributes
     const tensorFlowNode = screen.getByTestId("flow-node-tensor");
     expect(tensorFlowNode).toHaveAttribute("data-x", "128");
     expect(tensorFlowNode).toHaveAttribute("data-y", "112");
 
-    // Move Dense Block to the oversized mock position and let React Flow own bounds.
     fireEvent.click(screen.getByRole("button", { name: "Move Dense Block" }));
 
     const denseBlockFlowNode = screen.getByTestId("flow-node-dense-block");
-    expect(denseBlockFlowNode).toHaveAttribute("data-x", "420");
-    expect(denseBlockFlowNode).toHaveAttribute("data-y", "340");
+    expect(denseBlockFlowNode).toHaveAttribute("data-x", "1500");
+    expect(denseBlockFlowNode).toHaveAttribute("data-y", "1500");
   });
 
-  it("keeps controlled node state aligned with React Flow clamp semantics on tiny canvases", async () => {
+  it("does not rewrite controlled node positions when the canvas is tiny", async () => {
     graphCanvasSize = { width: 10, height: 10 };
 
     render(<App />);
 
-    await waitFor(() =>
-      expect(screen.getByTestId("react-flow")).toHaveAttribute(
-        "data-node-extent",
-        JSON.stringify([
-          [0, 0],
-          [10, 10],
-        ]),
-      ),
+    const reactFlow = await screen.findByTestId("react-flow");
+
+    expect(reactFlow).toHaveAttribute("data-has-node-extent", "false");
+    expect(reactFlow).not.toHaveAttribute("data-node-extent");
+    expect(screen.getByTestId("flow-node-tensor")).not.toHaveAttribute(
+      "data-node-extent",
     );
     expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
-      "data-node-extent",
-      JSON.stringify([
-        [6, 0],
-        [-2, -2],
-      ]),
-    );
-    await waitFor(() =>
-      expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
-        "data-x",
-        "-230",
-      ),
+      "data-x",
+      "96",
     );
     expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
       "data-y",
-      "-158",
+      "64",
     );
   });
 
