@@ -24,6 +24,9 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - For traditional single-worktree workflows, switching to `main` and running `git pull --ff-only` is still acceptable when it can be done safely.
 - Do not start a new roadmap task without product-owner confirmation.
 - When asked for the next task, inspect the GitHub Project and propose one open issue whose `dl-graph-studio Roadmap` Project status is exactly `Ready` and whose issue labels include `ready`. Do not treat the `ready` label alone as sufficient, because labels can be stale after a Project status change.
+- If no issue is currently executable under the `Ready` plus `ready` rule, still provide the product owner with the best viable alternative. First consider open issues in the GitHub Project and explain what status, scope, readiness, or product-owner confirmation is missing before it can become executable.
+- If no open issue is a useful alternative, investigate enough project context to recommend a viable next roadmap task. Use the PRD, roadmap docs, relevant specs, recent completed issues or pull requests, milestone state, and visible product gaps to propose a concrete task candidate.
+- When proposing a non-executable alternative, clearly label it as preparation or prioritization work, not an implementation task, and do not begin implementation until the product owner confirms issue creation or readiness and the normal roadmap workflow is satisfied.
 - Explain why the proposed issue is the best next task.
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
