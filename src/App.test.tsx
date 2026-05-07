@@ -208,6 +208,45 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
+  it("clears node selection when the empty canvas background is clicked", () => {
+    render(<App />);
+
+    const neuronNode = screen.getByLabelText(/neuron primitive node/i);
+
+    fireEvent.click(neuronNode);
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(screen.getByRole("complementary", { name: /node inspector/i }))
+        .getByRole("heading", { name: /neuron/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("region", { name: /graph canvas/i }));
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "false");
+    expect(
+      within(screen.getByRole("complementary", { name: /node inspector/i }))
+        .getByText(/no node selected/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not clear selection when another canvas node is clicked", () => {
+    render(<App />);
+
+    const neuronNode = screen.getByLabelText(/neuron primitive node/i);
+    const activationNode = screen.getByLabelText(/activation primitive node/i);
+
+    fireEvent.click(neuronNode);
+    fireEvent.click(activationNode);
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "false");
+    expect(activationNode).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(screen.getByRole("complementary", { name: /node inspector/i }))
+        .getByRole("heading", { name: /activation/i }),
+    ).toBeInTheDocument();
+  });
+
   it("updates selected node parameters and keeps values associated with each node", () => {
     render(<App />);
 

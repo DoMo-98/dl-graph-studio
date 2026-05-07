@@ -544,6 +544,10 @@ export function App() {
     [addGraphConnection],
   );
 
+  const clearCanvasSelection = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
   const handleCanvasNodesChange = useCallback(
     (changes: NodeChange<GraphFlowNode>[]) => {
       const rawPositionUpdates = changes.flatMap(
@@ -919,12 +923,21 @@ export function App() {
             <h2>Graph studio workspace</h2>
           </div>
 
-          <section className="graph-canvas" aria-label="Graph canvas">
+          <section
+            className="graph-canvas"
+            aria-label="Graph canvas"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                clearCanvasSelection();
+              }
+            }}
+          >
             <ReactFlow
               nodes={canvasNodes}
               edges={canvasEdges}
               nodeTypes={nodeTypes}
               onConnect={handleReactFlowConnect}
+              onPaneClick={clearCanvasSelection}
               onNodesChange={handleCanvasNodesChange}
               onNodeDragStart={(_, node) => setDraggedNodeId(node.id)}
               onNodeDragStop={() => setDraggedNodeId(null)}
