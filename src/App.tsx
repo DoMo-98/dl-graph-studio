@@ -871,7 +871,7 @@ export function App() {
       </header>
 
       {projectToast ? (
-        <div className="project-toast" role="status">
+        <div className="editor-toast project-toast" role="status">
           {projectToast}
         </div>
       ) : null}
@@ -1029,7 +1029,7 @@ export function App() {
           ) : null}
 
           {connectionFeedback ? (
-            <div className="connection-feedback" role="alert">
+            <div className="editor-toast connection-feedback" role="alert">
               <AlertTriangle size={16} aria-hidden="true" />
               <span>{connectionFeedback}</span>
             </div>
