@@ -72,6 +72,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   height: 48px;
   padding: 0 16px;
   color: #ffffff;
@@ -79,6 +80,13 @@ a {
   border-bottom: 1px solid var(--border);
   box-shadow: 0 1px 20px 0 rgba(0, 0, 0, 0.2);
   z-index: 10;
+}
+
+.topbar-project-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 24px;
 }
 
 .editor-shell {
@@ -210,6 +218,10 @@ h4 {
   height: 1px;
   margin: 4px 0;
   background: var(--border);
+}
+
+.utility-nav-list {
+  margin-top: auto;
 }
 
 .topbar-project {
@@ -761,6 +773,7 @@ h4 {
 }
 
 .connection-drawer {
+  grid-row: 4;
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -886,10 +899,10 @@ h4 {
 }
 
 .connection-feedback {
-  position: absolute;
-  left: 18px;
-  bottom: 18px;
-  z-index: 20;
+  grid-row: 3;
+  position: static;
+  justify-self: start;
+  z-index: 2;
   width: min(540px, calc(100% - 36px));
   pointer-events: none;
 }
@@ -1067,14 +1080,31 @@ h4 {
   }
 
   .app-topbar {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    flex-wrap: wrap;
+    align-content: center;
+    height: auto;
+    min-height: 48px;
+    gap: 8px;
     padding: 12px;
   }
 
-  .topbar-project,
+  .topbar-project-status {
+    flex: 1 1 240px;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .topbar-project {
+    flex: 1 1 220px;
+    flex-wrap: wrap;
+  }
+
   .status-pill {
-    justify-self: start;
+    flex: 0 0 auto;
+  }
+
+  .topbar-actions {
+    margin-left: auto;
   }
 
   .editor-shell {
@@ -1083,16 +1113,40 @@ h4 {
     min-height: calc(100vh - 48px);
   }
 
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 6px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
   .nav-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    gap: 4px;
+    padding: 0;
+  }
+
+  .utility-nav-list {
+    margin-top: 0;
+    margin-left: auto;
   }
 
   .nav-item {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 4px;
-    min-height: 60px;
-    text-align: center;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    flex: 0 0 36px;
+    border-radius: 8px;
+  }
+
+  .nav-separator {
+    width: 1px;
+    height: 24px;
+    margin: 6px 2px;
   }
 
   .project-file-actions {

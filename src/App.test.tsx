@@ -82,6 +82,21 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
+  it("groups the project title and ready status for narrow topbar wrapping", () => {
+    render(<App />);
+
+    const projectStatusGroup = screen
+      .getByText("Ready")
+      .closest(".topbar-project-status");
+
+    expect(projectStatusGroup).not.toBeNull();
+    expect(
+      within(projectStatusGroup as HTMLElement).getByLabelText(
+        /current project/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("renders deterministic primitive architecture nodes on the canvas", () => {
     render(<App />);
 

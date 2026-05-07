@@ -742,7 +742,7 @@ export function App() {
   return (
     <div className="app-shell">
       <header className="app-topbar">
-        <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+        <div className="topbar-project-status">
           <div className="brand-lockup">
             <div className="brand-mark" aria-hidden="true">
               <CircuitBoard size={18} strokeWidth={2} />
@@ -904,9 +904,8 @@ export function App() {
           </nav>
 
           <nav
-            className="nav-list"
+            className="nav-list utility-nav-list"
             aria-label="Utility actions"
-            style={{ marginTop: "auto" }}
           >
             <a className="nav-item" href="#settings">
               <Settings size={20} aria-hidden="true" />
