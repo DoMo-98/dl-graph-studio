@@ -952,6 +952,7 @@ export function App() {
               preventScrolling={true}
               fitView={true}
               fitViewOptions={{ padding: 0.18 }}
+              proOptions={{ hideAttribution: true }}
               minZoom={0.6}
               maxZoom={1.5}
             >

@@ -37,6 +37,9 @@ type MockReactFlowProps = {
   preventScrolling?: boolean;
   fitView?: boolean;
   fitViewOptions?: unknown;
+  proOptions?: {
+    hideAttribution?: boolean;
+  };
   minZoom?: number;
   maxZoom?: number;
   onNodesChange?: (
@@ -79,6 +82,7 @@ vi.mock("@xyflow/react", () => ({
     preventScrolling,
     fitView,
     fitViewOptions,
+    proOptions,
     minZoom,
     maxZoom,
     onNodesChange,
@@ -103,6 +107,7 @@ vi.mock("@xyflow/react", () => ({
         data-prevent-scrolling={preventScrolling}
         data-fit-view={fitView}
         data-fit-view-options={JSON.stringify(fitViewOptions)}
+        data-pro-options={JSON.stringify(proOptions)}
         data-min-zoom={minZoom}
         data-max-zoom={maxZoom}
       >
@@ -232,6 +237,10 @@ describe("App node dragging", () => {
     expect(reactFlow).toHaveAttribute(
       "data-fit-view-options",
       JSON.stringify({ padding: 0.18 }),
+    );
+    expect(reactFlow).toHaveAttribute(
+      "data-pro-options",
+      JSON.stringify({ hideAttribution: true }),
     );
     expect(screen.getByTestId("flow-controls")).toHaveAttribute(
       "data-fit-view-options",
