@@ -253,7 +253,7 @@ Agents should run the same commands locally before opening pull requests when th
 
 Coverage thresholds are a modest initial regression floor, not the final quality target for the product.
 
-`pnpm test:e2e` runs the Playwright functional regression suite for the current core editor surface. It covers editor load, node selection, inspector updates, primitive parameter editing, valid and invalid connection behavior, connection panel behavior, connection deletion, and stable project file export/reset/import behavior when browser automation supports it. It is not visual snapshot testing, cross-browser coverage, Tauri desktop automation, or exhaustive future Phase 2 workflow coverage.
+`pnpm test:e2e` runs the Playwright functional regression suite for the current core editor surface. It covers editor load, node selection, inspector updates, primitive parameter editing, valid and invalid connection behavior, connection panel behavior, connection deletion, and stable project file export/reset/import behavior. It is not visual snapshot testing, cross-browser coverage, Tauri desktop automation, or exhaustive future Phase 2 workflow coverage.
 
 Custom pull request metadata validation and GitHub Project automation are separate roadmap issues and must not be hidden in the Playwright regression pull request.
 
