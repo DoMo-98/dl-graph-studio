@@ -91,9 +91,6 @@ function WorkflowHarness({
 
   return (
     <div>
-      <button type="button" onClick={workflow.toggleProjectActions}>
-        Toggle menu
-      </button>
       <button type="button" onClick={workflow.openProjectImportPicker}>
         Open import
       </button>
@@ -109,9 +106,6 @@ function WorkflowHarness({
         type="file"
         onChange={workflow.importProjectFile}
       />
-      <output aria-label="menu state">
-        {workflow.isProjectActionsOpen ? "open" : "closed"}
-      </output>
       <output aria-label="toast">
         {lastToast ? `${lastToast.tone}: ${lastToast.message}` : "none"}
       </output>
@@ -146,7 +140,7 @@ describe("useProjectFileWorkflow", () => {
     );
   });
 
-  it("exports the current project and closes the project actions menu", () => {
+  it("exports the current project", () => {
     const OriginalBlob = globalThis.Blob;
     const blobParts: BlobPart[][] = [];
     const createObjectURLDescriptor = Object.getOwnPropertyDescriptor(
@@ -202,7 +196,6 @@ describe("useProjectFileWorkflow", () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
       fireEvent.click(screen.getByRole("button", { name: /export/i }));
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
@@ -216,7 +209,6 @@ describe("useProjectFileWorkflow", () => {
       expect(screen.getByLabelText("toast")).toHaveTextContent(
         "success: Project exported.",
       );
-      expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
       expect(blobParts).toHaveLength(1);
 
       const [serializedProject] = blobParts[0];
@@ -248,7 +240,7 @@ describe("useProjectFileWorkflow", () => {
     }
   });
 
-  it("imports a valid project, closes the menu, clears editor workflow state, and clears the input", async () => {
+  it("imports a valid project, clears editor workflow state, and clears the input", async () => {
     render(<WorkflowHarness />);
 
     const fileInput =
@@ -257,7 +249,6 @@ describe("useProjectFileWorkflow", () => {
       type: "application/json",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
     fireEvent.change(fileInput, { target: { files: [projectFile] } });
 
     await waitFor(() =>
@@ -271,7 +262,6 @@ describe("useProjectFileWorkflow", () => {
     expect(screen.getByLabelText("toast")).toHaveTextContent(
       "success: Project imported.",
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
     expect(screen.getByLabelText("selected")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("connection source")).toHaveTextContent(
       /^none$/,
@@ -283,7 +273,7 @@ describe("useProjectFileWorkflow", () => {
     expect(fileInput).toHaveValue("");
   });
 
-  it("keeps the menu open and preserves editor workflow state after invalid import", async () => {
+  it("preserves editor workflow state after invalid import", async () => {
     render(<WorkflowHarness />);
 
     const fileInput =
@@ -292,13 +282,11 @@ describe("useProjectFileWorkflow", () => {
       type: "application/json",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
     fireEvent.change(fileInput, { target: { files: [invalidFile] } });
 
     await waitFor(() =>
       expect(screen.getByLabelText("toast")).toHaveTextContent(/^error: /),
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^open$/);
     expect(screen.getByLabelText("nodes")).toHaveTextContent(/^tensor$/);
     expect(screen.getByLabelText("connections")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("selected")).toHaveTextContent(/^tensor$/);
@@ -312,7 +300,7 @@ describe("useProjectFileWorkflow", () => {
     expect(fileInput).toHaveValue("");
   });
 
-  it("shows a read failure toast without closing the menu or clearing dragged state", async () => {
+  it("shows a read failure toast without clearing dragged state", async () => {
     const unreadableFile = {
       text: vi.fn().mockRejectedValue(new Error("read failed")),
     } as unknown as File;
@@ -322,7 +310,6 @@ describe("useProjectFileWorkflow", () => {
     const fileInput =
       screen.getByLabelText<HTMLInputElement>(/import project file/i);
 
-    fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
     fireEvent.change(fileInput, { target: { files: [unreadableFile] } });
 
     await waitFor(() =>
@@ -330,12 +317,11 @@ describe("useProjectFileWorkflow", () => {
         "error: Project file could not be read.",
       ),
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^open$/);
     expect(screen.getByLabelText("dragged")).toHaveTextContent(/^tensor$/);
     expect(fileInput).toHaveValue("");
   });
 
-  it("resets the project, closes the menu, and clears editor workflow state", () => {
+  it("resets the project and clears editor workflow state", () => {
     render(
       <WorkflowHarness
         initialGraphNodes={editedProjectNodes}
@@ -343,7 +329,6 @@ describe("useProjectFileWorkflow", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /toggle menu/i }));
     fireEvent.click(screen.getByRole("button", { name: /reset/i }));
 
     expect(screen.getByLabelText("nodes")).toHaveTextContent(/^tensor$/);
@@ -351,7 +336,6 @@ describe("useProjectFileWorkflow", () => {
     expect(screen.getByLabelText("toast")).toHaveTextContent(
       "success: Project reset.",
     );
-    expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
     expect(screen.getByLabelText("selected")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("connection source")).toHaveTextContent(
       /^none$/,

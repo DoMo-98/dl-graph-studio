@@ -13,7 +13,6 @@ import {
   Link2,
   MousePointer2,
   Play,
-  RotateCcw,
   Save,
   Settings,
   Share2,
@@ -22,9 +21,6 @@ import {
   Undo2,
   Redo2,
   X,
-  MoreVertical,
-  Download,
-  Upload,
 } from "lucide-react";
 import {
   useCallback,
@@ -49,6 +45,7 @@ import {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
+import { ProjectActionsMenu } from "./ProjectActionsMenu";
 import { updateGraphNodePositions } from "./projectFile";
 import { useEditorToast } from "./useEditorToast";
 import type {
@@ -449,8 +446,6 @@ export function App() {
   const [isConnectionsPanelCollapsed, setIsConnectionsPanelCollapsed] =
     useState(false);
   const {
-    isProjectActionsOpen,
-    setIsProjectActionsOpen,
     fileInputRef,
     openProjectImportPicker,
     exportProjectFile,
@@ -830,49 +825,11 @@ export function App() {
             <Save size={18} aria-hidden="true" />
           </button>
           <div className="project-actions-menu">
-            <button
-              type="button"
-              className="topbar-icon-button"
-              aria-label="Project actions"
-              title="Project actions"
-              aria-expanded={isProjectActionsOpen}
-              aria-haspopup="menu"
-              onClick={() =>
-                setIsProjectActionsOpen((currentValue) => !currentValue)
-              }
-            >
-              <MoreVertical size={18} aria-hidden="true" />
-            </button>
-
-            {isProjectActionsOpen ? (
-              <div className="project-actions-popover" role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={openProjectImportPicker}
-                >
-                  <Upload size={15} aria-hidden="true" />
-                  <span>Import project</span>
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={exportProjectFile}
-                >
-                  <Download size={15} aria-hidden="true" />
-                  <span>Export project</span>
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="danger"
-                  onClick={resetProject}
-                >
-                  <RotateCcw size={15} aria-hidden="true" />
-                  <span>Reset project</span>
-                </button>
-              </div>
-            ) : null}
+            <ProjectActionsMenu
+              onImportProject={openProjectImportPicker}
+              onExportProject={exportProjectFile}
+              onResetProject={resetProject}
+            />
           </div>
           <input
             ref={fileInputRef}

@@ -1,7 +1,6 @@
 import {
   useCallback,
   useRef,
-  useState,
   type ChangeEvent,
   type Dispatch,
   type SetStateAction,
@@ -71,7 +70,6 @@ export function useProjectFileWorkflow({
   clearDraggedNode,
   showToast,
 }: UseProjectFileWorkflowOptions) {
-  const [isProjectActionsOpen, setIsProjectActionsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const clearEditorWorkflowState = useCallback(() => {
@@ -85,10 +83,6 @@ export function useProjectFileWorkflow({
     clearConnectionFeedback,
     clearDraggedNode,
   ]);
-
-  const toggleProjectActions = useCallback(() => {
-    setIsProjectActionsOpen((isOpen) => !isOpen);
-  }, []);
 
   const openProjectImportPicker = useCallback(() => {
     fileInputRef.current?.click();
@@ -110,7 +104,6 @@ export function useProjectFileWorkflow({
     projectLink.remove();
     URL.revokeObjectURL(projectUrl);
     showToast({ message: "Project exported.", tone: "success" });
-    setIsProjectActionsOpen(false);
   }, [graphNodes, graphConnections, showToast]);
 
   const importProjectFile = useCallback(
@@ -146,7 +139,6 @@ export function useProjectFileWorkflow({
       setGraphConnections(parsedProject.project.connections);
       clearEditorWorkflowState();
       showToast({ message: "Project imported.", tone: "success" });
-      setIsProjectActionsOpen(false);
       event.target.value = "";
     },
     [setGraphNodes, setGraphConnections, clearEditorWorkflowState, showToast],
@@ -157,7 +149,6 @@ export function useProjectFileWorkflow({
     setGraphConnections([]);
     clearEditorWorkflowState();
     showToast({ message: "Project reset.", tone: "success" });
-    setIsProjectActionsOpen(false);
   }, [
     setGraphNodes,
     setGraphConnections,
@@ -167,9 +158,6 @@ export function useProjectFileWorkflow({
   ]);
 
   return {
-    isProjectActionsOpen,
-    setIsProjectActionsOpen,
-    toggleProjectActions,
     fileInputRef,
     openProjectImportPicker,
     exportProjectFile,
