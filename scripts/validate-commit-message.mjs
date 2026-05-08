@@ -26,7 +26,7 @@ Modes:
 export function validateCommitMessage(message) {
   const errors = [];
   const subject = String(message ?? "").split(/\r?\n/, 1)[0];
-  const match = subject.match(/^([a-z]+):\s*(.*)$/);
+  const match = subject.match(/^([a-z]+):\s+(.*)$/);
 
   if (!match) {
     errors.push('Commit subject must match "type: summary".');
@@ -65,10 +65,19 @@ export function collectCommitSubjects(range, { cwd = process.cwd() } = {}) {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  return output
+  return parseCommitSubjects(output);
+}
+
+export function parseCommitSubjects(output) {
+  const subjects = String(output)
     .split(/\r?\n/)
-    .map((line) => line.trimEnd())
-    .filter(Boolean);
+    .map((line) => line.trimEnd());
+
+  if (subjects.at(-1) === "") {
+    subjects.pop();
+  }
+
+  return subjects;
 }
 
 export function parseArgs(args) {

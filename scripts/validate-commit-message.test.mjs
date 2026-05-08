@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   collectCommitSubjects,
+  parseCommitSubjects,
   parseArgs,
   validateCommitMessage,
 } from "./validate-commit-message.mjs";
@@ -36,6 +37,12 @@ build: this invalid body line is ignored.`;
 
   it('rejects subjects without "type: summary"', () => {
     expect(validateCommitMessage("update graph editor")).toContain(
+      'Commit subject must match "type: summary".',
+    );
+  });
+
+  it("rejects subjects without a space after the colon", () => {
+    expect(validateCommitMessage("feat:add missing space")).toContain(
       'Commit subject must match "type: summary".',
     );
   });
@@ -92,6 +99,12 @@ describe("parseArgs", () => {
 });
 
 describe("collectCommitSubjects", () => {
+  it("preserves empty subject lines while parsing git log output", () => {
+    expect(
+      parseCommitSubjects("fix: add second change\n\nfeat: add first change\n"),
+    ).toEqual(["fix: add second change", "", "feat: add first change"]);
+  });
+
   it("returns every commit subject in the provided range", () => {
     const repo = mkdtempSync(join(tmpdir(), "commit-message-validator-"));
 
