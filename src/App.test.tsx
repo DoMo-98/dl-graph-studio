@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+import { setupProjectExportTest } from "./test/projectExportTestHelper";
 
 const originalGetBoundingClientRect =
   HTMLElement.prototype.getBoundingClientRect;
@@ -121,33 +122,35 @@ describe("App shell", () => {
 
   it("renders project feedback through the editor toast surface", async () => {
     const user = userEvent.setup();
-    const createObjectUrl = vi.fn(() => "blob:project");
-    const revokeObjectUrl = vi.fn();
-    const anchorClick = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => undefined);
-    vi.stubGlobal("URL", {
-      ...URL,
+    const {
+      anchorClick,
       createObjectURL: createObjectUrl,
       revokeObjectURL: revokeObjectUrl,
-    });
+      restore,
+    } = setupProjectExportTest({ objectUrl: "blob:project" });
 
-    render(<App />);
+    try {
+      render(<App />);
 
-    await user.click(screen.getByRole("button", { name: /project actions/i }));
-    await user.click(
-      await screen.findByRole("menuitem", { name: /export project/i }),
-    );
+      await user.click(
+        screen.getByRole("button", { name: /project actions/i }),
+      );
+      await user.click(
+        await screen.findByRole("menuitem", { name: /export project/i }),
+      );
 
-    const toast = screen.getByRole("status");
+      const toast = screen.getByRole("status");
 
-    expect(toast).toHaveClass("editor-toast");
-    expect(toast).toHaveClass("success");
-    expect(toast).toHaveTextContent("Project exported.");
-    expect(createObjectUrl).toHaveBeenCalledTimes(1);
-    expect(anchorClick).toHaveBeenCalledTimes(1);
-    expect(revokeObjectUrl).toHaveBeenCalledWith("blob:project");
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(toast).toHaveClass("editor-toast");
+      expect(toast).toHaveClass("success");
+      expect(toast).toHaveTextContent("Project exported.");
+      expect(createObjectUrl).toHaveBeenCalledTimes(1);
+      expect(anchorClick).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrl).toHaveBeenCalledWith("blob:project");
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    } finally {
+      restore();
+    }
   });
 
   it("renders deterministic primitive architecture nodes on the canvas", () => {
@@ -782,39 +785,10 @@ describe("App shell", () => {
 
   it("exports the current project from the project actions menu", async () => {
     const user = userEvent.setup();
-    const OriginalBlob = globalThis.Blob;
-    const blobParts: BlobPart[][] = [];
-    const createObjectURLDescriptor = Object.getOwnPropertyDescriptor(
-      URL,
-      "createObjectURL",
-    );
-    const revokeObjectURLDescriptor = Object.getOwnPropertyDescriptor(
-      URL,
-      "revokeObjectURL",
-    );
-    const createObjectURL = vi.fn(() => "blob:project-file");
-    const revokeObjectURL = vi.fn();
+    const { blobParts, createObjectURL, revokeObjectURL, restore } =
+      setupProjectExportTest();
 
-    vi.stubGlobal(
-      "Blob",
-      vi.fn((parts?: BlobPart[], options?: BlobPropertyBag) => {
-        blobParts.push(parts ?? []);
-        return new OriginalBlob(parts, options);
-      }),
-    );
-    Object.defineProperty(URL, "createObjectURL", {
-      configurable: true,
-      value: createObjectURL,
-    });
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: revokeObjectURL,
-    });
     try {
-      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
-        () => undefined,
-      );
-
       render(<App />);
 
       fireEvent.click(screen.getByLabelText(/tensor primitive node/i));
@@ -866,25 +840,7 @@ describe("App shell", () => {
         target: "neuron",
       });
     } finally {
-      if (createObjectURLDescriptor) {
-        Object.defineProperty(
-          URL,
-          "createObjectURL",
-          createObjectURLDescriptor,
-        );
-      } else {
-        Reflect.deleteProperty(URL, "createObjectURL");
-      }
-
-      if (revokeObjectURLDescriptor) {
-        Object.defineProperty(
-          URL,
-          "revokeObjectURL",
-          revokeObjectURLDescriptor,
-        );
-      } else {
-        Reflect.deleteProperty(URL, "revokeObjectURL");
-      }
+      restore();
     }
   });
 });
