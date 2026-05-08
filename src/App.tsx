@@ -2,12 +2,14 @@ import {
   AlertTriangle,
   BookOpen,
   Box,
+  CheckCircle2,
   ChevronDown,
   ChevronsRight,
   CircuitBoard,
   Grid,
   Hand,
   Info,
+  InfoIcon,
   Link2,
   MousePointer2,
   Play,
@@ -29,6 +31,7 @@ import {
   useMemo,
   useState,
   type ChangeEvent,
+  type JSX,
   type KeyboardEvent,
 } from "react";
 import {
@@ -47,6 +50,7 @@ import {
 
 import "@xyflow/react/dist/style.css";
 import { updateGraphNodePositions } from "./projectFile";
+import { useEditorToast } from "./useEditorToast";
 import type {
   CompositeNode,
   GraphNode,
@@ -56,6 +60,7 @@ import type {
   PrimitiveNodeParameter,
 } from "./projectFile";
 import { useProjectFileWorkflow } from "./useProjectFileWorkflow";
+import type { EditorToast } from "./useEditorToast";
 
 type ConnectionValidationResult =
   | { isValid: true }
@@ -435,9 +440,7 @@ export function App() {
   const [graphConnections, setGraphConnections] = useState<GraphConnection[]>(
     [],
   );
-  const [connectionFeedback, setConnectionFeedback] = useState<string | null>(
-    null,
-  );
+  const { toast, showToast, clearToast } = useEditorToast();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [connectionSourceId, setConnectionSourceId] = useState<string | null>(
@@ -448,7 +451,6 @@ export function App() {
   const {
     isProjectActionsOpen,
     setIsProjectActionsOpen,
-    projectToast,
     fileInputRef,
     openProjectImportPicker,
     exportProjectFile,
@@ -462,8 +464,9 @@ export function App() {
     createInitialGraphNodes,
     clearSelectedNode: () => setSelectedNodeId(null),
     clearConnectionSource: () => setConnectionSourceId(null),
-    clearConnectionFeedback: () => setConnectionFeedback(null),
+    clearConnectionFeedback: clearToast,
     clearDraggedNode: () => setDraggedNodeId(null),
+    showToast,
   });
   const selectedNode =
     graphNodes.find((node) => node.id === selectedNodeId) ?? null;
@@ -503,7 +506,7 @@ export function App() {
       );
 
       if (!validation.isValid) {
-        setConnectionFeedback(validation.message);
+        showToast({ message: validation.message, tone: "error" });
         setConnectionSourceId(null);
         return;
       }
@@ -516,10 +519,10 @@ export function App() {
           target: targetId,
         },
       ]);
-      setConnectionFeedback(null);
+      clearToast();
       setConnectionSourceId(null);
     },
-    [graphConnections, graphNodes],
+    [clearToast, graphConnections, graphNodes, showToast],
   );
 
   const completeGraphConnection = useCallback(
@@ -620,9 +623,9 @@ export function App() {
         ),
       );
       setConnectionSourceId(null);
-      setConnectionFeedback(`${connectionLabel} deleted.`);
+      showToast({ message: `${connectionLabel} deleted.`, tone: "success" });
     },
-    [graphConnections, graphNodes],
+    [graphConnections, graphNodes, showToast],
   );
 
   const canvasNodes: GraphFlowNode[] = useMemo(
@@ -738,6 +741,18 @@ export function App() {
   const connectionsPanelToggleLabel = isConnectionsPanelCollapsed
     ? "Expand connections panel"
     : "Collapse connections panel";
+
+  const toastIconByTone: Record<EditorToast["tone"], JSX.Element> = {
+    success: <CheckCircle2 size={16} aria-hidden="true" />,
+    info: <InfoIcon size={16} aria-hidden="true" />,
+    error: (
+      <AlertTriangle
+        size={16}
+        aria-hidden="true"
+        data-testid="toast-error-icon"
+      />
+    ),
+  };
 
   return (
     <div className="app-shell">
@@ -870,9 +885,13 @@ export function App() {
         </div>
       </header>
 
-      {projectToast ? (
-        <div className="editor-toast project-toast" role="status">
-          {projectToast}
+      {toast ? (
+        <div
+          className={`editor-toast ${toast.tone}`}
+          role={toast.tone === "error" ? "alert" : "status"}
+        >
+          {toastIconByTone[toast.tone]}
+          <span>{toast.message}</span>
         </div>
       ) : null}
 
@@ -1025,13 +1044,6 @@ export function App() {
                 </div>
               ) : null}
             </section>
-          ) : null}
-
-          {connectionFeedback ? (
-            <div className="editor-toast connection-feedback" role="alert">
-              <AlertTriangle size={16} aria-hidden="true" />
-              <span>{connectionFeedback}</span>
-            </div>
           ) : null}
         </section>
 

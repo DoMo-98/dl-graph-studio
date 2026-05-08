@@ -97,6 +97,28 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders project feedback through the editor toast surface", () => {
+    const createObjectUrl = vi.fn(() => "blob:project");
+    const revokeObjectUrl = vi.fn();
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: createObjectUrl,
+      revokeObjectURL: revokeObjectUrl,
+    });
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /export project/i }));
+
+    const toast = screen.getByRole("status");
+
+    expect(toast).toHaveClass("editor-toast");
+    expect(toast).toHaveClass("success");
+    expect(toast).toHaveTextContent("Project exported.");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("renders deterministic primitive architecture nodes on the canvas", () => {
     render(<App />);
 
@@ -448,24 +470,30 @@ describe("App shell", () => {
     expect(
       within(connectionList).getByText("Neuron -> Activation"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(screen.getByRole("status")).toHaveTextContent(
       /tensor -> neuron deleted/i,
     );
     expect(screen.getByLabelText(/tensor primitive node/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/neuron primitive node/i)).toBeInTheDocument();
   });
 
-  it("uses the same editor toast surface for connection deletion", () => {
+  it("uses success treatment for connection deletion feedback", () => {
     render(<App />);
 
     fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
     fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
-    fireEvent.click(screen.getByLabelText(/delete connection tensor to neuron/i));
+    fireEvent.click(
+      screen.getByLabelText(/delete connection tensor to neuron/i),
+    );
 
-    const alert = screen.getByRole("alert");
+    const toast = screen.getByRole("status");
 
-    expect(alert).toHaveClass("editor-toast");
-    expect(alert).toHaveTextContent(/tensor -> neuron deleted/i);
+    expect(toast).toHaveClass("editor-toast");
+    expect(toast).toHaveClass("success");
+    expect(toast).toHaveTextContent("Tensor -> Neuron deleted.");
+    expect(
+      within(toast).queryByTestId("toast-error-icon"),
+    ).not.toBeInTheDocument();
   });
 
   it("rejects duplicate connections with clear feedback", () => {
@@ -486,7 +514,7 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
-  it("uses one editor toast surface for connection feedback", () => {
+  it("renders invalid connection feedback as one error toast", () => {
     render(<App />);
 
     fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
@@ -497,8 +525,9 @@ describe("App shell", () => {
     const alert = screen.getByRole("alert");
 
     expect(alert).toHaveClass("editor-toast");
-    expect(alert).toHaveTextContent(/that connection already exists/i);
-    expect(screen.queryByText(/^Project exported\.$/i)).not.toBeInTheDocument();
+    expect(alert).toHaveClass("error");
+    expect(alert).toHaveTextContent("That connection already exists.");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("rejects connections into the tensor input node with clear feedback", () => {
