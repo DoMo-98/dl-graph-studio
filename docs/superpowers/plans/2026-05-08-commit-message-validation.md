@@ -443,7 +443,7 @@ Add this section to `AGENTS.md` before `## Pull Requests`:
 
 Add this section to `docs/roadmap/roadmap-process.md` before `## Pull Request Contract` or, if that heading is not present, before `## Agent Cycle`:
 
-```md
+````md
 ## Commit Message Rules
 
 All commits should use the repository Conventional Commit subset:
@@ -451,6 +451,7 @@ All commits should use the repository Conventional Commit subset:
 ```text
 type: summary
 ```
+````
 
 Allowed types are `feat`, `fix`, `docs`, `test`, `refactor`, `style`, and `chore`.
 The summary should be concrete, should describe the actual change, should not
@@ -471,7 +472,8 @@ pnpm validate:commit-message -- --range origin/main..HEAD
 
 The future CI policy should validate each commit individually rather than only
 the pull request title or final squash commit.
-```
+
+````
 
 - [ ] **Step 3: Run documentation format check**
 
@@ -479,7 +481,7 @@ Run:
 
 ```bash
 pnpm format:check
-```
+````
 
 Expected: PASS. If `node_modules` is missing, install dependencies or report that the check could not run because `prettier` is unavailable.
 

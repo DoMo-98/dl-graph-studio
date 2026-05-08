@@ -1,3 +1,5 @@
+/* global process */
+
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -12,7 +14,10 @@ import {
   validateCommitMessage,
 } from "./validate-commit-message.mjs";
 
-const cliScriptPath = join(process.cwd(), "scripts/validate-commit-message.mjs");
+const cliScriptPath = join(
+  process.cwd(),
+  "scripts/validate-commit-message.mjs",
+);
 
 describe("validateCommitMessage", () => {
   it("accepts every allowed conventional commit type", () => {
