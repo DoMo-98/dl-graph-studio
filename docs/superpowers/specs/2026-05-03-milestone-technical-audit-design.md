@@ -31,15 +31,16 @@ Near the end of each product milestone, create one roadmap issue named:
 [Roadmap]: Phase N technical audit
 ```
 
-This issue should usually run before:
+This issue should usually run after:
 
 ```md
 [Roadmap]: Phase N UX/UI hardening
 ```
 
-The technical audit should stabilize implementation quality first. The UX/UI
-hardening pass can then validate the user-facing flow on top of the corrected
-technical base.
+The UX/UI hardening pass should validate and polish the user-facing flow first.
+The technical audit can then verify that the complete milestone, including
+hardening changes, remains maintainable, well bounded, and ready for the next
+milestone.
 
 The issue should use the normal roadmap task contract:
 
@@ -69,8 +70,9 @@ Recommended subagent responsibilities:
 - `architecture-boundaries`: module boundaries, ownership, data flow,
   coupling, domain models, adapter layers, and whether implementation matches
   documented architecture.
-- `clean-code-maintainability`: naming, duplication, function and component
-  size, local API clarity, complexity, dead code, and readability.
+- `clean-code-maintainability`: naming, duplication, component consolidation,
+  function and component size, local API clarity, complexity, dead code, and
+  readability.
 - `library-use`: places where the code reinvents solved problems, checks
   whether existing project dependencies already provide the needed behavior,
   and evaluates any proposed new dependency for maturity, maintenance, bundle
@@ -102,6 +104,8 @@ milestone-local, and directly tied to an audit finding:
 - clarify module boundaries without changing product behavior,
 - extract focused helpers or components when existing code is doing too much,
 - remove duplication introduced during the milestone,
+- centralize duplicated or parallel local components when the consolidation is
+  bounded and reviewable,
 - simplify overly complex conditionals, data mapping, or state transitions,
 - replace hand-rolled code with project-approved, robust library behavior,
 - add missing tests for milestone behavior,
@@ -137,6 +141,11 @@ If a finding requires a broad refactor, architecture decision, dependency
 migration, or product clarification, create a follow-up roadmap issue with its
 own objective, scope, acceptance criteria, and verification details.
 
+If a component consolidation finding has multiple reasonable product or
+architecture outcomes, ask the product owner for feedback before choosing one.
+If the consolidation is too large for the audit pull request, create a follow-up
+roadmap issue instead of hiding the decision inside the audit.
+
 ## Finding Format
 
 Audit findings should be recorded in the issue or pull request using a compact,
@@ -164,7 +173,8 @@ Each milestone technical audit issue should adapt these criteria to the current
 milestone:
 
 - [ ] The milestone code has been audited for architecture boundaries,
-      maintainability, library usage, and test coverage.
+      maintainability, component consolidation opportunities, library usage, and
+      test coverage.
 - [ ] Audit work was split across single-responsibility subagents where
       parallel work was useful.
 - [ ] Each subagent had a clear domain and did not mix unrelated
@@ -208,9 +218,9 @@ milestone-flow visual review.
 ## Process Impact
 
 This should become a roadmap convention, not an informal reminder. The
-technical audit issue is the default penultimate issue in a milestone, followed
-by UX/UI hardening as the final issue, unless the product owner explicitly
-decides to skip or reorder either closeout task.
+technical audit issue is the default final issue in a milestone, normally after
+UX/UI hardening, unless the product owner explicitly decides to skip or reorder
+either closeout task.
 
 The existing rule that each roadmap task needs product-owner confirmation still
 applies. An agent should not start the technical audit unless the product owner
@@ -229,6 +239,6 @@ subagents inspect and fix focused areas in parallel while avoiding the common
 failure mode where one broad "cleanup" task mixes architecture, style,
 dependencies, and tests into a hard-to-review pull request.
 
-Running the technical audit before UX/UI hardening also keeps closeout ordered:
-first make the implementation foundation maintainable, then validate the
-complete user-facing experience.
+Running the technical audit after UX/UI hardening keeps closeout ordered: first
+validate and polish the complete user-facing experience, then confirm the final
+milestone implementation remains maintainable before the next milestone starts.

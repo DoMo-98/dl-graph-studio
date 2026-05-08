@@ -122,8 +122,8 @@ Manual:
 ## Process Impact
 
 This should become a roadmap convention, not an informal reminder. The milestone
-hardening issue is the final issue in a milestone by default, especially for
-Phase 1 and Phase 2.
+hardening issue is the user-facing closeout issue by default, normally followed
+by the milestone technical audit as the final issue.
 
 The existing rule that each roadmap task needs product-owner confirmation still
 applies. An agent should not start a hardening issue unless the product owner
