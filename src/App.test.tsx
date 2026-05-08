@@ -284,6 +284,36 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
+  it("selects primitive and composite nodes from the keyboard", async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    const neuronNode = screen.getByRole("button", {
+      name: /neuron primitive node/i,
+    });
+    const compositeNode = screen.getByRole("button", {
+      name: /dense block composite node/i,
+    });
+
+    neuronNode.focus();
+    await user.keyboard("{Enter}");
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "true");
+    expect(compositeNode).toHaveAttribute("aria-pressed", "false");
+
+    compositeNode.focus();
+    await user.keyboard(" ");
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "false");
+    expect(compositeNode).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByRole("heading", { name: /dense block/i }),
+    ).toBeInTheDocument();
+  });
+
   it("clears node selection when the empty canvas background is clicked", () => {
     render(<App />);
 
