@@ -201,19 +201,20 @@ The GitHub Project tracks roadmap issues as the status owner. Pull requests are 
 
 1. The product owner asks for the next task.
 2. The agent reviews the GitHub Project.
-3. The agent proposes one issue with the `ready` label and explains the recommendation.
-4. The product owner confirms the issue or selects another one.
-5. The agent creates a branch named `codex/<issue-number>-<short-name>`.
-6. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
-7. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
-8. The agent implements the issue scope using the maintainability and scope balance convention.
-9. The agent runs the required verification.
-10. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
-11. The product owner reviews the result.
-12. If changes are needed, the issue moves to `Needs Iteration` and the agent updates the same PR.
-13. When the update is ready for review, the issue moves back to `In Review`.
-14. When accepted and merged, the issue moves to `Done`.
-15. The next issue starts only after product-owner confirmation.
+3. If the agent cannot review the GitHub Project because authentication, permissions, tooling, network access, or Project metadata is unavailable, the agent asks the product owner for the concrete access, re-authentication, authorization, or Project metadata needed to inspect it before recommending an executable task. When a CLI or app can start an interactive authorization flow, the agent starts that flow and gives the product owner the exact URL, code, or approval prompt to complete, instead of only describing commands for the product owner to run. Issue labels, issue sidebars, and public issue HTML are not substitutes for the Project status.
+4. The agent proposes one issue with the `ready` label and explains the recommendation.
+5. The product owner confirms the issue or selects another one.
+6. The agent creates a branch named `codex/<issue-number>-<short-name>`.
+7. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
+8. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
+9. The agent implements the issue scope using the maintainability and scope balance convention.
+10. The agent runs the required verification.
+11. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
+12. The product owner reviews the result.
+13. If changes are needed, the issue moves to `Needs Iteration` and the agent updates the same PR.
+14. When the update is ready for review, the issue moves back to `In Review`.
+15. When accepted and merged, the issue moves to `Done`.
+16. The next issue starts only after product-owner confirmation.
 
 ## First Executable Roadmap
 
