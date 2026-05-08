@@ -80,6 +80,28 @@ Any fix that requires substantial state-model changes, new graph behavior,
 new controls, new persistent data, or a large layout rewrite should be excluded
 from #22 and proposed as follow-up roadmap work.
 
+## Toast Notification Design
+
+Toast notifications should use one editor-level notification system instead of
+separate project and connection feedback state with different lifecycles. The
+system should remain local to the Phase 1 editor; it does not need a global app
+provider or a third-party toast dependency.
+
+The editor should show one toast at a time. A new toast replaces the previous
+toast so import/export/reset feedback, connection validation feedback, and
+connection deletion feedback do not compete for attention in separate surfaces.
+
+Toasts should share one visual surface and one placement. Message behavior may
+vary only by severity:
+
+- `success` and `info` toasts use `role="status"` and auto-clear after 3000
+  milliseconds.
+- `error` toasts use `role="alert"` and auto-clear after 5000 milliseconds so
+  users have more time to read corrective feedback.
+
+Icons should match severity. Success feedback should not use warning imagery,
+and warning/error imagery should be reserved for invalid or failed actions.
+
 ## Verification
 
 Automated verification should run:
