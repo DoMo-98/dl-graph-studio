@@ -2,7 +2,6 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -13,9 +12,7 @@ import {
   validateCommitMessage,
 } from "./validate-commit-message.mjs";
 
-const cliScriptPath = fileURLToPath(
-  new URL("./validate-commit-message.mjs", import.meta.url),
-);
+const cliScriptPath = join(process.cwd(), "scripts/validate-commit-message.mjs");
 
 describe("validateCommitMessage", () => {
   it("accepts every allowed conventional commit type", () => {
