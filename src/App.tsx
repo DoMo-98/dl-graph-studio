@@ -358,6 +358,7 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
         type="target"
         position={Position.Left}
         className="architecture-node-handle"
+        data-testid={`node-${data.id}-target-handle`}
       />
       <ArchitectureNodeCardSurface
         id={data.id}
@@ -398,6 +399,7 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
         type="source"
         position={Position.Right}
         className="architecture-node-handle"
+        data-testid={`node-${data.id}-source-handle`}
       />
     </div>
   );
