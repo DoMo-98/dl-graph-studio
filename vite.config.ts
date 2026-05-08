@@ -17,5 +17,24 @@ export default defineConfig({
     exclude: ["node_modules/**", "dist/**", ".pnpm-store/**", "src-tauri/**"],
     globals: true,
     setupFiles: "./src/test/setup.ts",
+    coverage: {
+      all: true,
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/test/**",
+        "src/main.tsx",
+        "vite.config.ts",
+      ],
+      include: ["src/**/*.{ts,tsx}"],
+      provider: "v8",
+      reporter: ["text", "lcov"],
+      reportsDirectory: "./coverage",
+      thresholds: {
+        branches: 10,
+        functions: 10,
+        lines: 10,
+        statements: 10,
+      },
+    },
   },
 });
