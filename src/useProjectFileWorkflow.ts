@@ -25,7 +25,7 @@ type UseProjectFileWorkflowOptions = {
   clearConnectionSource: () => void;
   clearConnectionFeedback: () => void;
   clearDraggedNode: () => void;
-  showToast?: (toast: EditorToast) => void;
+  showToast: (toast: EditorToast) => void;
 };
 
 export function readTextFile(file: File) {
@@ -72,16 +72,7 @@ export function useProjectFileWorkflow({
   showToast,
 }: UseProjectFileWorkflowOptions) {
   const [isProjectActionsOpen, setIsProjectActionsOpen] = useState(false);
-  const [projectToast, setProjectToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const emitProjectToast = useCallback(
-    (toast: EditorToast) => {
-      showToast?.(toast);
-      setProjectToast(toast.message);
-    },
-    [showToast],
-  );
 
   const clearEditorWorkflowState = useCallback(() => {
     clearSelectedNode();
@@ -118,9 +109,9 @@ export function useProjectFileWorkflow({
     projectLink.click();
     projectLink.remove();
     URL.revokeObjectURL(projectUrl);
-    emitProjectToast({ message: "Project exported.", tone: "success" });
+    showToast({ message: "Project exported.", tone: "success" });
     setIsProjectActionsOpen(false);
-  }, [graphNodes, graphConnections, emitProjectToast]);
+  }, [graphNodes, graphConnections, showToast]);
 
   const importProjectFile = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -135,7 +126,7 @@ export function useProjectFileWorkflow({
       try {
         projectFileContent = await readTextFile(selectedFile);
       } catch {
-        emitProjectToast({
+        showToast({
           message: "Project file could not be read.",
           tone: "error",
         });
@@ -146,7 +137,7 @@ export function useProjectFileWorkflow({
       const parsedProject = parseProjectFileContent(projectFileContent);
 
       if (!parsedProject.ok) {
-        emitProjectToast({ message: parsedProject.message, tone: "error" });
+        showToast({ message: parsedProject.message, tone: "error" });
         event.target.value = "";
         return;
       }
@@ -154,37 +145,31 @@ export function useProjectFileWorkflow({
       setGraphNodes(parsedProject.project.nodes);
       setGraphConnections(parsedProject.project.connections);
       clearEditorWorkflowState();
-      emitProjectToast({ message: "Project imported.", tone: "success" });
+      showToast({ message: "Project imported.", tone: "success" });
       setIsProjectActionsOpen(false);
       event.target.value = "";
     },
-    [
-      setGraphNodes,
-      setGraphConnections,
-      clearEditorWorkflowState,
-      emitProjectToast,
-    ],
+    [setGraphNodes, setGraphConnections, clearEditorWorkflowState, showToast],
   );
 
   const resetProject = useCallback(() => {
     setGraphNodes(createInitialGraphNodes());
     setGraphConnections([]);
     clearEditorWorkflowState();
-    emitProjectToast({ message: "Project reset.", tone: "success" });
+    showToast({ message: "Project reset.", tone: "success" });
     setIsProjectActionsOpen(false);
   }, [
     setGraphNodes,
     setGraphConnections,
     createInitialGraphNodes,
     clearEditorWorkflowState,
-    emitProjectToast,
+    showToast,
   ]);
 
   return {
     isProjectActionsOpen,
     setIsProjectActionsOpen,
     toggleProjectActions,
-    projectToast,
     fileInputRef,
     openProjectImportPicker,
     exportProjectFile,
