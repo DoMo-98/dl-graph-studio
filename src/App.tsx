@@ -390,7 +390,9 @@ function CompositeNodeCard({ data }: NodeProps<CompositeFlowNode>) {
       onClick={selectNode}
       onKeyDown={handleKeyDown}
     >
-      <span className="architecture-node-kind">{data.kind}</span>
+      <span className="architecture-node-kind architecture-node-kind--composite">
+        {data.kind}
+      </span>
       <h4>{data.label}</h4>
       <ul>
         {data.displayMetadata.map((item) => (
@@ -766,23 +768,8 @@ export function App() {
             </div>
           </div>
 
-          <div
-            className="status-pill"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#10b981",
-              padding: 0,
-            }}
-          >
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "#10b981",
-              }}
-            ></div>
+          <div className="status-pill topbar-ready-status">
+            <div className="status-pill-dot" aria-hidden="true"></div>
             <span>Ready</span>
           </div>
         </div>
@@ -1013,7 +1000,7 @@ export function App() {
           {selectedNode ? (
             <div className="inspector-details">
               <span
-                className={`architecture-node-kind${selectedNode.type === "composite" ? " composite-inspector-tag" : ""}`}
+                className={`architecture-node-kind${selectedNode.type === "composite" ? " architecture-node-kind--composite" : ""}`}
               >
                 {selectedNode.kind}
               </span>
