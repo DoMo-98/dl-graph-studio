@@ -123,9 +123,7 @@ test.describe("editor core functional regression", () => {
       name: /graph connections/i,
     });
     await expect(connectionsPanel.getByText("Tensor -> Neuron")).toBeVisible();
-    await expect(
-      connectionsPanel.locator(".connection-drawer-summary span"),
-    ).toHaveText("1");
+    await expect(connectionsPanel.getByText(/^1$/)).toBeVisible();
 
     await page
       .getByRole("button", { name: /collapse connections panel/i })
