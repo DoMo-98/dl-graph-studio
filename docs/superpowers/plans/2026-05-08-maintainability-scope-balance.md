@@ -25,6 +25,7 @@ Do not modify `.github/ISSUE_TEMPLATE/roadmap-task.md` or `.github/pull_request_
 ### Task 1: Update Agent Operating Rules
 
 **Files:**
+
 - Modify: `AGENTS.md`
 
 - [ ] **Step 1: Add the source-of-truth bullet**
@@ -89,6 +90,7 @@ Expected: commit succeeds with `AGENTS.md` changed.
 ### Task 2: Update Human Roadmap Process
 
 **Files:**
+
 - Modify: `docs/roadmap/roadmap-process.md`
 
 - [ ] **Step 1: Add the roadmap process section**
@@ -152,6 +154,7 @@ Expected: commit succeeds with `docs/roadmap/roadmap-process.md` changed.
 ### Task 3: Final Documentation Verification
 
 **Files:**
+
 - Inspect: `AGENTS.md`
 - Inspect: `docs/roadmap/roadmap-process.md`
 - Inspect: `docs/superpowers/specs/2026-05-08-maintainability-scope-balance-design.md`
