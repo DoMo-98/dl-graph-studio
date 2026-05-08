@@ -53,6 +53,18 @@ export type GraphConnection = {
   target: string;
 };
 
+export type GraphConnectionRuleInput = Pick<
+  GraphConnection,
+  "source" | "target"
+>;
+
+export type GraphConnectionValidationResult =
+  | { isValid: true; sourceNode: GraphNode; targetNode: GraphNode }
+  | { isValid: false; reason: "missing-node" }
+  | { isValid: false; reason: "self-connection"; sourceNode: GraphNode }
+  | { isValid: false; reason: "duplicate-connection" }
+  | { isValid: false; reason: "data-target"; targetNode: GraphNode };
+
 export type ProjectFile = {
   version: 1;
   nodes: GraphNode[];
@@ -109,6 +121,39 @@ export function updateGraphNodePositions(
       position: { ...nextPosition },
     };
   });
+}
+
+export function validateGraphConnectionRules(
+  connection: GraphConnectionRuleInput,
+  nodes: GraphNode[],
+  existingConnections: GraphConnection[],
+): GraphConnectionValidationResult {
+  const sourceNode = nodes.find((node) => node.id === connection.source);
+  const targetNode = nodes.find((node) => node.id === connection.target);
+
+  if (!sourceNode || !targetNode) {
+    return { isValid: false, reason: "missing-node" };
+  }
+
+  if (connection.source === connection.target) {
+    return { isValid: false, reason: "self-connection", sourceNode };
+  }
+
+  if (
+    existingConnections.some(
+      (existingConnection) =>
+        existingConnection.source === connection.source &&
+        existingConnection.target === connection.target,
+    )
+  ) {
+    return { isValid: false, reason: "duplicate-connection" };
+  }
+
+  if (targetNode.kind === "Data") {
+    return { isValid: false, reason: "data-target", targetNode };
+  }
+
+  return { isValid: true, sourceNode, targetNode };
 }
 
 export function parseProjectFileContent(
@@ -350,53 +395,31 @@ function parseConnections(
 ): GraphConnection[] | null {
   const connections: GraphConnection[] = [];
   const connectionIds = new Set<string>();
-  const targetsBySourceId = new Map<string, Set<string>>();
-  const nodesById = new Map(nodes.map((node) => [node.id, node]));
 
   for (const value of values) {
-    const connection = parseConnection(value, nodesById);
+    const connection = parseConnection(value);
 
     if (!connection || connectionIds.has(connection.id)) {
       return null;
     }
 
-    const targetsForSource =
-      targetsBySourceId.get(connection.source) ?? new Set<string>();
-
-    if (targetsForSource.has(connection.target)) {
+    if (!validateGraphConnectionRules(connection, nodes, connections).isValid) {
       return null;
     }
 
     connectionIds.add(connection.id);
-    targetsForSource.add(connection.target);
-    targetsBySourceId.set(connection.source, targetsForSource);
     connections.push(connection);
   }
 
   return connections;
 }
 
-function parseConnection(
-  value: unknown,
-  nodesById: Map<string, GraphNode>,
-): GraphConnection | null {
+function parseConnection(value: unknown): GraphConnection | null {
   if (
     !isRecord(value) ||
     !isString(value.id) ||
     !isString(value.source) ||
     !isString(value.target)
-  ) {
-    return null;
-  }
-
-  const sourceNode = nodesById.get(value.source);
-  const targetNode = nodesById.get(value.target);
-
-  if (
-    !sourceNode ||
-    !targetNode ||
-    value.source === value.target ||
-    targetNode.kind === "Data"
   ) {
     return null;
   }
