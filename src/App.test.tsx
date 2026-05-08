@@ -100,6 +100,9 @@ describe("App shell", () => {
   it("renders project feedback through the editor toast surface", () => {
     const createObjectUrl = vi.fn(() => "blob:project");
     const revokeObjectUrl = vi.fn();
+    const anchorClick = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
     vi.stubGlobal("URL", {
       ...URL,
       createObjectURL: createObjectUrl,
@@ -116,6 +119,9 @@ describe("App shell", () => {
     expect(toast).toHaveClass("editor-toast");
     expect(toast).toHaveClass("success");
     expect(toast).toHaveTextContent("Project exported.");
+    expect(createObjectUrl).toHaveBeenCalledTimes(1);
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(revokeObjectUrl).toHaveBeenCalledWith("blob:project");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -254,16 +260,18 @@ describe("App shell", () => {
 
     expect(neuronNode).toHaveAttribute("aria-pressed", "true");
     expect(
-      within(screen.getByRole("complementary", { name: /node inspector/i }))
-        .getByRole("heading", { name: /neuron/i }),
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByRole("heading", { name: /neuron/i }),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("region", { name: /graph canvas/i }));
 
     expect(neuronNode).toHaveAttribute("aria-pressed", "false");
     expect(
-      within(screen.getByRole("complementary", { name: /node inspector/i }))
-        .getByText(/no node selected/i),
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByText(/no node selected/i),
     ).toBeInTheDocument();
   });
 
@@ -279,8 +287,9 @@ describe("App shell", () => {
     expect(neuronNode).toHaveAttribute("aria-pressed", "false");
     expect(activationNode).toHaveAttribute("aria-pressed", "true");
     expect(
-      within(screen.getByRole("complementary", { name: /node inspector/i }))
-        .getByRole("heading", { name: /activation/i }),
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByRole("heading", { name: /activation/i }),
     ).toBeInTheDocument();
   });
 
