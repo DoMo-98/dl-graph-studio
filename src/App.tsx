@@ -47,6 +47,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ProjectActionsMenu } from "./ProjectActionsMenu";
 import {
+  cloneGraphNode,
   updateGraphNodePositions,
   validateGraphConnectionRules,
 } from "./projectFile";
@@ -172,15 +173,7 @@ type CompositeFlowNode = Node<CompositeNodeData, "composite">;
 type GraphFlowNode = PrimitiveFlowNode | CompositeFlowNode;
 
 function createInitialGraphNodes() {
-  return [...primitiveNodes, ...compositeNodes].map((node) => ({
-    ...node,
-    metadata: [...node.metadata],
-    parameters: node.parameters.map((parameter) => ({ ...parameter })),
-    ...(node.type === "composite"
-      ? { memberNodeIds: [...node.memberNodeIds] }
-      : {}),
-    position: { ...node.position },
-  }));
+  return [...primitiveNodes, ...compositeNodes].map(cloneGraphNode);
 }
 
 function formatParameterSummary(parameter: PrimitiveNodeParameter) {
@@ -573,29 +566,9 @@ export function App() {
         return;
       }
 
-      setGraphNodes((currentNodes) => {
-        const rawPositionsByNodeId = new Map(
-          rawPositionUpdates.map((update) => [update.id, update.position]),
-        );
-        const positionUpdates = currentNodes.flatMap(
-          (node): GraphNodePositionUpdate[] => {
-            const nextPosition = rawPositionsByNodeId.get(node.id);
-
-            if (!nextPosition) {
-              return [];
-            }
-
-            return [
-              {
-                id: node.id,
-                position: nextPosition,
-              },
-            ];
-          },
-        );
-
-        return updateGraphNodePositions(currentNodes, positionUpdates);
-      });
+      setGraphNodes((currentNodes) =>
+        updateGraphNodePositions(currentNodes, rawPositionUpdates),
+      );
     },
     [],
   );

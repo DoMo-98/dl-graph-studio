@@ -88,7 +88,7 @@ export function createProjectFile(
 ): ProjectFile {
   return {
     version: PROJECT_FILE_VERSION,
-    nodes: nodes.map(cloneNode),
+    nodes: nodes.map(cloneGraphNode),
     connections: connections.map((connection) => ({ ...connection })),
   };
 }
@@ -121,6 +121,24 @@ export function updateGraphNodePositions(
       position: { ...nextPosition },
     };
   });
+}
+
+export function cloneGraphNode(node: GraphNode): GraphNode {
+  const clonedNode = {
+    ...node,
+    metadata: [...node.metadata],
+    parameters: node.parameters.map((parameter) => ({ ...parameter })),
+    position: { ...node.position },
+  };
+
+  if (clonedNode.type === "composite") {
+    return {
+      ...clonedNode,
+      memberNodeIds: [...clonedNode.memberNodeIds],
+    };
+  }
+
+  return clonedNode;
 }
 
 export function validateGraphConnectionRules(
@@ -205,24 +223,6 @@ export function parseProjectFileContent(
       connections,
     },
   };
-}
-
-function cloneNode(node: GraphNode): GraphNode {
-  const clonedNode = {
-    ...node,
-    metadata: [...node.metadata],
-    parameters: node.parameters.map((parameter) => ({ ...parameter })),
-    position: { ...node.position },
-  };
-
-  if (clonedNode.type === "composite") {
-    return {
-      ...clonedNode,
-      memberNodeIds: [...clonedNode.memberNodeIds],
-    };
-  }
-
-  return clonedNode;
 }
 
 function parseNodes(values: unknown[]): GraphNode[] | null {
