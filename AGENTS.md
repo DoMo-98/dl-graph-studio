@@ -12,6 +12,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - `docs/superpowers/specs/2026-05-03-milestone-technical-audit-design.md` defines the milestone technical audit convention.
 - `docs/superpowers/specs/2026-05-03-product-owner-idea-intake-design.md` defines the product-owner idea intake convention.
 - `docs/superpowers/specs/2026-05-03-start-task-in-progress-design.md` defines when a confirmed local task moves to `In Progress`.
+- `docs/superpowers/specs/2026-05-08-maintainability-scope-balance-design.md` defines how implementation work balances issue scope with maintainability and scalability.
 - The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
@@ -70,6 +71,16 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - Do not use technical audit issues for new product capabilities, future milestone behavior, broad rewrites, speculative abstractions, dependency changes without a concrete finding, or formatting churn.
 - If the audit reveals larger architecture, dependency, testing, or maintainability work, create follow-up roadmap issues instead of bundling that work into the audit PR.
 
+## Maintainability And Scope Balance
+
+- Treat maintainability and scalability as part of implementing an issue well, not as optional polish.
+- When touching code for a confirmed issue, include bounded local quality improvements when they are directly connected to the issue and reduce real complexity, duplication, coupling, fragility, or unclear ownership.
+- Local quality improvements must not change product behavior outside the issue acceptance criteria, introduce abstractions for hypothetical future requirements, or make the pull request too large for the normal 15-30 minute review window.
+- The issue's explicit `Out of scope` section still wins. If a needed quality improvement conflicts with that boundary, stop and ask the product owner to confirm an issue update before continuing.
+- If the right maintainability or scalability improvement is valid but too large, cross-cutting, or dependent on product-owner or architecture decisions, create or propose a follow-up roadmap issue instead of bundling it into the current PR.
+- Use milestone technical audits for broader architecture boundaries, component consolidation, library usage, test coverage, and maintainability work that is not necessary for a specific implementation issue.
+- Explain any included local quality improvement in the PR summary and verify that the issue behavior still works.
+
 ## Branches
 
 - Use `codex/<issue-number>-<short-name>` for agent-created branches.
@@ -78,7 +89,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 
 ## Scope Control
 
-- Implement only the issue scope.
+- Implement only the issue scope, interpreted with the maintainability and scope balance convention above.
 - Treat the issue's `Out of scope` section as binding.
 - Do not include unrelated refactors, dependency changes, or formatting churn.
 - If implementation reveals missing scope, stop and ask for clarification or update the issue before continuing.
