@@ -265,9 +265,9 @@ describe("App shell", () => {
       name: /node inspector/i,
     });
 
-    expect(
-      within(compositeNode).getByText("Composite"),
-    ).toHaveClass("architecture-node-kind--composite");
+    expect(within(compositeNode).getByText("Composite")).toHaveClass(
+      "architecture-node-kind--composite",
+    );
     expect(
       within(inspector).getByRole("heading", { name: /dense block/i }),
     ).toBeInTheDocument();
