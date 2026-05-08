@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cloneGraphNode,
   parseProjectFileContent,
   updateGraphNodePositions,
   validateGraphConnectionRules,
@@ -165,6 +166,34 @@ describe("parseProjectFileContent", () => {
       ok: true,
       project,
     });
+  });
+});
+
+describe("cloneGraphNode", () => {
+  it("clones primitive and composite node data without sharing nested references", () => {
+    const project = createValidProjectFile();
+
+    const primitiveClone = cloneGraphNode(project.nodes[0]);
+    const compositeClone = cloneGraphNode(project.nodes[2]);
+
+    expect(primitiveClone).toEqual(project.nodes[0]);
+    expect(compositeClone).toEqual(project.nodes[2]);
+    expect(primitiveClone).not.toBe(project.nodes[0]);
+    expect(compositeClone).not.toBe(project.nodes[2]);
+    expect(primitiveClone.metadata).not.toBe(project.nodes[0].metadata);
+    expect(primitiveClone.parameters).not.toBe(project.nodes[0].parameters);
+    expect(primitiveClone.parameters[0]).not.toBe(project.nodes[0].parameters[0]);
+    expect(primitiveClone.position).not.toBe(project.nodes[0].position);
+
+    if (compositeClone.type !== "composite") {
+      throw new Error("Expected composite clone");
+    }
+
+    expect(compositeClone.memberNodeIds).not.toBe(
+      project.nodes[2].type === "composite"
+        ? project.nodes[2].memberNodeIds
+        : undefined,
+    );
   });
 });
 
