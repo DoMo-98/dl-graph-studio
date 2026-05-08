@@ -91,9 +91,25 @@ export function parseArgs(args) {
     if (arg === "--") {
       continue;
     } else if (arg === "--message") {
+      if (isMissingValue(args[index + 1])) {
+        parsed.missingValueFor = arg;
+        if (args[index + 1] !== undefined) {
+          index += 1;
+        }
+        continue;
+      }
+
       parsed.message = args[index + 1];
       index += 1;
     } else if (arg === "--range") {
+      if (isMissingValue(args[index + 1])) {
+        parsed.missingValueFor = arg;
+        if (args[index + 1] !== undefined) {
+          index += 1;
+        }
+        continue;
+      }
+
       parsed.range = args[index + 1];
       index += 1;
     } else {
@@ -104,13 +120,22 @@ export function parseArgs(args) {
   return parsed;
 }
 
+function isMissingValue(value) {
+  return value === undefined || value.startsWith("--");
+}
+
 function runCli() {
   const args = process.argv.slice(2);
-  const { message, range, unknownArg } = parseArgs(args);
+  const { message, range, unknownArg, missingValueFor } = parseArgs(args);
   const hasMessage = args.includes("--message");
   const hasRange = args.includes("--range");
 
-  if (unknownArg || (!hasMessage && !hasRange) || (hasMessage && hasRange)) {
+  if (
+    unknownArg ||
+    missingValueFor ||
+    (!hasMessage && !hasRange) ||
+    (hasMessage && hasRange)
+  ) {
     console.error(USAGE);
     process.exitCode = 2;
     return;
@@ -124,7 +149,7 @@ function runCli() {
     try {
       subjects = collectCommitSubjects(range);
     } catch (error) {
-      console.error(`Unable to collect commit subjects: ${error.message}`);
+      console.error(`Unable to read commit range: ${error.message}`);
       process.exitCode = 2;
       return;
     }

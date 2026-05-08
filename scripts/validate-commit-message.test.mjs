@@ -113,6 +113,38 @@ describe("parseArgs", () => {
       unknownArg: "--unknown",
     });
   });
+
+  it("captures missing message values", () => {
+    expect(parseArgs(["--message"])).toEqual({
+      message: undefined,
+      range: undefined,
+      missingValueFor: "--message",
+    });
+  });
+
+  it("captures flag-looking message values", () => {
+    expect(parseArgs(["--message", "--unknown"])).toEqual({
+      message: undefined,
+      range: undefined,
+      missingValueFor: "--message",
+    });
+  });
+
+  it("captures missing range values", () => {
+    expect(parseArgs(["--range"])).toEqual({
+      message: undefined,
+      range: undefined,
+      missingValueFor: "--range",
+    });
+  });
+
+  it("captures flag-looking range values", () => {
+    expect(parseArgs(["--range", "--message"])).toEqual({
+      message: undefined,
+      range: undefined,
+      missingValueFor: "--range",
+    });
+  });
 });
 
 describe("CLI", () => {
@@ -166,6 +198,81 @@ describe("CLI", () => {
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
   });
+
+  it("exits 2 and prints usage when a message value is missing", () => {
+    const result = runCli("--message");
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+
+  it("exits 2 and prints usage when a message value looks like a flag", () => {
+    const result = runCli("--message", "--unknown");
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+
+  it("exits 2 and prints usage when a range value is missing", () => {
+    const result = runCli("--range");
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+
+  it("exits 2 and prints usage when a range value looks like a flag", () => {
+    const result = runCli("--range", "--message");
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+
+  it("exits 0 for a valid commit range", () => {
+    const repo = createRepoWithBaseCommit();
+
+    try {
+      const base = git(repo, "rev-parse", "HEAD");
+      commitFile(repo, "file.txt", "valid\n", "feat: add valid change");
+
+      const result = runCliIn(repo, "--range", `${base}..HEAD`);
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("Commit message format is valid.");
+    } finally {
+      rmSync(repo, { force: true, recursive: true });
+    }
+  });
+
+  it("exits 1 with a subject-prefixed error for an invalid commit range", () => {
+    const repo = createRepoWithBaseCommit();
+
+    try {
+      const base = git(repo, "rev-parse", "HEAD");
+      commitFile(repo, "file.txt", "invalid\n", "update");
+
+      const result = runCliIn(repo, "--range", `${base}..HEAD`);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        'update: Commit subject must match "type: summary".',
+      );
+    } finally {
+      rmSync(repo, { force: true, recursive: true });
+    }
+  });
+
+  it("exits 2 and prints an unreadable range error for an invalid range", () => {
+    const repo = createRepoWithBaseCommit();
+
+    try {
+      const result = runCliIn(repo, "--range", "missing-ref..HEAD");
+
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain("Unable to read commit range");
+    } finally {
+      rmSync(repo, { force: true, recursive: true });
+    }
+  });
 });
 
 describe("collectCommitSubjects", () => {
@@ -216,7 +323,27 @@ function git(cwd, ...args) {
 }
 
 function runCli(...args) {
+  return runCliIn(undefined, ...args);
+}
+
+function runCliIn(cwd, ...args) {
   return spawnSync(process.execPath, [cliScriptPath, ...args], {
+    cwd,
     encoding: "utf8",
   });
+}
+
+function createRepoWithBaseCommit() {
+  const repo = mkdtempSync(join(tmpdir(), "commit-message-validator-"));
+  git(repo, "init");
+  git(repo, "config", "user.email", "test@example.com");
+  git(repo, "config", "user.name", "Test User");
+  commitFile(repo, "file.txt", "base\n", "chore: base commit");
+  return repo;
+}
+
+function commitFile(repo, filename, content, message) {
+  writeFileSync(join(repo, filename), content);
+  git(repo, "add", filename);
+  git(repo, "commit", "-m", message);
 }
