@@ -46,7 +46,10 @@ import {
 
 import "@xyflow/react/dist/style.css";
 import { ProjectActionsMenu } from "./ProjectActionsMenu";
-import { updateGraphNodePositions } from "./projectFile";
+import {
+  updateGraphNodePositions,
+  validateGraphConnectionRules,
+} from "./projectFile";
 import { useEditorToast } from "./useEditorToast";
 import type {
   CompositeNode,
@@ -215,43 +218,38 @@ function validateGraphConnection(
   nodes: GraphNode[],
   connections: GraphConnection[],
 ): ConnectionValidationResult {
-  const sourceNode = nodes.find((node) => node.id === sourceId);
-  const targetNode = nodes.find((node) => node.id === targetId);
-
-  if (!sourceNode || !targetNode) {
-    return {
-      isValid: false,
-      message: "Choose two existing nodes before creating a connection.",
-    };
-  }
-
-  if (sourceId === targetId) {
-    return {
-      isValid: false,
-      message: `${sourceNode.label} cannot connect to itself.`,
-    };
-  }
-
-  const connectionExists = connections.some(
-    (connection) =>
-      connection.source === sourceId && connection.target === targetId,
+  const validation = validateGraphConnectionRules(
+    { source: sourceId, target: targetId },
+    nodes,
+    connections,
   );
 
-  if (connectionExists) {
-    return {
-      isValid: false,
-      message: "That connection already exists.",
-    };
+  if (validation.isValid) {
+    return { isValid: true };
   }
 
-  if (targetNode.kind === "Data") {
-    return {
-      isValid: false,
-      message: `${targetNode.label} is an input node and cannot receive connections.`,
-    };
+  switch (validation.reason) {
+    case "missing-node":
+      return {
+        isValid: false,
+        message: "Choose two existing nodes before creating a connection.",
+      };
+    case "self-connection":
+      return {
+        isValid: false,
+        message: `${validation.sourceNode.label} cannot connect to itself.`,
+      };
+    case "duplicate-connection":
+      return {
+        isValid: false,
+        message: "That connection already exists.",
+      };
+    case "data-target":
+      return {
+        isValid: false,
+        message: `${validation.targetNode.label} is an input node and cannot receive connections.`,
+      };
   }
-
-  return { isValid: true };
 }
 
 function getGraphConnectionLabel(
