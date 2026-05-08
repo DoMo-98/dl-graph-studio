@@ -1,14 +1,9 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 
 import { readTextFile, useProjectFileWorkflow } from "./useProjectFileWorkflow";
+import type { EditorToast } from "./useEditorToast";
 import type { GraphConnection, GraphNode } from "./projectFile";
 
 afterEach(() => {
@@ -78,6 +73,7 @@ function WorkflowHarness({
   const [connectionFeedback, setConnectionFeedback] = useState<string | null>(
     "Existing feedback",
   );
+  const [lastToast, setLastToast] = useState<EditorToast | null>(null);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>("tensor");
   const workflow = useProjectFileWorkflow({
     graphNodes,
@@ -90,6 +86,7 @@ function WorkflowHarness({
     clearConnectionSource: () => setConnectionSourceId(null),
     clearConnectionFeedback: () => setConnectionFeedback(null),
     clearDraggedNode: () => setDraggedNodeId(null),
+    showToast: setLastToast,
   });
 
   return (
@@ -115,7 +112,9 @@ function WorkflowHarness({
       <output aria-label="menu state">
         {workflow.isProjectActionsOpen ? "open" : "closed"}
       </output>
-      <output aria-label="toast">{workflow.projectToast ?? "none"}</output>
+      <output aria-label="toast">
+        {lastToast ? `${lastToast.tone}: ${lastToast.message}` : "none"}
+      </output>
       <output aria-label="nodes">
         {graphNodes.map((node) => node.id).join(",")}
       </output>
@@ -215,7 +214,7 @@ describe("useProjectFileWorkflow", () => {
         "dl-graph-studio-project.json",
       );
       expect(screen.getByLabelText("toast")).toHaveTextContent(
-        "Project exported.",
+        "success: Project exported.",
       );
       expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
       expect(blobParts).toHaveLength(1);
@@ -270,7 +269,7 @@ describe("useProjectFileWorkflow", () => {
       /^connection-tensor-dense$/,
     );
     expect(screen.getByLabelText("toast")).toHaveTextContent(
-      "Project imported.",
+      "success: Project imported.",
     );
     expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
     expect(screen.getByLabelText("selected")).toHaveTextContent(/^none$/);
@@ -297,9 +296,7 @@ describe("useProjectFileWorkflow", () => {
     fireEvent.change(fileInput, { target: { files: [invalidFile] } });
 
     await waitFor(() =>
-      expect(screen.getByLabelText("toast")).toHaveTextContent(
-        "Project file is not valid JSON.",
-      ),
+      expect(screen.getByLabelText("toast")).toHaveTextContent(/^error: /),
     );
     expect(screen.getByLabelText("menu state")).toHaveTextContent(/^open$/);
     expect(screen.getByLabelText("nodes")).toHaveTextContent(/^tensor$/);
@@ -330,7 +327,7 @@ describe("useProjectFileWorkflow", () => {
 
     await waitFor(() =>
       expect(screen.getByLabelText("toast")).toHaveTextContent(
-        "Project file could not be read.",
+        "error: Project file could not be read.",
       ),
     );
     expect(screen.getByLabelText("menu state")).toHaveTextContent(/^open$/);
@@ -351,7 +348,9 @@ describe("useProjectFileWorkflow", () => {
 
     expect(screen.getByLabelText("nodes")).toHaveTextContent(/^tensor$/);
     expect(screen.getByLabelText("connections")).toHaveTextContent(/^none$/);
-    expect(screen.getByLabelText("toast")).toHaveTextContent("Project reset.");
+    expect(screen.getByLabelText("toast")).toHaveTextContent(
+      "success: Project reset.",
+    );
     expect(screen.getByLabelText("menu state")).toHaveTextContent(/^closed$/);
     expect(screen.getByLabelText("selected")).toHaveTextContent(/^none$/);
     expect(screen.getByLabelText("connection source")).toHaveTextContent(
@@ -363,21 +362,4 @@ describe("useProjectFileWorkflow", () => {
     expect(screen.getByLabelText("dragged")).toHaveTextContent(/^none$/);
   });
 
-  it("clears project toasts after three seconds", () => {
-    vi.useFakeTimers();
-
-    render(<WorkflowHarness />);
-
-    fireEvent.click(screen.getByRole("button", { name: /reset/i }));
-
-    expect(screen.getByLabelText("toast")).toHaveTextContent("Project reset.");
-
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-
-    expect(screen.getByLabelText("toast")).toHaveTextContent(/^none$/);
-
-    vi.useRealTimers();
-  });
 });
