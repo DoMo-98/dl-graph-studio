@@ -234,6 +234,25 @@ Start with enough Phase 1 issues for roughly 2-4 weeks of work:
 
 Do not start PyTorch execution or training until the graph representation is minimal, stable, and persistible.
 
+## Required CI Checks
+
+Pull requests and pushes to `main` run the base CI workflow. The base workflow is limited to repository-owned commands so required checks stay auditable and reproducible within this repository:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm format:check
+pnpm lint
+pnpm test
+pnpm test:coverage
+pnpm build
+```
+
+Agents should run the same commands locally before opening pull requests when the issue touches code, build configuration, tests, or documentation.
+
+Coverage thresholds in the base workflow are a modest initial regression floor, not the final quality target for the product.
+
+Playwright smoke checks, custom pull request metadata validation, and GitHub Project automation are separate roadmap issues and must not be hidden in the base CI pull request.
+
 ## Later Automation
 
 After 5-10 real PRs use this process, consider automating repeated checks:
