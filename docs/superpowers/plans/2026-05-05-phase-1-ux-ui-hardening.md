@@ -118,15 +118,15 @@ Manual:
 
 ## User-reported UX/UI findings
 
-| Date | Finding | Classification | Status | Target |
-| --- | --- | --- | --- | --- |
-| 2026-05-03 | Some UI elements can render outside the visible viewport, making them impossible to see or reach. | UX bug / layout stability | Converted and closed | #33 |
-| 2026-05-03 | Users need a way to delete one chosen existing connection individually. | New graph editing capability | Converted and closed | #26 |
-| 2026-05-04 | Toast notifications should be unified across the Phase 1 editor flow. | Small UX/UI consistency polish | Open in this issue | #22 |
-| 2026-05-04 | Remove the default "React Flow" text shown on the canvas. | Visual polish / product presentation | Open in this issue if licensing and package configuration allow it | #22 |
-| 2026-05-04 | Components should be deselected when clicking the canvas background. | Interaction polish | Open in this issue | #22 |
-| 2026-05-04 | The bottom connections list should be collapsible so it does not take up editor space when it is not needed. | Layout density / workspace efficiency | Converted and closed | #32 |
-| 2026-05-04 | Improve canvas navigation with zoom, pan, and fit-view controls. | Workspace navigation / visibility | Converted and closed | #33 |
+| Date       | Finding                                                                                                      | Classification                        | Status                                                             | Target |
+| ---------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------- | ------------------------------------------------------------------ | ------ |
+| 2026-05-03 | Some UI elements can render outside the visible viewport, making them impossible to see or reach.            | UX bug / layout stability             | Converted and closed                                               | #33    |
+| 2026-05-03 | Users need a way to delete one chosen existing connection individually.                                      | New graph editing capability          | Converted and closed                                               | #26    |
+| 2026-05-04 | Toast notifications should be unified across the Phase 1 editor flow.                                        | Small UX/UI consistency polish        | Open in this issue                                                 | #22    |
+| 2026-05-04 | Remove the default "React Flow" text shown on the canvas.                                                    | Visual polish / product presentation  | Open in this issue if licensing and package configuration allow it | #22    |
+| 2026-05-04 | Components should be deselected when clicking the canvas background.                                         | Interaction polish                    | Open in this issue                                                 | #22    |
+| 2026-05-04 | The bottom connections list should be collapsible so it does not take up editor space when it is not needed. | Layout density / workspace efficiency | Converted and closed                                               | #32    |
+| 2026-05-04 | Improve canvas navigation with zoom, pan, and fit-view controls.                                             | Workspace navigation / visibility     | Converted and closed                                               | #33    |
 
 ## Visual review gate
 
@@ -318,8 +318,8 @@ Expected: record visible overlap, unreachable controls, text clipping, broken hi
 Send the product owner a table in this exact shape:
 
 ```md
-| ID | Finding | Affected screen/interaction | User impact | Recommendation | Risk/scope |
-| --- | --- | --- | --- | --- | --- |
+| ID  | Finding | Affected screen/interaction | User impact | Recommendation | Risk/scope |
+| --- | ------- | --------------------------- | ----------- | -------------- | ---------- |
 ```
 
 Add one row per newly discovered finding. Use stable IDs in order: `V1`, `V2`, `V3`. If no newly discovered findings are found, send the table header followed by `No newly discovered visual findings.`.
@@ -349,16 +349,18 @@ it("clears node selection when the empty canvas background is clicked", () => {
 
   expect(neuronNode).toHaveAttribute("aria-pressed", "true");
   expect(
-    within(screen.getByRole("complementary", { name: /node inspector/i }))
-      .getByRole("heading", { name: /neuron/i }),
+    within(
+      screen.getByRole("complementary", { name: /node inspector/i }),
+    ).getByRole("heading", { name: /neuron/i }),
   ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("region", { name: /graph canvas/i }));
 
   expect(neuronNode).toHaveAttribute("aria-pressed", "false");
   expect(
-    within(screen.getByRole("complementary", { name: /node inspector/i }))
-      .getByText(/no node selected/i),
+    within(
+      screen.getByRole("complementary", { name: /node inspector/i }),
+    ).getByText(/no node selected/i),
   ).toBeInTheDocument();
 });
 ```
@@ -380,8 +382,9 @@ it("does not clear selection when another canvas node is clicked", () => {
   expect(neuronNode).toHaveAttribute("aria-pressed", "false");
   expect(activationNode).toHaveAttribute("aria-pressed", "true");
   expect(
-    within(screen.getByRole("complementary", { name: /node inspector/i }))
-      .getByRole("heading", { name: /activation/i }),
+    within(
+      screen.getByRole("complementary", { name: /node inspector/i }),
+    ).getByRole("heading", { name: /activation/i }),
   ).toBeInTheDocument();
 });
 ```
@@ -409,7 +412,7 @@ const clearCanvasSelection = useCallback(() => {
 Then add the callback to the existing `<ReactFlow>` props:
 
 ```tsx
-onPaneClick={clearCanvasSelection}
+onPaneClick = { clearCanvasSelection };
 ```
 
 If the React Testing Library test clicks the wrapper section and React Flow does not receive pane events in jsdom, add this guarded click handler to `<section className="graph-canvas" aria-label="Graph canvas">` instead:
@@ -597,33 +600,39 @@ Expected: FAIL because connection feedback currently uses `connection-feedback`,
 In `src/App.tsx`, replace the current connection feedback block:
 
 ```tsx
-{connectionFeedback ? (
-  <div className="connection-feedback" role="alert">
-    <AlertTriangle size={16} aria-hidden="true" />
-    <span>{connectionFeedback}</span>
-  </div>
-) : null}
+{
+  connectionFeedback ? (
+    <div className="connection-feedback" role="alert">
+      <AlertTriangle size={16} aria-hidden="true" />
+      <span>{connectionFeedback}</span>
+    </div>
+  ) : null;
+}
 ```
 
 with:
 
 ```tsx
-{connectionFeedback ? (
-  <div className="editor-toast connection-feedback" role="alert">
-    <AlertTriangle size={16} aria-hidden="true" />
-    <span>{connectionFeedback}</span>
-  </div>
-) : null}
+{
+  connectionFeedback ? (
+    <div className="editor-toast connection-feedback" role="alert">
+      <AlertTriangle size={16} aria-hidden="true" />
+      <span>{connectionFeedback}</span>
+    </div>
+  ) : null;
+}
 ```
 
 In the project toast block, keep `role="status"` and add the shared class:
 
 ```tsx
-{projectToast ? (
-  <div className="editor-toast project-toast" role="status">
-    {projectToast}
-  </div>
-) : null}
+{
+  projectToast ? (
+    <div className="editor-toast project-toast" role="status">
+      {projectToast}
+    </div>
+  ) : null;
+}
 ```
 
 - [ ] **Step 4: Add shared toast styling without changing placement semantics**
@@ -696,8 +705,9 @@ it("keeps the approved visual or interaction behavior stable", () => {
   fireEvent.click(screen.getByLabelText(/tensor primitive node/i));
 
   expect(
-    within(screen.getByRole("complementary", { name: /node inspector/i }))
-      .getByRole("heading", { name: /tensor/i }),
+    within(
+      screen.getByRole("complementary", { name: /node inspector/i }),
+    ).getByRole("heading", { name: /tensor/i }),
   ).toBeInTheDocument();
 });
 ```
@@ -848,8 +858,8 @@ Closes #22
 
 ## Visual review gate
 
-| ID | Finding | Decision |
-| --- | --- | --- |
+| ID  | Finding | Decision |
+| --- | ------- | -------- |
 ```
 
 Add one row per visual review finding using the same IDs from Task 3.
