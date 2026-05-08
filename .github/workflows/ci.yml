@@ -50,5 +50,11 @@ jobs:
       - name: Check coverage
         run: pnpm test:coverage
 
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Playwright functional regression
+        run: pnpm test:e2e
+
       - name: Build
         run: pnpm build
