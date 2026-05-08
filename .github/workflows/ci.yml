@@ -56,5 +56,16 @@ jobs:
       - name: Run Playwright functional regression
         run: pnpm test:e2e
 
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-failure-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Build
         run: pnpm build
