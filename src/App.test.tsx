@@ -106,6 +106,19 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
+  it("uses named classes for the topbar status indicator", () => {
+    render(<App />);
+
+    const statusLabel = screen.getByText("Ready");
+    const statusPill = statusLabel.closest(".status-pill");
+    const statusDot = statusPill?.querySelector(".status-pill-dot");
+
+    expect(statusPill).toHaveClass("topbar-ready-status");
+    expect(statusPill).not.toHaveAttribute("style");
+    expect(statusDot).toBeInTheDocument();
+    expect(statusDot).not.toHaveAttribute("style");
+  });
+
   it("renders project feedback through the editor toast surface", async () => {
     const user = userEvent.setup();
     const createObjectUrl = vi.fn(() => "blob:project");
@@ -250,9 +263,14 @@ describe("App shell", () => {
     });
 
     expect(
+      within(compositeNode).getByText("Composite"),
+    ).toHaveClass("architecture-node-kind--composite");
+    expect(
       within(inspector).getByRole("heading", { name: /dense block/i }),
     ).toBeInTheDocument();
-    expect(within(inspector).getByText("Composite")).toBeInTheDocument();
+    expect(within(inspector).getByText("Composite")).toHaveClass(
+      "architecture-node-kind--composite",
+    );
     expect(
       within(inspector).getByText(
         "Members: Neuron, Activation, Dense / Linear",
