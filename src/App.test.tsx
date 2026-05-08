@@ -1,4 +1,11 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
@@ -53,7 +60,9 @@ describe("App shell", () => {
     expect(screen.getAllByText(/local workspace/i).length).toBeGreaterThan(0);
   });
 
-  it("shows future topbar actions as disabled and exposes real project actions from the menu", () => {
+  it("shows future topbar actions as disabled and exposes real project actions from the menu", async () => {
+    const user = userEvent.setup();
+
     render(<App />);
 
     expect(
@@ -69,10 +78,10 @@ describe("App shell", () => {
       screen.getByRole("button", { name: /native save coming soon/i }),
     ).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    await user.click(screen.getByRole("button", { name: /project actions/i }));
 
     expect(
-      screen.getByRole("menuitem", { name: /import project/i }),
+      await screen.findByRole("menuitem", { name: /import project/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: /export project/i }),
@@ -97,7 +106,8 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders project feedback through the editor toast surface", () => {
+  it("renders project feedback through the editor toast surface", async () => {
+    const user = userEvent.setup();
     const createObjectUrl = vi.fn(() => "blob:project");
     const revokeObjectUrl = vi.fn();
     const anchorClick = vi
@@ -111,8 +121,10 @@ describe("App shell", () => {
 
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /export project/i }));
+    await user.click(screen.getByRole("button", { name: /project actions/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /export project/i }),
+    );
 
     const toast = screen.getByRole("status");
 
@@ -645,7 +657,9 @@ describe("App shell", () => {
     expect(screen.getByRole("spinbutton", { name: /units/i })).toHaveValue(384);
   });
 
-  it("resets the project from the project actions menu", () => {
+  it("resets the project from the project actions menu", async () => {
+    const user = userEvent.setup();
+
     render(<App />);
 
     fireEvent.click(screen.getByLabelText(/dense \/ linear primitive node/i));
@@ -655,8 +669,10 @@ describe("App shell", () => {
     fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
     fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
 
-    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
-    fireEvent.click(screen.getByRole("menuitem", { name: /reset project/i }));
+    await user.click(screen.getByRole("button", { name: /project actions/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /reset project/i }),
+    );
 
     expect(
       screen.queryByLabelText(/graph connections/i),
@@ -668,6 +684,8 @@ describe("App shell", () => {
   });
 
   it("imports a project file from the project actions menu", async () => {
+    const user = userEvent.setup();
+
     render(<App />);
 
     const projectFile = new File(
@@ -699,7 +717,10 @@ describe("App shell", () => {
       { type: "application/json" },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    await user.click(screen.getByRole("button", { name: /project actions/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /import project/i }),
+    );
     fireEvent.change(screen.getByLabelText(/import project file/i), {
       target: { files: [projectFile] },
     });
@@ -708,7 +729,41 @@ describe("App shell", () => {
     expect(screen.queryByText("Dense / Linear")).not.toBeInTheDocument();
   });
 
-  it("exports the current project from the project actions menu", () => {
+  it("keeps the project actions menu closed after an invalid project import", async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    const projectActionsButton = screen.getByRole("button", {
+      name: /project actions/i,
+    });
+    await user.click(projectActionsButton);
+    await user.click(screen.getByRole("menuitem", { name: /import project/i }));
+
+    expect(
+      screen.queryByRole("menuitem", { name: /import project/i }),
+    ).not.toBeInTheDocument();
+
+    const invalidProjectFile = new File(["not json"], "invalid-project.json", {
+      type: "application/json",
+    });
+
+    fireEvent.change(screen.getByLabelText(/import project file/i), {
+      target: { files: [invalidProjectFile] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /project file is not valid json/i,
+      );
+    });
+    expect(
+      screen.queryByRole("menuitem", { name: /import project/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("exports the current project from the project actions menu", async () => {
+    const user = userEvent.setup();
     const OriginalBlob = globalThis.Blob;
     const blobParts: BlobPart[][] = [];
     const createObjectURLDescriptor = Object.getOwnPropertyDescriptor(
@@ -753,9 +808,11 @@ describe("App shell", () => {
       fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
       fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
 
-      fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
-      fireEvent.click(
-        screen.getByRole("menuitem", { name: /export project/i }),
+      await user.click(
+        screen.getByRole("button", { name: /project actions/i }),
+      );
+      await user.click(
+        await screen.findByRole("menuitem", { name: /export project/i }),
       );
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
