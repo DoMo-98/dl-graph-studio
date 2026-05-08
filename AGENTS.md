@@ -105,6 +105,14 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - Document manual verification steps in the PR.
 - If a requested verification cannot be run, state why in the PR.
 
+## Commit Messages
+
+- Agents must use Conventional Commit-style messages for every commit they create: `type: summary`.
+- Allowed types are `feat`, `fix`, `docs`, `test`, `refactor`, `style`, and `chore`.
+- The summary must describe the actual change, must not be empty, must not end with a period, and must not be a vague placeholder such as `update`, `changes`, `fix stuff`, or `misc`.
+- Before running `git commit`, validate the intended message with `pnpm validate:commit-message -- --message "<type>: <summary>"`.
+- Do not rely on the pull request title to fix unclear commit history. Future CI is expected to validate each commit individually.
+
 ## Pull Requests
 
 - Link the issue with `Closes #<issue-number>`.

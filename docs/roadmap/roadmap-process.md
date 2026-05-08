@@ -167,6 +167,34 @@ Default acceptance criteria:
 - [ ] Manual verification describes the flow that was tested.
 - [ ] No new product capabilities were added.
 
+## Commit Message Rules
+
+All commits should use the repository Conventional Commit subset:
+
+```text
+type: summary
+```
+
+Allowed types are `feat`, `fix`, `docs`, `test`, `refactor`, `style`, and `chore`.
+The summary should be concrete, should describe the actual change, should not
+end with a period, and should not be a vague placeholder such as `update`,
+`changes`, `fix stuff`, or `misc`.
+
+Before creating a commit, agents should validate the intended message:
+
+```bash
+pnpm validate:commit-message -- --message "docs: add commit message rules"
+```
+
+The validator also supports revision ranges for the future CI pass:
+
+```bash
+pnpm validate:commit-message -- --range origin/main..HEAD
+```
+
+The future CI policy should validate each commit individually rather than only
+the pull request title or final squash commit.
+
 ## Agent Cycle
 
 The GitHub Project tracks roadmap issues as the status owner. Pull requests are linked delivery artifacts that move the issue through Project statuses.
