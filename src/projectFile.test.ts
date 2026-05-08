@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseProjectFileContent,
   updateGraphNodePositions,
+  validateGraphConnectionRules,
 } from "./projectFile";
 import type { GraphConnection, GraphNode, ProjectFile } from "./projectFile";
 
@@ -163,6 +164,80 @@ describe("parseProjectFileContent", () => {
     expect(parseProject(project)).toEqual({
       ok: true,
       project,
+    });
+  });
+});
+
+describe("validateGraphConnectionRules", () => {
+  it("rejects missing endpoint nodes", () => {
+    const project = createValidProjectFile();
+
+    expect(
+      validateGraphConnectionRules(
+        { source: "input", target: "missing" },
+        project.nodes,
+        [],
+      ),
+    ).toEqual({ isValid: false, reason: "missing-node" });
+  });
+
+  it("rejects self-connections", () => {
+    const project = createValidProjectFile();
+
+    expect(
+      validateGraphConnectionRules(
+        { source: "dense", target: "dense" },
+        project.nodes,
+        [],
+      ),
+    ).toEqual({
+      isValid: false,
+      reason: "self-connection",
+      sourceNode: project.nodes[1],
+    });
+  });
+
+  it("rejects duplicate source-target connection pairs", () => {
+    const project = createValidProjectFile();
+
+    expect(
+      validateGraphConnectionRules(
+        { source: "input", target: "dense" },
+        project.nodes,
+        project.connections,
+      ),
+    ).toEqual({ isValid: false, reason: "duplicate-connection" });
+  });
+
+  it("rejects connections into Data nodes", () => {
+    const project = createValidProjectFile();
+
+    expect(
+      validateGraphConnectionRules(
+        { source: "dense", target: "input" },
+        project.nodes,
+        [],
+      ),
+    ).toEqual({
+      isValid: false,
+      reason: "data-target",
+      targetNode: project.nodes[0],
+    });
+  });
+
+  it("accepts valid connections", () => {
+    const project = createValidProjectFile();
+
+    expect(
+      validateGraphConnectionRules(
+        { source: "dense", target: "block" },
+        project.nodes,
+        project.connections,
+      ),
+    ).toEqual({
+      isValid: true,
+      sourceNode: project.nodes[1],
+      targetNode: project.nodes[2],
     });
   });
 });
