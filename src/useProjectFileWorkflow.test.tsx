@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 
 import { readTextFile, useProjectFileWorkflow } from "./useProjectFileWorkflow";
+import { setupProjectExportTest } from "./test/projectExportTestHelper";
 import type { EditorToast } from "./useEditorToast";
 import type { GraphConnection, GraphNode } from "./projectFile";
 
@@ -141,41 +142,17 @@ describe("useProjectFileWorkflow", () => {
   });
 
   it("exports the current project", () => {
-    const OriginalBlob = globalThis.Blob;
-    const blobParts: BlobPart[][] = [];
-    const createObjectURLDescriptor = Object.getOwnPropertyDescriptor(
-      URL,
-      "createObjectURL",
-    );
-    const revokeObjectURLDescriptor = Object.getOwnPropertyDescriptor(
-      URL,
-      "revokeObjectURL",
-    );
-    const createObjectURL = vi.fn(() => "blob:project-file");
-    const revokeObjectURL = vi.fn();
+    const {
+      anchorClick,
+      blobParts,
+      createObjectURL,
+      revokeObjectURL,
+      restore,
+    } = setupProjectExportTest();
     const createdAnchors: HTMLAnchorElement[] = [];
     const originalCreateElement = document.createElement.bind(document);
 
-    vi.stubGlobal(
-      "Blob",
-      vi.fn((parts?: BlobPart[], options?: BlobPropertyBag) => {
-        blobParts.push(parts ?? []);
-        return new OriginalBlob(parts, options);
-      }),
-    );
-    Object.defineProperty(URL, "createObjectURL", {
-      configurable: true,
-      value: createObjectURL,
-    });
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: revokeObjectURL,
-    });
-
     try {
-      const anchorClick = vi
-        .spyOn(HTMLAnchorElement.prototype, "click")
-        .mockImplementation(() => undefined);
       vi.spyOn(document, "createElement").mockImplementation(((
         tagName: string,
         options?: ElementCreationOptions,
@@ -218,25 +195,7 @@ describe("useProjectFileWorkflow", () => {
         connections: editedConnections,
       });
     } finally {
-      if (createObjectURLDescriptor) {
-        Object.defineProperty(
-          URL,
-          "createObjectURL",
-          createObjectURLDescriptor,
-        );
-      } else {
-        Reflect.deleteProperty(URL, "createObjectURL");
-      }
-
-      if (revokeObjectURLDescriptor) {
-        Object.defineProperty(
-          URL,
-          "revokeObjectURL",
-          revokeObjectURLDescriptor,
-        );
-      } else {
-        Reflect.deleteProperty(URL, "revokeObjectURL");
-      }
+      restore();
     }
   });
 
