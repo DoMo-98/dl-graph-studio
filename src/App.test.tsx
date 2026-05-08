@@ -82,6 +82,49 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
+  it("groups the project title and ready status for narrow topbar wrapping", () => {
+    render(<App />);
+
+    const projectStatusGroup = screen
+      .getByText("Ready")
+      .closest(".topbar-project-status");
+
+    expect(projectStatusGroup).not.toBeNull();
+    expect(
+      within(projectStatusGroup as HTMLElement).getByLabelText(
+        /current project/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("renders project feedback through the editor toast surface", () => {
+    const createObjectUrl = vi.fn(() => "blob:project");
+    const revokeObjectUrl = vi.fn();
+    const anchorClick = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: createObjectUrl,
+      revokeObjectURL: revokeObjectUrl,
+    });
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /project actions/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /export project/i }));
+
+    const toast = screen.getByRole("status");
+
+    expect(toast).toHaveClass("editor-toast");
+    expect(toast).toHaveClass("success");
+    expect(toast).toHaveTextContent("Project exported.");
+    expect(createObjectUrl).toHaveBeenCalledTimes(1);
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(revokeObjectUrl).toHaveBeenCalledWith("blob:project");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("renders deterministic primitive architecture nodes on the canvas", () => {
     render(<App />);
 
@@ -205,6 +248,48 @@ describe("App shell", () => {
     ).toBeInTheDocument();
     expect(
       within(inspector).getByText("Role: reusable feed-forward block"),
+    ).toBeInTheDocument();
+  });
+
+  it("clears node selection when the empty canvas background is clicked", () => {
+    render(<App />);
+
+    const neuronNode = screen.getByLabelText(/neuron primitive node/i);
+
+    fireEvent.click(neuronNode);
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByRole("heading", { name: /neuron/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("region", { name: /graph canvas/i }));
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "false");
+    expect(
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByText(/no node selected/i),
+    ).toBeInTheDocument();
+  });
+
+  it("does not clear selection when another canvas node is clicked", () => {
+    render(<App />);
+
+    const neuronNode = screen.getByLabelText(/neuron primitive node/i);
+    const activationNode = screen.getByLabelText(/activation primitive node/i);
+
+    fireEvent.click(neuronNode);
+    fireEvent.click(activationNode);
+
+    expect(neuronNode).toHaveAttribute("aria-pressed", "false");
+    expect(activationNode).toHaveAttribute("aria-pressed", "true");
+    expect(
+      within(
+        screen.getByRole("complementary", { name: /node inspector/i }),
+      ).getByRole("heading", { name: /activation/i }),
     ).toBeInTheDocument();
   });
 
@@ -394,11 +479,30 @@ describe("App shell", () => {
     expect(
       within(connectionList).getByText("Neuron -> Activation"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(screen.getByRole("status")).toHaveTextContent(
       /tensor -> neuron deleted/i,
     );
     expect(screen.getByLabelText(/tensor primitive node/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/neuron primitive node/i)).toBeInTheDocument();
+  });
+
+  it("uses success treatment for connection deletion feedback", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(
+      screen.getByLabelText(/delete connection tensor to neuron/i),
+    );
+
+    const toast = screen.getByRole("status");
+
+    expect(toast).toHaveClass("editor-toast");
+    expect(toast).toHaveClass("success");
+    expect(toast).toHaveTextContent("Tensor -> Neuron deleted.");
+    expect(
+      within(toast).queryByTestId("toast-error-icon"),
+    ).not.toBeInTheDocument();
   });
 
   it("rejects duplicate connections with clear feedback", () => {
@@ -417,6 +521,22 @@ describe("App shell", () => {
     expect(
       screen.getByText(/that connection already exists/i),
     ).toBeInTheDocument();
+  });
+
+  it("renders invalid connection feedback as one error toast", () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+    fireEvent.click(screen.getByLabelText(/start connection from tensor/i));
+    fireEvent.click(screen.getByLabelText(/connect tensor to neuron/i));
+
+    const alert = screen.getByRole("alert");
+
+    expect(alert).toHaveClass("editor-toast");
+    expect(alert).toHaveClass("error");
+    expect(alert).toHaveTextContent("That connection already exists.");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("rejects connections into the tensor input node with clear feedback", () => {
