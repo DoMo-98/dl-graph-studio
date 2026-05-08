@@ -12,7 +12,10 @@ describe("useEditorToast", () => {
     const { result } = renderHook(() => useEditorToast());
 
     act(() => {
-      result.current.showToast({ message: "Project exported.", tone: "success" });
+      result.current.showToast({
+        message: "Project exported.",
+        tone: "success",
+      });
     });
 
     expect(result.current.toast).toEqual({
@@ -94,7 +97,10 @@ describe("useEditorToast", () => {
     const { result } = renderHook(() => useEditorToast());
 
     act(() => {
-      result.current.showToast({ message: "Project imported.", tone: "success" });
+      result.current.showToast({
+        message: "Project imported.",
+        tone: "success",
+      });
     });
     act(() => {
       result.current.clearToast();
