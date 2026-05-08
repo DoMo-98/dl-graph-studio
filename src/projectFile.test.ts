@@ -182,7 +182,9 @@ describe("cloneGraphNode", () => {
     expect(compositeClone).not.toBe(project.nodes[2]);
     expect(primitiveClone.metadata).not.toBe(project.nodes[0].metadata);
     expect(primitiveClone.parameters).not.toBe(project.nodes[0].parameters);
-    expect(primitiveClone.parameters[0]).not.toBe(project.nodes[0].parameters[0]);
+    expect(primitiveClone.parameters[0]).not.toBe(
+      project.nodes[0].parameters[0],
+    );
     expect(primitiveClone.position).not.toBe(project.nodes[0].position);
 
     if (compositeClone.type !== "composite") {

@@ -45,6 +45,7 @@ import {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
+import { EditorIconButton } from "./EditorIconButton";
 import { ProjectActionsMenu } from "./ProjectActionsMenu";
 import {
   cloneGraphNode,
@@ -341,6 +342,9 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const isConnectionSource = data.connectionSourceId === data.id;
   const isConnectionTarget =
     data.connectionSourceId !== null && data.connectionSourceId !== data.id;
+  const connectionButtonLabel = data.connectionSourceId
+    ? `Connect ${data.connectionSourceLabel} to ${data.label}`
+    : `Start connection from ${data.label}`;
   const connectionStateClassName = [
     isConnectionSource ? "connection-source" : "",
     isConnectionTarget ? "connection-target" : "",
@@ -369,37 +373,25 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
       />
       <div className="connection-controls">
         {isConnectionSource ? (
-          <button
-            type="button"
+          <EditorIconButton
             className="connection-button cancel nodrag"
-            aria-label={`Cancel connection from ${data.label}`}
+            label={`Cancel connection from ${data.label}`}
             title={`Cancel connection from ${data.label}`}
+            icon={<X size={15} aria-hidden="true" />}
             onClick={data.onCancelConnection}
-          >
-            <X size={15} aria-hidden="true" />
-          </button>
+          />
         ) : (
-          <button
-            type="button"
+          <EditorIconButton
             className="connection-button nodrag"
-            aria-label={
-              data.connectionSourceId
-                ? `Connect ${data.connectionSourceLabel} to ${data.label}`
-                : `Start connection from ${data.label}`
-            }
-            title={
-              data.connectionSourceId
-                ? `Connect ${data.connectionSourceLabel} to ${data.label}`
-                : `Start connection from ${data.label}`
-            }
+            label={connectionButtonLabel}
+            title={connectionButtonLabel}
+            icon={<Link2 size={15} aria-hidden="true" />}
             onClick={() =>
               data.connectionSourceId
                 ? data.onCompleteConnection(data.id)
                 : data.onStartConnection(data.id)
             }
-          >
-            <Link2 size={15} aria-hidden="true" />
-          </button>
+          />
         )}
       </div>
       <Handle
@@ -781,42 +773,34 @@ export function App() {
         </div>
 
         <div className="topbar-actions" aria-label="Editor actions">
-          <button
-            type="button"
+          <EditorIconButton
             className="topbar-icon-button future-action"
             disabled
+            label="Undo coming soon"
             title="Undo coming soon"
-            aria-label="Undo coming soon"
-          >
-            <Undo2 size={18} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
+            icon={<Undo2 size={18} aria-hidden="true" />}
+          />
+          <EditorIconButton
             className="topbar-icon-button future-action"
             disabled
+            label="Redo coming soon"
             title="Redo coming soon"
-            aria-label="Redo coming soon"
-          >
-            <Redo2 size={18} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
+            icon={<Redo2 size={18} aria-hidden="true" />}
+          />
+          <EditorIconButton
             className="topbar-icon-button future-action"
             disabled
+            label="Run graph coming soon"
             title="Run graph coming soon"
-            aria-label="Run graph coming soon"
-          >
-            <Play size={18} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
+            icon={<Play size={18} aria-hidden="true" />}
+          />
+          <EditorIconButton
             className="topbar-icon-button future-action"
             disabled
+            label="Native save coming soon"
             title="Native save coming soon"
-            aria-label="Native save coming soon"
-          >
-            <Save size={18} aria-hidden="true" />
-          </button>
+            icon={<Save size={18} aria-hidden="true" />}
+          />
           <div className="project-actions-menu">
             <ProjectActionsMenu
               onImportProject={openProjectImportPicker}
@@ -953,20 +937,18 @@ export function App() {
                   <h3>Connections</h3>
                   <span>{graphConnections.length}</span>
                 </div>
-                <button
-                  type="button"
+                <EditorIconButton
                   className="connection-drawer-toggle"
                   aria-expanded={!isConnectionsPanelCollapsed}
-                  aria-label={connectionsPanelToggleLabel}
+                  label={connectionsPanelToggleLabel}
                   title={connectionsPanelToggleLabel}
+                  icon={<ChevronDown size={16} aria-hidden="true" />}
                   onClick={() =>
                     setIsConnectionsPanelCollapsed(
                       (currentIsCollapsed) => !currentIsCollapsed,
                     )
                   }
-                >
-                  <ChevronDown size={16} aria-hidden="true" />
-                </button>
+                />
               </header>
               {!isConnectionsPanelCollapsed ? (
                 <div className="connection-list">
@@ -979,15 +961,13 @@ export function App() {
                     return (
                       <div className="connection-list-item" key={connection.id}>
                         <span>{connectionLabel}</span>
-                        <button
-                          type="button"
+                        <EditorIconButton
                           className="connection-delete-button"
-                          aria-label={getDeleteConnectionLabel(connectionLabel)}
+                          label={getDeleteConnectionLabel(connectionLabel)}
                           title={getDeleteConnectionLabel(connectionLabel)}
+                          icon={<Trash2 size={13} aria-hidden="true" />}
                           onClick={() => deleteGraphConnection(connection.id)}
-                        >
-                          <Trash2 size={13} aria-hidden="true" />
-                        </button>
+                        />
                       </div>
                     );
                   })}
