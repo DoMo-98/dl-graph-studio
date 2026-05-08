@@ -21,7 +21,6 @@ No new runtime files, dependencies, graph model fields, or CSS changes are neede
 ### Task 1: Update Adapter Tests For Free Node Placement
 
 **Files:**
-
 - Modify: `src/App.nodeDrag.test.tsx`
 
 - [ ] **Step 1: Replace bounded-drag assertions with free-placement assertions**
@@ -34,73 +33,73 @@ In `src/App.nodeDrag.test.tsx`, replace the two tests named:
 with this code:
 
 ```tsx
-it("passes viewport controls to React Flow and persists free node positions from drag changes", async () => {
-  render(<App />);
+  it("passes viewport controls to React Flow and persists free node positions from drag changes", async () => {
+    render(<App />);
 
-  const reactFlow = await screen.findByTestId("react-flow");
+    const reactFlow = await screen.findByTestId("react-flow");
 
-  expect(reactFlow).toHaveAttribute("data-nodes-draggable", "true");
-  expect(reactFlow).toHaveAttribute("data-has-node-extent", "false");
-  expect(reactFlow).not.toHaveAttribute("data-node-extent");
-  expect(reactFlow).not.toHaveAttribute("data-initial-node-extent");
-  expect(reactFlow).toHaveAttribute("data-auto-pan-on-node-drag", "false");
-  expect(reactFlow).toHaveAttribute("data-pan-on-drag", "true");
-  expect(reactFlow).toHaveAttribute("data-zoom-on-scroll", "true");
-  expect(reactFlow).toHaveAttribute("data-zoom-on-pinch", "true");
-  expect(reactFlow).toHaveAttribute("data-zoom-on-double-click", "false");
-  expect(reactFlow).toHaveAttribute("data-prevent-scrolling", "true");
-  expect(reactFlow).toHaveAttribute("data-fit-view", "true");
-  expect(reactFlow).toHaveAttribute("data-min-zoom", "0.6");
-  expect(reactFlow).toHaveAttribute("data-max-zoom", "1.5");
-  expect(reactFlow).toHaveAttribute(
-    "data-fit-view-options",
-    JSON.stringify({ padding: 0.18 }),
-  );
-  expect(screen.getByTestId("flow-controls")).toHaveAttribute(
-    "data-fit-view-options",
-    JSON.stringify({ padding: 0.18 }),
-  );
-  expect(screen.getByTestId("flow-node-tensor")).not.toHaveAttribute(
-    "data-node-extent",
-  );
-  expect(screen.getByTestId("flow-node-dense-block")).not.toHaveAttribute(
-    "data-node-extent",
-  );
+    expect(reactFlow).toHaveAttribute("data-nodes-draggable", "true");
+    expect(reactFlow).toHaveAttribute("data-has-node-extent", "false");
+    expect(reactFlow).not.toHaveAttribute("data-node-extent");
+    expect(reactFlow).not.toHaveAttribute("data-initial-node-extent");
+    expect(reactFlow).toHaveAttribute("data-auto-pan-on-node-drag", "false");
+    expect(reactFlow).toHaveAttribute("data-pan-on-drag", "true");
+    expect(reactFlow).toHaveAttribute("data-zoom-on-scroll", "true");
+    expect(reactFlow).toHaveAttribute("data-zoom-on-pinch", "true");
+    expect(reactFlow).toHaveAttribute("data-zoom-on-double-click", "false");
+    expect(reactFlow).toHaveAttribute("data-prevent-scrolling", "true");
+    expect(reactFlow).toHaveAttribute("data-fit-view", "true");
+    expect(reactFlow).toHaveAttribute("data-min-zoom", "0.6");
+    expect(reactFlow).toHaveAttribute("data-max-zoom", "1.5");
+    expect(reactFlow).toHaveAttribute(
+      "data-fit-view-options",
+      JSON.stringify({ padding: 0.18 }),
+    );
+    expect(screen.getByTestId("flow-controls")).toHaveAttribute(
+      "data-fit-view-options",
+      JSON.stringify({ padding: 0.18 }),
+    );
+    expect(screen.getByTestId("flow-node-tensor")).not.toHaveAttribute(
+      "data-node-extent",
+    );
+    expect(screen.getByTestId("flow-node-dense-block")).not.toHaveAttribute(
+      "data-node-extent",
+    );
 
-  fireEvent.click(screen.getByRole("button", { name: "Move Tensor" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move Tensor" }));
 
-  const tensorFlowNode = screen.getByTestId("flow-node-tensor");
-  expect(tensorFlowNode).toHaveAttribute("data-x", "128");
-  expect(tensorFlowNode).toHaveAttribute("data-y", "112");
+    const tensorFlowNode = screen.getByTestId("flow-node-tensor");
+    expect(tensorFlowNode).toHaveAttribute("data-x", "128");
+    expect(tensorFlowNode).toHaveAttribute("data-y", "112");
 
-  fireEvent.click(screen.getByRole("button", { name: "Move Dense Block" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move Dense Block" }));
 
-  const denseBlockFlowNode = screen.getByTestId("flow-node-dense-block");
-  expect(denseBlockFlowNode).toHaveAttribute("data-x", "1500");
-  expect(denseBlockFlowNode).toHaveAttribute("data-y", "1500");
-});
+    const denseBlockFlowNode = screen.getByTestId("flow-node-dense-block");
+    expect(denseBlockFlowNode).toHaveAttribute("data-x", "1500");
+    expect(denseBlockFlowNode).toHaveAttribute("data-y", "1500");
+  });
 
-it("does not rewrite controlled node positions when the canvas is tiny", async () => {
-  graphCanvasSize = { width: 10, height: 10 };
+  it("does not rewrite controlled node positions when the canvas is tiny", async () => {
+    graphCanvasSize = { width: 10, height: 10 };
 
-  render(<App />);
+    render(<App />);
 
-  const reactFlow = await screen.findByTestId("react-flow");
+    const reactFlow = await screen.findByTestId("react-flow");
 
-  expect(reactFlow).toHaveAttribute("data-has-node-extent", "false");
-  expect(reactFlow).not.toHaveAttribute("data-node-extent");
-  expect(screen.getByTestId("flow-node-tensor")).not.toHaveAttribute(
-    "data-node-extent",
-  );
-  expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
-    "data-x",
-    "96",
-  );
-  expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
-    "data-y",
-    "64",
-  );
-});
+    expect(reactFlow).toHaveAttribute("data-has-node-extent", "false");
+    expect(reactFlow).not.toHaveAttribute("data-node-extent");
+    expect(screen.getByTestId("flow-node-tensor")).not.toHaveAttribute(
+      "data-node-extent",
+    );
+    expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
+      "data-x",
+      "96",
+    );
+    expect(screen.getByTestId("flow-node-tensor")).toHaveAttribute(
+      "data-y",
+      "64",
+    );
+  });
 ```
 
 - [ ] **Step 2: Run the focused test and verify it fails**
@@ -125,7 +124,6 @@ git commit -m "test: cover free canvas node placement"
 ### Task 2: Remove Canvas Position Bounds From App
 
 **Files:**
-
 - Modify: `src/App.tsx`
 
 - [ ] **Step 1: Remove unused React and React Flow types/imports**
@@ -135,7 +133,12 @@ In `src/App.tsx`, remove `useLayoutEffect` and `useRef` from the React import, a
 The imports should become:
 
 ```ts
-import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import {
   Background,
   Controls,
@@ -281,9 +284,9 @@ const compositeNodeVisualOverflow = {
 In `App`, delete:
 
 ```ts
-const graphCanvasRef = useRef<HTMLElement | null>(null);
-const [canvasNodeExtent, setCanvasNodeExtent] =
-  useState<CoordinateExtent | null>(null);
+  const graphCanvasRef = useRef<HTMLElement | null>(null);
+  const [canvasNodeExtent, setCanvasNodeExtent] =
+    useState<CoordinateExtent | null>(null);
 ```
 
 Delete both `useLayoutEffect` blocks that start with:
@@ -305,18 +308,18 @@ and:
 In the `canvasNodes` `useMemo`, replace the `commonNode` object with:
 
 ```ts
-const commonNode = {
-  id: node.id,
-  position: node.position,
-  width: nodeSize.width,
-  height: nodeSize.height,
-  initialWidth: nodeSize.width,
-  initialHeight: nodeSize.height,
-  measured: nodeSize,
-  selected: selectedNodeId === node.id,
-  selectable: true,
-  draggable: true,
-};
+        const commonNode = {
+          id: node.id,
+          position: node.position,
+          width: nodeSize.width,
+          height: nodeSize.height,
+          initialWidth: nodeSize.width,
+          initialHeight: nodeSize.height,
+          measured: nodeSize,
+          selected: selectedNodeId === node.id,
+          selectable: true,
+          draggable: true,
+        };
 ```
 
 In the dependency array for the same `useMemo`, remove `canvasNodeExtent` so it becomes:
@@ -415,7 +418,6 @@ git commit -m "feat: allow free canvas node placement"
 ### Task 3: Mark The Existing PR Plan As Superseded For Placement Bounds
 
 **Files:**
-
 - Modify: `docs/superpowers/plans/2026-05-05-canvas-viewport-navigation-hardening.md`
 
 - [ ] **Step 1: Add a scope update notice to the existing plan**
@@ -453,7 +455,6 @@ git commit -m "docs: align viewport plan with free placement"
 ### Task 4: Full Verification
 
 **Files:**
-
 - Verify: `src/App.tsx`
 - Verify: `src/App.nodeDrag.test.tsx`
 - Verify: `docs/superpowers/specs/2026-05-05-canvas-viewport-navigation-hardening-design.md`
