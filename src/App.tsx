@@ -267,9 +267,37 @@ function getFlowNodeSize(node: GraphNode) {
     : primitiveFlowNodeSize;
 }
 
-function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
+type ArchitectureNodeCardSurfaceProps = {
+  id: string;
+  label: string;
+  kind: string;
+  displayMetadata: string[];
+  nodeKindLabel: "primitive" | "composite";
+  isSelected: boolean;
+  isDragging: boolean;
+  onSelect: (id: string) => void;
+  testId: string;
+  variantClassName?: string;
+  stateClassName?: string;
+  kindClassName?: string;
+};
+
+function ArchitectureNodeCardSurface({
+  id,
+  label,
+  kind,
+  displayMetadata,
+  nodeKindLabel,
+  isSelected,
+  isDragging,
+  onSelect,
+  testId,
+  variantClassName,
+  stateClassName,
+  kindClassName,
+}: ArchitectureNodeCardSurfaceProps) {
   const selectNode = () => {
-    data.onSelect(data.id);
+    onSelect(id);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -279,9 +307,46 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
     }
   };
 
+  return (
+    <article
+      className={`architecture-node${variantClassName ? ` ${variantClassName}` : ""}${
+        isSelected ? " selected" : ""
+      }${isDragging ? " moving" : ""}${
+        stateClassName ? ` ${stateClassName}` : ""
+      }`}
+      data-testid={testId}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      aria-label={`${label} ${nodeKindLabel} node`}
+      onClick={selectNode}
+      onKeyDown={handleKeyDown}
+    >
+      <span
+        className={`architecture-node-kind${kindClassName ? ` ${kindClassName}` : ""}`}
+      >
+        {kind}
+      </span>
+      <h4>{label}</h4>
+      <ul>
+        {displayMetadata.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
+function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
   const isConnectionSource = data.connectionSourceId === data.id;
   const isConnectionTarget =
     data.connectionSourceId !== null && data.connectionSourceId !== data.id;
+  const connectionStateClassName = [
+    isConnectionSource ? "connection-source" : "",
+    isConnectionTarget ? "connection-target" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="architecture-node-shell">
@@ -290,28 +355,18 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
         position={Position.Left}
         className="architecture-node-handle"
       />
-      <article
-        className={`architecture-node${data.isSelected ? " selected" : ""}${
-          data.isDragging ? " moving" : ""
-        }${
-          isConnectionSource ? " connection-source" : ""
-        }${isConnectionTarget ? " connection-target" : ""}`}
-        data-testid="architecture-node"
-        role="button"
-        tabIndex={0}
-        aria-pressed={data.isSelected}
-        aria-label={`${data.label} primitive node`}
-        onClick={selectNode}
-        onKeyDown={handleKeyDown}
-      >
-        <span className="architecture-node-kind">{data.kind}</span>
-        <h4>{data.label}</h4>
-        <ul>
-          {data.displayMetadata.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </article>
+      <ArchitectureNodeCardSurface
+        id={data.id}
+        label={data.label}
+        kind={data.kind}
+        displayMetadata={data.displayMetadata}
+        nodeKindLabel="primitive"
+        isSelected={data.isSelected}
+        isDragging={data.isDragging}
+        onSelect={data.onSelect}
+        testId="architecture-node"
+        stateClassName={connectionStateClassName}
+      />
       <div className="connection-controls">
         {isConnectionSource ? (
           <button
@@ -357,40 +412,20 @@ function PrimitiveNodeCard({ data }: NodeProps<PrimitiveFlowNode>) {
 }
 
 function CompositeNodeCard({ data }: NodeProps<CompositeFlowNode>) {
-  const selectNode = () => {
-    data.onSelect(data.id);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      selectNode();
-    }
-  };
-
   return (
-    <article
-      className={`architecture-node composite-node${
-        data.isSelected ? " selected" : ""
-      }${data.isDragging ? " moving" : ""}`}
-      data-testid="composite-node"
-      role="button"
-      tabIndex={0}
-      aria-pressed={data.isSelected}
-      aria-label={`${data.label} composite node`}
-      onClick={selectNode}
-      onKeyDown={handleKeyDown}
-    >
-      <span className="architecture-node-kind architecture-node-kind--composite">
-        {data.kind}
-      </span>
-      <h4>{data.label}</h4>
-      <ul>
-        {data.displayMetadata.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </article>
+    <ArchitectureNodeCardSurface
+      id={data.id}
+      label={data.label}
+      kind={data.kind}
+      displayMetadata={data.displayMetadata}
+      nodeKindLabel="composite"
+      isSelected={data.isSelected}
+      isDragging={data.isDragging}
+      onSelect={data.onSelect}
+      testId="composite-node"
+      variantClassName="composite-node"
+      kindClassName="architecture-node-kind--composite"
+    />
   );
 }
 
