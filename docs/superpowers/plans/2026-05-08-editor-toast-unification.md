@@ -25,7 +25,6 @@
 ### Task 1: Add the Editor Toast Hook
 
 **Files:**
-
 - Create: `src/useEditorToast.ts`
 - Create: `src/useEditorToast.test.tsx`
 
@@ -48,10 +47,7 @@ describe("useEditorToast", () => {
     const { result } = renderHook(() => useEditorToast());
 
     act(() => {
-      result.current.showToast({
-        message: "Project exported.",
-        tone: "success",
-      });
+      result.current.showToast({ message: "Project exported.", tone: "success" });
     });
 
     expect(result.current.toast).toEqual({
@@ -133,10 +129,7 @@ describe("useEditorToast", () => {
     const { result } = renderHook(() => useEditorToast());
 
     act(() => {
-      result.current.showToast({
-        message: "Project imported.",
-        tone: "success",
-      });
+      result.current.showToast({ message: "Project imported.", tone: "success" });
     });
     act(() => {
       result.current.clearToast();
@@ -234,7 +227,6 @@ git commit -m "test: add editor toast lifecycle hook"
 ### Task 2: Move Project Workflow Toasts Onto the Shared API
 
 **Files:**
-
 - Modify: `src/useProjectFileWorkflow.ts`
 - Modify: `src/useProjectFileWorkflow.test.tsx`
 
@@ -360,7 +352,6 @@ git commit -m "refactor: route project feedback through editor toasts"
 ### Task 3: Render One Toast Surface in the Editor
 
 **Files:**
-
 - Modify: `src/App.tsx`
 - Modify: `src/App.test.tsx`
 - Modify: `src/styles.css`
@@ -420,9 +411,7 @@ it("uses success treatment for connection deletion feedback", () => {
   expect(toast).toHaveClass("editor-toast");
   expect(toast).toHaveClass("success");
   expect(toast).toHaveTextContent("Tensor -> Neuron deleted.");
-  expect(
-    within(toast).queryByTestId("toast-error-icon"),
-  ).not.toBeInTheDocument();
+  expect(within(toast).queryByTestId("toast-error-icon")).not.toBeInTheDocument();
 });
 ```
 
@@ -498,17 +487,15 @@ const toastIconByTone: Record<EditorToast["tone"], JSX.Element> = {
 Remove the separate project toast JSX and replace connection feedback JSX with one surface:
 
 ```tsx
-{
-  toast ? (
-    <div
-      className={`editor-toast ${toast.tone}`}
-      role={toast.tone === "error" ? "alert" : "status"}
-    >
-      {toastIconByTone[toast.tone]}
-      <span>{toast.message}</span>
-    </div>
-  ) : null;
-}
+{toast ? (
+  <div
+    className={`editor-toast ${toast.tone}`}
+    role={toast.tone === "error" ? "alert" : "status"}
+  >
+    {toastIconByTone[toast.tone]}
+    <span>{toast.message}</span>
+  </div>
+) : null}
 ```
 
 - [ ] **Step 4: Update styles**
@@ -581,7 +568,6 @@ git commit -m "feat: render unified editor toast surface"
 ### Task 4: Full Verification
 
 **Files:**
-
 - Modify if needed: only files touched in Tasks 1-3.
 
 - [ ] **Step 1: Run focused toast tests**
