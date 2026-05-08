@@ -116,6 +116,23 @@ Default acceptance criteria:
 - [ ] Manual verification describes the milestone behavior that was checked after technical changes.
 - [ ] No new product capabilities were added.
 
+## Maintainability And Scope Balance
+
+Implementation issues should preserve the one-issue, one-reviewable-PR workflow while still leaving touched code maintainable and ready for later roadmap work.
+
+Agents may include local quality improvements in the same pull request when all of these conditions are true:
+
+- the improvement is directly connected to the current issue,
+- it reduces real complexity, duplication, coupling, fragility, or unclear local ownership,
+- it does not change product behavior outside the issue acceptance criteria,
+- it does not introduce abstractions for hypothetical future requirements,
+- it keeps the pull request reviewable in the normal 15-30 minute window,
+- it has verification proportional to the behavioral and architectural risk.
+
+If the improvement is valid but too large, cross-cutting, or dependent on product-owner or architecture decisions, it should become a follow-up roadmap issue or be routed to the milestone technical audit. If the issue explicitly marks the improvement out of scope, the agent should stop and ask the product owner to confirm an issue update before continuing.
+
+This convention does not authorize broad refactors, dependency migrations, product behavior changes, or formatting churn inside normal implementation issues.
+
 ## Milestone UX/UI Hardening
 
 Each product milestone should include one roadmap issue with the live title `[Roadmap]: Phase N UX/UI hardening` unless the product owner explicitly decides to skip it. This issue should usually run before `[Roadmap]: Phase N technical audit`, which remains the final milestone closeout.
@@ -161,7 +178,7 @@ The GitHub Project tracks roadmap issues as the status owner. Pull requests are 
 5. The agent creates a branch named `codex/<issue-number>-<short-name>`.
 6. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
 7. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
-8. The agent implements only the issue scope.
+8. The agent implements the issue scope using the maintainability and scope balance convention.
 9. The agent runs the required verification.
 10. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
 11. The product owner reviews the result.
