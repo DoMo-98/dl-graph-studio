@@ -52,6 +52,18 @@ build: this invalid body line is ignored.`;
     );
   });
 
+  it("rejects subjects with a tab after the colon", () => {
+    expect(validateCommitMessage("feat:\tbad tab")).toContain(
+      'Commit subject must match "type: summary".',
+    );
+  });
+
+  it("rejects subjects with more than one space after the colon", () => {
+    expect(validateCommitMessage("feat:  double space")).toContain(
+      'Commit subject must match "type: summary".',
+    );
+  });
+
   it("rejects unknown conventional commit types", () => {
     expect(validateCommitMessage("build: add local validation")).toContain(
       "Commit type must be one of: feat, fix, docs, test, refactor, style, chore.",
@@ -113,6 +125,15 @@ describe("CLI", () => {
 
   it("exits 1 and prints validation errors for an invalid message", () => {
     const result = runCli("--message", "update graph editor");
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'Commit subject must match "type: summary".',
+    );
+  });
+
+  it("exits 1 and prints validation errors for an empty message", () => {
+    const result = runCli("--message", "");
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(

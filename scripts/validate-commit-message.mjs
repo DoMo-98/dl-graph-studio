@@ -26,7 +26,7 @@ Modes:
 export function validateCommitMessage(message) {
   const errors = [];
   const subject = String(message ?? "").split(/\r?\n/, 1)[0];
-  const match = subject.match(/^([a-z]+):\s+(.*)$/);
+  const match = subject.match(/^([a-z]+): ($|\S.*)$/);
 
   if (!match) {
     errors.push('Commit subject must match "type: summary".');
@@ -105,16 +105,19 @@ export function parseArgs(args) {
 }
 
 function runCli() {
-  const { message, range, unknownArg } = parseArgs(process.argv.slice(2));
+  const args = process.argv.slice(2);
+  const { message, range, unknownArg } = parseArgs(args);
+  const hasMessage = args.includes("--message");
+  const hasRange = args.includes("--range");
 
-  if (unknownArg || (!message && !range) || (message && range)) {
+  if (unknownArg || (!hasMessage && !hasRange) || (hasMessage && hasRange)) {
     console.error(USAGE);
     process.exitCode = 2;
     return;
   }
 
   let errors;
-  if (message) {
+  if (hasMessage) {
     errors = validateCommitMessage(message);
   } else {
     let subjects;
