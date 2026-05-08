@@ -1,6 +1,8 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Download, MoreVertical, RotateCcw, Upload } from "lucide-react";
 
+import { EditorIconButton } from "./EditorIconButton";
+
 type ProjectActionsMenuProps = {
   onImportProject: () => void;
   onExportProject: () => void;
@@ -15,14 +17,11 @@ export function ProjectActionsMenu({
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
+        <EditorIconButton
           className="topbar-icon-button"
-          aria-label="Project actions"
-          title="Project actions"
-        >
-          <MoreVertical size={18} aria-hidden="true" />
-        </button>
+          label="Project actions"
+          icon={<MoreVertical size={18} aria-hidden="true" />}
+        />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
