@@ -310,10 +310,7 @@ h4 {
   position: relative;
 }
 
-.project-actions-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+.project-actions-content {
   z-index: 40;
   display: grid;
   width: 210px;
@@ -326,7 +323,7 @@ h4 {
   box-shadow: 0 18px 40px rgb(0 0 0 / 35%);
 }
 
-.project-actions-popover button {
+.project-actions-item {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
@@ -342,22 +339,24 @@ h4 {
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
-}
-
-.project-actions-popover button:hover,
-.project-actions-popover button:focus-visible {
-  color: var(--teal-strong);
-  background: var(--teal-soft);
-  border-color: rgb(59 130 246 / 20%);
   outline: none;
 }
 
-.project-actions-popover button.danger {
+.project-actions-item:hover,
+.project-actions-item:focus-visible,
+.project-actions-item[data-highlighted] {
+  color: var(--teal-strong);
+  background: var(--teal-soft);
+  border-color: rgb(59 130 246 / 20%);
+}
+
+.project-actions-item.danger {
   color: var(--danger);
 }
 
-.project-actions-popover button.danger:hover,
-.project-actions-popover button.danger:focus-visible {
+.project-actions-item.danger:hover,
+.project-actions-item.danger:focus-visible,
+.project-actions-item.danger[data-highlighted] {
   color: #ffffff;
   background: var(--danger);
   border-color: rgb(239 68 68 / 40%);
