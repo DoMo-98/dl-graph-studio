@@ -1,7 +1,8 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -11,6 +12,10 @@ import {
   parseArgs,
   validateCommitMessage,
 } from "./validate-commit-message.mjs";
+
+const cliScriptPath = fileURLToPath(
+  new URL("./validate-commit-message.mjs", import.meta.url),
+);
 
 describe("validateCommitMessage", () => {
   it("accepts every allowed conventional commit type", () => {
@@ -98,6 +103,50 @@ describe("parseArgs", () => {
   });
 });
 
+describe("CLI", () => {
+  it("exits 0 and prints a success message for a valid message", () => {
+    const result = runCli("--message", "test: cover commit validator cli");
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Commit message format is valid.");
+  });
+
+  it("exits 1 and prints validation errors for an invalid message", () => {
+    const result = runCli("--message", "update graph editor");
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'Commit subject must match "type: summary".',
+    );
+  });
+
+  it("exits 2 and prints usage when no mode is provided", () => {
+    const result = runCli();
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+
+  it("exits 2 and prints usage when both modes are provided", () => {
+    const result = runCli(
+      "--message",
+      "test: cover commit validator cli",
+      "--range",
+      "origin/main..HEAD",
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+
+  it("exits 2 and prints usage for an unknown argument", () => {
+    const result = runCli("--unknown");
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage: pnpm validate:commit-message");
+  });
+});
+
 describe("collectCommitSubjects", () => {
   it("preserves empty subject lines while parsing git log output", () => {
     expect(
@@ -143,4 +192,10 @@ function git(cwd, ...args) {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   }).trim();
+}
+
+function runCli(...args) {
+  return spawnSync(process.execPath, [cliScriptPath, ...args], {
+    encoding: "utf8",
+  });
 }
