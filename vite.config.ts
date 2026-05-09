@@ -14,7 +14,13 @@ export default defineConfig({
   envPrefix: ["VITE_", "TAURI_"],
   test: {
     environment: "jsdom",
-    exclude: ["node_modules/**", "dist/**", ".pnpm-store/**", "src-tauri/**"],
+    exclude: [
+      "node_modules/**",
+      "dist/**",
+      ".pnpm-store/**",
+      "src-tauri/**",
+      "tests/e2e/**",
+    ],
     globals: true,
     setupFiles: "./src/test/setup.ts",
     coverage: {

@@ -237,7 +237,7 @@ Do not start PyTorch execution or training until the graph representation is min
 
 ## Required CI Checks
 
-Pull requests and pushes to `main` run the base CI workflow. The base workflow is limited to repository-owned commands so required checks stay auditable and reproducible within this repository:
+Pull requests and pushes to `main` run the repository CI workflow. The workflow is limited to repository-owned commands so required checks stay auditable and reproducible within this repository:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -245,14 +245,17 @@ pnpm format:check
 pnpm lint
 pnpm test
 pnpm test:coverage
+pnpm test:e2e
 pnpm build
 ```
 
 Agents should run the same commands locally before opening pull requests when the issue touches code, build configuration, tests, or documentation.
 
-Coverage thresholds in the base workflow are a modest initial regression floor, not the final quality target for the product.
+Coverage thresholds are a modest initial regression floor, not the final quality target for the product.
 
-Playwright smoke checks, custom pull request metadata validation, and GitHub Project automation are separate roadmap issues and must not be hidden in the base CI pull request.
+`pnpm test:e2e` runs the Playwright functional regression suite for the current core editor surface. It covers editor load, node selection, inspector updates, primitive parameter editing, valid and invalid connection behavior, connection panel behavior, connection deletion, and stable project file export/reset/import behavior. It is not visual snapshot testing, cross-browser coverage, Tauri desktop automation, or exhaustive future Phase 2 workflow coverage.
+
+Custom pull request metadata validation and GitHub Project automation are separate roadmap issues and must not be hidden in the Playwright regression pull request.
 
 ## Later Automation
 

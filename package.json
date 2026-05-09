@@ -9,6 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "validate:commit-message": "node scripts/validate-commit-message.mjs",
     "validate:roadmap-issue": "node scripts/validate-roadmap-issue.mjs",
     "lint": "eslint .",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.0.0",
     "@tauri-apps/cli": "^2.0.0",
     "@testing-library/jest-dom": "^6.0.0",
