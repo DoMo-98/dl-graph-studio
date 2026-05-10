@@ -13,7 +13,6 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - `docs/superpowers/specs/2026-05-03-product-owner-idea-intake-design.md` defines the product-owner idea intake convention.
 - `docs/superpowers/specs/2026-05-03-start-task-in-progress-design.md` defines when a confirmed local task moves to `In Progress`.
 - `docs/superpowers/specs/2026-05-08-maintainability-scope-balance-design.md` defines how implementation work balances issue scope with maintainability and scalability.
-- `docs/superpowers/specs/2026-05-10-milestone-project-board-focus-design.md` defines the GitHub Project milestone focus field, active milestone view, global milestone overview, and milestone focus advancement convention.
 - The GitHub Project for this repository is `dl-graph-studio Roadmap`.
 - GitHub Issues and the GitHub Project are the operational source of truth for executable roadmap work.
 - Pull requests are delivery and review artifacts, not planning documents.
@@ -34,7 +33,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If multiple issues are plausible, present the tradeoff and recommend one.
 - Do not implement an issue that lacks objective, scope, acceptance criteria, and verification details.
 - Before creating or updating a live roadmap issue outside GitHub's issue-template UI, use `.github/ISSUE_TEMPLATE/roadmap-task.md` as the canonical format and run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>` before applying `ready` or adding it to the Project in the appropriate confirmed status.
-- Do not apply `ready` or add a roadmap issue to the Project until the issue body records `GitHub Milestone`, `Milestone Focus`, and `No GitHub Milestone reason` roadmap metadata. Phase work must have a real GitHub Milestone; `No GitHub Milestone reason` is only for product-owner-approved bootstrap or global process exceptions.
+- Do not apply `ready` or add a roadmap issue to the Project until the issue body records `GitHub Milestone` and `No GitHub Milestone reason` roadmap metadata. Phase work must have a real GitHub Milestone; `No GitHub Milestone reason` is only for product-owner-approved bootstrap or global process exceptions.
 - After the product owner confirms a ready issue and the agent creates the local branch `codex/<issue-number>-<short-name>`, immediately attempt to move the confirmed issue from `Ready` to `In Progress` in the `dl-graph-studio Roadmap` GitHub Project before making implementation edits, unless the product owner explicitly authorizes continuing under the Project blocker policy below.
 - If a GitHub Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, GitHub availability, or another blocker, report the limitation and ask the product owner for the permissions, authorization, or project metadata needed for the agent to complete the update, or for explicit authorization to continue while the Project status remains temporarily unchanged. Do not request a manual Project move unless the product owner explicitly chooses that fallback.
 
@@ -48,27 +47,18 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If the idea is a milestone-local technical quality finding, record it in `[Roadmap]: Phase N technical audit` when it fits that issue's scope.
 - If the idea is a new roadmap task, draft a roadmap issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
 - If the idea changes high-level product direction, treat it as a PRD or planning discussion before creating executable issues.
-- Ask focused clarifying questions until the issue has objective, scope, out-of-scope, acceptance criteria, verification, milestone, milestone-focus value, labels, and an expected PR size that fits the normal 15-30 minute review window. If no milestone applies, capture the product-owner-approved reason in the issue body instead of leaving the field implicit.
-- Recommend a `Milestone Focus` value for each drafted roadmap issue: normally `Current` for active milestone work, `Next` for prepared next-milestone work, and `Later` for future milestone work.
+- Ask focused clarifying questions until the issue has objective, scope, out-of-scope, acceptance criteria, verification, milestone, labels, and an expected PR size that fits the normal 15-30 minute review window. If no milestone applies, capture the product-owner-approved reason in the issue body instead of leaving the field implicit.
 - If the idea is too large for one reviewable PR, propose a split and recommend the first issue to create.
 - Before creating or updating a live roadmap issue outside GitHub's issue-template UI, run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
 - Ask the product owner to confirm issue creation, readiness, priority, and intended Project status before applying `ready`, adding the issue to the `dl-graph-studio Roadmap` Project, or starting implementation.
 - When creating a roadmap issue, add it to the `dl-graph-studio Roadmap` Project in the confirmed status before treating the issue as ready for roadmap execution. If Project placement fails, ask the product owner for the permissions, authorization, or project metadata needed for the agent to complete the placement, or for explicit authorization to continue while the Project status remains temporarily unchanged, instead of asking for a manual Project update.
 
-## Milestone Project Board Focus
+## GitHub Milestones
 
-- The `dl-graph-studio Roadmap` GitHub Project must use a single-select Project field named `Milestone Focus` with values `Current`, `Next`, `Later`, and `Closed`.
-- GitHub Milestones remain the canonical phase assignment for issues. `Milestone Focus` controls Project-board visibility and does not replace the issue milestone.
-- The Project should have an `Active Milestone` board view filtered to `Milestone Focus:Current` and grouped by the existing `Status` field.
-- The Project should have a `Milestone Overview` global view that shows all roadmap items with GitHub Milestone, `Milestone Focus`, `Status`, labels, and linked pull requests visible.
-- When creating or updating a roadmap issue, set both the issue's GitHub Milestone and the Project item's `Milestone Focus` value.
+- GitHub Milestones are the canonical phase assignment for roadmap issues.
 - Roadmap issues for product phase work must not be left without a GitHub Milestone. The only allowed exception is a product-owner-approved bootstrap or global process issue whose body includes a concrete `No GitHub Milestone reason`.
-- Use `Current` for the active milestone, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
-- `Milestone Focus` must not change the executable task rule: an executable issue still requires Project status `Ready` and the `ready` label.
-- When all required work in the `Current` milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
-- If closeout is complete, propose moving the completed milestone's Project items from `Current` to `Closed` and the next milestone's Project items from `Next` to `Current`. After product-owner confirmation, attempt to update the Project fields; if the update fails, use the Project field blocker policy below.
-- A milestone focus transition updates board focus only. It does not authorize implementation of the next roadmap issue.
-- If Project field updates fail because of permissions, missing tooling, unresolved Project metadata, GitHub availability, or another blocker, report the limitation and ask for the concrete access, authorization, or Project metadata needed to complete the update.
+- GitHub Milestones do not change the executable task rule: an executable issue still requires Project status `Ready` and the `ready` label.
+- When all required work in a milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
 
 ## Milestone UX/UI Hardening
 

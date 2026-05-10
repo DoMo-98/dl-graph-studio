@@ -38,19 +38,7 @@ Create these labels:
 - `blocked`
 - `ready`
 
-Create a single-select Project field named `Milestone Focus` with these values:
-
-- `Current`
-- `Next`
-- `Later`
-- `Closed`
-
-GitHub Milestones remain the canonical issue-level phase assignment. `Milestone Focus` controls which milestone appears in the daily Project board view.
-
-Create these saved Project views:
-
-- `Active Milestone`: board layout, filtered to `Milestone Focus:Current`, with columns grouped by `Status`.
-- `Milestone Overview`: global view showing all roadmap items with GitHub Milestone, `Milestone Focus`, `Status`, labels, and linked pull requests visible.
+GitHub Milestones remain the canonical issue-level phase assignment for phase work.
 
 ## Issue Rules
 
@@ -61,31 +49,16 @@ Create these saved Project views:
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
 - Do not apply the `ready` label or add the issue to the Project as ready until the roadmap issue validator passes.
 - Keep issues small enough for a PR review of about 15-30 minutes.
-- Each roadmap issue added to the Project must have both a GitHub Milestone and a `Milestone Focus` value. Use `Current` for active milestone work, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
+- Each roadmap issue added to the Project must have a GitHub Milestone, unless it is an approved bootstrap or global process exception.
 - Roadmap issues for product phase work must not be left without a GitHub Milestone. Unmilestoned roadmap issues are exceptional and must include a concrete `No GitHub Milestone reason` approved by the product owner, such as bootstrap work that predates the milestone system or global process work that intentionally sits outside phase delivery.
 
-## Milestone Project Board Focus
+## Milestone Closeout
 
-The Project board should make the active milestone clear without requiring the product owner to inspect the separate Issues milestone page.
+GitHub Milestones are the roadmap's phase grouping mechanism. Project status and the `ready` label still control task execution; milestone assignment does not make an issue executable.
 
-Use `Milestone Focus` as operational Project metadata:
+When all required work in a milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
 
-- `Current`: issues in the milestone that should be visible in the daily board.
-- `Next`: issues in the next planned milestone.
-- `Later`: future milestone work that should remain out of the daily board.
-- `Closed`: completed milestone work that remains visible in the global view.
-
-The `Active Milestone` view is the default daily execution board. It filters to `Milestone Focus:Current` and keeps the existing `Status` columns.
-
-The `Milestone Overview` view is the planning and review view. It shows all roadmap items and should make GitHub Milestone and `Milestone Focus` visible so work can be compared across phases.
-
-`Milestone Focus` does not change readiness or task selection. An executable task still requires Project status `Ready`, the `ready` label, and product-owner confirmation.
-
-When all required work in the `Current` milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
-
-If closeout is complete, propose moving the completed milestone's Project items from `Current` to `Closed` and the next milestone's Project items from `Next` to `Current`. After product-owner confirmation, attempt to update the Project fields; if the update fails, report the blocker and ask for the concrete access, authorization, or Project metadata needed to complete the update.
-
-A focus transition updates board visibility only. It does not authorize implementation of the next roadmap issue.
+Milestone closeout does not authorize implementation of the next roadmap issue. The next executable task still requires Project status `Ready`, the `ready` label, and product-owner confirmation.
 
 ## Product Owner Idea Intake
 
@@ -97,7 +70,7 @@ Use this intake sequence:
 
 1. Classify the idea as a UX/UI finding, technical audit finding, new roadmap task, or PRD-level idea.
 2. If it fits the current milestone hardening or technical audit issue, record it there with enough context to evaluate later.
-3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, `Milestone Focus`, labels, and expected PR size. If no milestone applies, ask for the explicit `No GitHub Milestone reason` that should be recorded in the issue body.
+3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, labels, and expected PR size. If no milestone applies, ask for the explicit `No GitHub Milestone reason` that should be recorded in the issue body.
 4. If the idea is too large for one 15-30 minute reviewable PR, split it before issue creation and recommend the first issue to create.
 5. Draft the issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
 6. Validate the draft before applying `ready` or adding it to the Project as ready:
@@ -110,7 +83,7 @@ Use this intake sequence:
 
 Intake confirmation can create or update the issue, mark it `Ready`, and set its priority, but it does not authorize implementation. Ideas become implementation work only when the product owner explicitly selects or confirms a ready issue for work under the Agent Cycle. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
 
-Intake should recommend a GitHub Milestone and `Milestone Focus` value. Future-milestone ideas should usually receive `Later` unless the product owner explicitly promotes that milestone to `Next`. The agent should not propose a phase issue as ready while the GitHub Milestone is missing or only implied by title, label, or Project field.
+Intake should recommend a GitHub Milestone. The agent should not propose a phase issue as ready while the GitHub Milestone is missing or only implied by title, label, or Project field.
 
 ## Milestone Technical Audit
 

@@ -13,7 +13,6 @@ Describe the user or product outcome this issue delivers.
 ## Roadmap metadata
 
 GitHub Milestone: Phase N - Milestone name
-Milestone Focus: Current
 No GitHub Milestone reason: N/A
 
 ## Scope

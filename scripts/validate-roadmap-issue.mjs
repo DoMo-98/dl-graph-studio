@@ -21,13 +21,6 @@ Required arguments:
   --title <title>  Issue title. Must start with "[Roadmap]: ".
   --body <path>    Path to a Markdown body file.`;
 
-const VALID_MILESTONE_FOCUS_VALUES = new Set([
-  "Current",
-  "Next",
-  "Later",
-  "Closed",
-]);
-
 const PLACEHOLDER_VALUES = new Set(["", "n/a", "na", "none", "tbd", "todo"]);
 const PLACEHOLDER_PATTERNS = [/^phase\s+n\b/i, /\bmilestone name\b/i];
 
@@ -73,7 +66,6 @@ function validateRoadmapMetadata({ errors, lines }) {
   }
 
   const milestone = getMetadataValue(metadataLines, "GitHub Milestone");
-  const milestoneFocus = getMetadataValue(metadataLines, "Milestone Focus");
   const noMilestoneReason = getMetadataValue(
     metadataLines,
     "No GitHub Milestone reason",
@@ -83,8 +75,8 @@ function validateRoadmapMetadata({ errors, lines }) {
     errors.push('Roadmap metadata must contain "GitHub Milestone:".');
   }
 
-  if (milestoneFocus === undefined) {
-    errors.push('Roadmap metadata must contain "Milestone Focus:".');
+  if (getMetadataValue(metadataLines, "Milestone Focus") !== undefined) {
+    errors.push('Roadmap metadata must not contain "Milestone Focus:".');
   }
 
   if (noMilestoneReason === undefined) {
@@ -97,15 +89,6 @@ function validateRoadmapMetadata({ errors, lines }) {
   if (!hasMilestone && !hasNoMilestoneReason) {
     errors.push(
       'Roadmap metadata must include a GitHub Milestone or an explicit "No GitHub Milestone reason".',
-    );
-  }
-
-  if (
-    hasMilestone &&
-    !VALID_MILESTONE_FOCUS_VALUES.has(String(milestoneFocus ?? "").trim())
-  ) {
-    errors.push(
-      'Milestone Focus must be one of "Current", "Next", "Later", or "Closed" when a GitHub Milestone is set.',
     );
   }
 }

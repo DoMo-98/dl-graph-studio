@@ -9,7 +9,6 @@ Describe the outcome.
 ## Roadmap metadata
 
 GitHub Milestone: Phase 1 - Core architecture editor
-Milestone Focus: Current
 No GitHub Milestone reason: N/A
 
 ## Scope
@@ -55,7 +54,6 @@ describe("validateRoadmapIssue", () => {
         "GitHub Milestone: Phase 1 - Core architecture editor",
         "GitHub Milestone: N/A",
       )
-      .replace("Milestone Focus: Current", "Milestone Focus: N/A")
       .replace(
         "No GitHub Milestone reason: N/A",
         "No GitHub Milestone reason: Bootstrap issue created before milestones existed.",
@@ -74,7 +72,6 @@ describe("validateRoadmapIssue", () => {
       `## Roadmap metadata
 
 GitHub Milestone: Phase 1 - Core architecture editor
-Milestone Focus: Current
 No GitHub Milestone reason: N/A
 
 `,
@@ -94,12 +91,10 @@ No GitHub Milestone reason: N/A
   });
 
   it("fails when a milestone and no-milestone reason are both placeholders", () => {
-    const body = validBody
-      .replace(
-        "GitHub Milestone: Phase 1 - Core architecture editor",
-        "GitHub Milestone: N/A",
-      )
-      .replace("Milestone Focus: Current", "Milestone Focus: N/A");
+    const body = validBody.replace(
+      "GitHub Milestone: Phase 1 - Core architecture editor",
+      "GitHub Milestone: N/A",
+    );
 
     expect(
       validateRoadmapIssue({
@@ -127,10 +122,11 @@ No GitHub Milestone reason: N/A
     );
   });
 
-  it("fails when milestone focus is invalid for a milestone issue", () => {
+  it("fails when obsolete milestone focus metadata is present", () => {
     const body = validBody.replace(
-      "Milestone Focus: Current",
-      "Milestone Focus: Soon",
+      "GitHub Milestone: Phase 1 - Core architecture editor",
+      `GitHub Milestone: Phase 1 - Core architecture editor
+Milestone Focus: Current`,
     );
 
     expect(
@@ -138,9 +134,7 @@ No GitHub Milestone reason: N/A
         title: "[Roadmap]: Example",
         body,
       }),
-    ).toContain(
-      'Milestone Focus must be one of "Current", "Next", "Later", or "Closed" when a GitHub Milestone is set.',
-    );
+    ).toContain('Roadmap metadata must not contain "Milestone Focus:".');
   });
 
   it("fails when the title is missing the roadmap prefix", () => {
