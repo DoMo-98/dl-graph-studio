@@ -38,6 +38,20 @@ Create these labels:
 - `blocked`
 - `ready`
 
+Create a single-select Project field named `Milestone Focus` with these values:
+
+- `Current`
+- `Next`
+- `Later`
+- `Closed`
+
+GitHub Milestones remain the canonical issue-level phase assignment. `Milestone Focus` controls which milestone appears in the daily Project board view.
+
+Create these saved Project views:
+
+- `Active Milestone`: board layout, filtered to `Milestone Focus:Current`, with columns grouped by `Status`.
+- `Milestone Overview`: global view showing all roadmap items with GitHub Milestone, `Milestone Focus`, `Status`, labels, and linked pull requests visible.
+
 ## Issue Rules
 
 - One issue should map to one branch and one pull request by default.
@@ -47,6 +61,30 @@ Create these labels:
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
 - Do not apply the `ready` label or add the issue to the Project as ready until the roadmap issue validator passes.
 - Keep issues small enough for a PR review of about 15-30 minutes.
+- Each roadmap issue added to the Project must have both a GitHub Milestone and a `Milestone Focus` value. Use `Current` for active milestone work, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
+
+## Milestone Project Board Focus
+
+The Project board should make the active milestone clear without requiring the product owner to inspect the separate Issues milestone page.
+
+Use `Milestone Focus` as operational Project metadata:
+
+- `Current`: issues in the milestone that should be visible in the daily board.
+- `Next`: issues in the next planned milestone.
+- `Later`: future milestone work that should remain out of the daily board.
+- `Closed`: completed milestone work that remains visible in the global view.
+
+The `Active Milestone` view is the default daily execution board. It filters to `Milestone Focus:Current` and keeps the existing `Status` columns.
+
+The `Milestone Overview` view is the planning and review view. It shows all roadmap items and should make GitHub Milestone and `Milestone Focus` visible so work can be compared across phases.
+
+`Milestone Focus` does not change readiness or task selection. An executable task still requires Project status `Ready`, the `ready` label, and product-owner confirmation.
+
+When all required work in the `Current` milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
+
+If closeout is complete, propose moving the completed milestone's Project items from `Current` to `Closed` and the next milestone's Project items from `Next` to `Current`. After product-owner confirmation, attempt to update the Project fields; if the update fails, report the blocker and ask for the concrete access, authorization, or Project metadata needed to complete the update.
+
+A focus transition updates board visibility only. It does not authorize implementation of the next roadmap issue.
 
 ## Product Owner Idea Intake
 
@@ -58,7 +96,7 @@ Use this intake sequence:
 
 1. Classify the idea as a UX/UI finding, technical audit finding, new roadmap task, or PRD-level idea.
 2. If it fits the current milestone hardening or technical audit issue, record it there with enough context to evaluate later.
-3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, labels, and expected PR size.
+3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, `Milestone Focus`, labels, and expected PR size.
 4. If the idea is too large for one 15-30 minute reviewable PR, split it before issue creation and recommend the first issue to create.
 5. Draft the issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
 6. Validate the draft before applying `ready` or adding it to the Project as ready:
@@ -70,6 +108,8 @@ Use this intake sequence:
 7. Ask the product owner to confirm issue creation, readiness, and priority.
 
 Intake confirmation can create or update the issue, mark it `Ready`, and set its priority, but it does not authorize implementation. Ideas become implementation work only when the product owner explicitly selects or confirms a ready issue for work under the Agent Cycle. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
+
+Intake should recommend a `Milestone Focus` value. Future-milestone ideas should usually receive `Later` unless the product owner explicitly promotes that milestone to `Next`.
 
 ## Milestone Technical Audit
 
@@ -203,11 +243,11 @@ The GitHub Project tracks roadmap issues as the status owner. Pull requests are 
 1. The product owner asks for the next task.
 2. The agent reviews the GitHub Project.
 3. If the agent cannot review the GitHub Project because authentication, permissions, tooling, network access, or Project metadata is unavailable, the agent asks the product owner for the concrete access, re-authentication, authorization, or Project metadata needed to inspect it before recommending an executable task. When a CLI or app can start an interactive authorization flow, the agent starts that flow and gives the product owner the exact URL, code, or approval prompt to complete, instead of only describing commands for the product owner to run. Issue labels, issue sidebars, and public issue HTML are not substitutes for the Project status.
-4. The agent proposes one issue with the `ready` label and explains the recommendation.
+4. The agent proposes one issue whose Project status is `Ready` and whose labels include `ready`, then explains the recommendation.
 5. The product owner confirms the issue or selects another one.
 6. The agent creates a branch named `codex/<issue-number>-<short-name>`.
 7. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
-8. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
+8. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, GitHub availability, or another blocker, the agent reports the limitation and asks the product owner for the permissions, authorization, or Project metadata needed to complete the update, or for explicit authorization to continue while the Project status remains temporarily unchanged. The agent does not request a manual Project move unless the product owner explicitly chooses that fallback.
 9. The agent implements the issue scope using the maintainability and scope balance convention.
 10. The agent runs the required verification.
 11. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
