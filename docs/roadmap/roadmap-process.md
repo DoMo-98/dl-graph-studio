@@ -186,13 +186,14 @@ Before creating a commit, agents should validate the intended message:
 pnpm validate:commit-message -- --message "docs: add commit message rules"
 ```
 
-The validator also supports revision ranges for the future CI pass:
+The validator also supports revision ranges for pull request CI and local
+branch checks:
 
 ```bash
 pnpm validate:commit-message -- --range origin/main..HEAD
 ```
 
-The future CI policy should validate each commit individually rather than only
+The CI policy validates each pull request commit individually rather than only
 the pull request title or final squash commit.
 
 ## Agent Cycle
