@@ -186,13 +186,14 @@ Before creating a commit, agents should validate the intended message:
 pnpm validate:commit-message -- --message "docs: add commit message rules"
 ```
 
-The validator also supports revision ranges for the future CI pass:
+The validator also supports revision ranges for pull request CI and local
+branch checks:
 
 ```bash
 pnpm validate:commit-message -- --range origin/main..HEAD
 ```
 
-The future CI policy should validate each commit individually rather than only
+The CI policy validates each pull request commit individually rather than only
 the pull request title or final squash commit.
 
 ## Agent Cycle
@@ -237,7 +238,22 @@ Do not start PyTorch execution or training until the graph representation is min
 
 ## Required CI Checks
 
-Pull requests and pushes to `main` run the repository CI workflow. The workflow is limited to repository-owned commands so required checks stay auditable and reproducible within this repository:
+Pull requests and pushes to `main` run the repository CI workflow. The workflow is limited to repository-owned commands so required checks stay auditable and reproducible within this repository.
+
+Pull requests run these enforced checks:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm validate:commit-message -- --range <base>..HEAD
+pnpm format:check
+pnpm lint
+pnpm test
+pnpm test:coverage
+pnpm test:e2e
+pnpm build
+```
+
+Pushes to `main` run the same quality checks except pull request commit range validation:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -249,21 +265,30 @@ pnpm test:e2e
 pnpm build
 ```
 
+For local branch verification before opening a pull request, agents and contributors should use `origin/main` as the usual base:
+
+```bash
+pnpm validate:commit-message -- --range origin/main..HEAD
+```
+
+When reviewing a branch against a different base, replace `origin/main` with the actual base revision.
+
 Agents should run the same commands locally before opening pull requests when the issue touches code, build configuration, tests, or documentation.
 
 Coverage thresholds are a modest initial regression floor, not the final quality target for the product.
 
 `pnpm test:e2e` runs the Playwright functional regression suite for the current core editor surface. It covers editor load, node selection, inspector updates, primitive parameter editing, valid and invalid connection behavior, connection panel behavior, connection deletion, and stable project file export/reset/import behavior. It is not visual snapshot testing, cross-browser coverage, Tauri desktop automation, or exhaustive future Phase 2 workflow coverage.
 
-Custom pull request metadata validation and GitHub Project automation are separate roadmap issues and must not be hidden in the Playwright regression pull request.
+Pull request issue linkage, roadmap issue readiness, and GitHub Project status remain required process checks, but they are not enforced by repository CI. They depend on live GitHub metadata, Project permissions, and product-owner workflow state that are not reliably available to ordinary workflow runs. Agents must continue to verify those checks through the roadmap workflow before opening or updating pull requests.
 
 ## Later Automation
 
-After 5-10 real PRs use this process, consider automating repeated checks:
+After more real PRs use this process, consider automating repeated checks that require live GitHub metadata or repository settings:
 
 - Move issues between project states automatically.
 - Validate that each PR links a roadmap issue.
+- Validate that linked roadmap issues have the expected contract and readiness state.
 - Require completed PR checklist items.
-- Require CI checks before merge.
+- Configure branch protection to require CI checks before merge.
 - Generate issues from roadmap planning documents.
 - Add a standard command for asking the agent to propose the next task.
