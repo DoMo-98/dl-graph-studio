@@ -56,12 +56,13 @@ Create these saved Project views:
 
 - One issue should map to one branch and one pull request by default.
 - A PR can close multiple issues only when the issues explicitly allow grouping before work starts.
-- `.github/ISSUE_TEMPLATE/roadmap-task.md` is the canonical roadmap issue format, including the `[Roadmap]: ` title prefix and verification section shape.
+- `.github/ISSUE_TEMPLATE/roadmap-task.md` is the canonical roadmap issue format, including the `[Roadmap]: ` title prefix, roadmap metadata, and verification section shape.
 - Before creating or updating a live roadmap issue through the CLI, API, or any path outside GitHub's issue-template UI, run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
 - Do not apply the `ready` label or add the issue to the Project as ready until the roadmap issue validator passes.
 - Keep issues small enough for a PR review of about 15-30 minutes.
 - Each roadmap issue added to the Project must have both a GitHub Milestone and a `Milestone Focus` value. Use `Current` for active milestone work, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
+- Roadmap issues for product phase work must not be left without a GitHub Milestone. Unmilestoned roadmap issues are exceptional and must include a concrete `No GitHub Milestone reason` approved by the product owner, such as bootstrap work that predates the milestone system or global process work that intentionally sits outside phase delivery.
 
 ## Milestone Project Board Focus
 
@@ -96,7 +97,7 @@ Use this intake sequence:
 
 1. Classify the idea as a UX/UI finding, technical audit finding, new roadmap task, or PRD-level idea.
 2. If it fits the current milestone hardening or technical audit issue, record it there with enough context to evaluate later.
-3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, `Milestone Focus`, labels, and expected PR size.
+3. If it is a standalone roadmap task, ask only the clarifying questions needed to define objective, scope, out-of-scope, acceptance criteria, verification, milestone, `Milestone Focus`, labels, and expected PR size. If no milestone applies, ask for the explicit `No GitHub Milestone reason` that should be recorded in the issue body.
 4. If the idea is too large for one 15-30 minute reviewable PR, split it before issue creation and recommend the first issue to create.
 5. Draft the issue using `.github/ISSUE_TEMPLATE/roadmap-task.md`.
 6. Validate the draft before applying `ready` or adding it to the Project as ready:
@@ -109,7 +110,7 @@ Use this intake sequence:
 
 Intake confirmation can create or update the issue, mark it `Ready`, and set its priority, but it does not authorize implementation. Ideas become implementation work only when the product owner explicitly selects or confirms a ready issue for work under the Agent Cycle. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
 
-Intake should recommend a `Milestone Focus` value. Future-milestone ideas should usually receive `Later` unless the product owner explicitly promotes that milestone to `Next`.
+Intake should recommend a GitHub Milestone and `Milestone Focus` value. Future-milestone ideas should usually receive `Later` unless the product owner explicitly promotes that milestone to `Next`. The agent should not propose a phase issue as ready while the GitHub Milestone is missing or only implied by title, label, or Project field.
 
 ## Milestone Technical Audit
 

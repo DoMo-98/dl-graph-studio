@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 
 const REQUIRED_HEADINGS = [
   "## Objective",
+  "## Roadmap metadata",
   "## Scope",
   "## Out of scope",
   "## Acceptance criteria",
@@ -20,6 +21,16 @@ Required arguments:
   --title <title>  Issue title. Must start with "[Roadmap]: ".
   --body <path>    Path to a Markdown body file.`;
 
+const VALID_MILESTONE_FOCUS_VALUES = new Set([
+  "Current",
+  "Next",
+  "Later",
+  "Closed",
+]);
+
+const PLACEHOLDER_VALUES = new Set(["", "n/a", "na", "none", "tbd", "todo"]);
+const PLACEHOLDER_PATTERNS = [/^phase\s+n\b/i, /\bmilestone name\b/i];
+
 export function validateRoadmapIssue({ title, body }) {
   const errors = [];
   const lines = String(body ?? "").split(/\r?\n/);
@@ -33,6 +44,8 @@ export function validateRoadmapIssue({ title, body }) {
       errors.push(`Body must contain heading "${heading}".`);
     }
   }
+
+  validateRoadmapMetadata({ errors, lines });
 
   const verificationLines = getSectionLines(lines, "## Verification");
   if (verificationLines.length === 0 && !lines.includes("## Verification")) {
@@ -51,6 +64,50 @@ export function validateRoadmapIssue({ title, body }) {
   });
 
   return errors;
+}
+
+function validateRoadmapMetadata({ errors, lines }) {
+  const metadataLines = getSectionLines(lines, "## Roadmap metadata");
+  if (metadataLines.length === 0 && !lines.includes("## Roadmap metadata")) {
+    return;
+  }
+
+  const milestone = getMetadataValue(metadataLines, "GitHub Milestone");
+  const milestoneFocus = getMetadataValue(metadataLines, "Milestone Focus");
+  const noMilestoneReason = getMetadataValue(
+    metadataLines,
+    "No GitHub Milestone reason",
+  );
+
+  if (milestone === undefined) {
+    errors.push('Roadmap metadata must contain "GitHub Milestone:".');
+  }
+
+  if (milestoneFocus === undefined) {
+    errors.push('Roadmap metadata must contain "Milestone Focus:".');
+  }
+
+  if (noMilestoneReason === undefined) {
+    errors.push('Roadmap metadata must contain "No GitHub Milestone reason:".');
+  }
+
+  const hasMilestone = isMeaningfulMetadataValue(milestone);
+  const hasNoMilestoneReason = isMeaningfulMetadataValue(noMilestoneReason);
+
+  if (!hasMilestone && !hasNoMilestoneReason) {
+    errors.push(
+      'Roadmap metadata must include a GitHub Milestone or an explicit "No GitHub Milestone reason".',
+    );
+  }
+
+  if (
+    hasMilestone &&
+    !VALID_MILESTONE_FOCUS_VALUES.has(String(milestoneFocus ?? "").trim())
+  ) {
+    errors.push(
+      'Milestone Focus must be one of "Current", "Next", "Later", or "Closed" when a GitHub Milestone is set.',
+    );
+  }
 }
 
 function getSectionLines(lines, heading) {
@@ -101,6 +158,28 @@ function validateVerificationLabel({ errors, lines, label }) {
       `Verification subsection "${label}" must include at least one unchecked checklist item.`,
     );
   }
+}
+
+function getMetadataValue(lines, label) {
+  const prefix = `${label}:`;
+  const line = lines.find((candidate) => candidate.startsWith(prefix));
+  if (!line) {
+    return undefined;
+  }
+
+  return line.slice(prefix.length).trim();
+}
+
+function isMeaningfulMetadataValue(value) {
+  if (value === undefined) {
+    return false;
+  }
+
+  const normalizedValue = value.trim();
+  return (
+    !PLACEHOLDER_VALUES.has(normalizedValue.toLowerCase()) &&
+    !PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(normalizedValue))
+  );
 }
 
 function escapeRegExp(value) {
