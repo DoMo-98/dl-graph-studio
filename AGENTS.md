@@ -63,8 +63,8 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - When creating or updating a roadmap issue, set both the issue's GitHub Milestone and the Project item's `Milestone Focus` value.
 - Use `Current` for the active milestone, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
 - `Milestone Focus` must not change the executable task rule: an executable issue still requires Project status `Ready` and the `ready` label.
-- When every issue in the `Current` milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
-- If closeout is complete, propose moving the completed milestone's Project items from `Current` to `Closed` and the next milestone's Project items from `Next` to `Current`. After product-owner confirmation, update the Project fields if tooling and permissions allow.
+- When all required work in the `Current` milestone is `Done`, first check that milestone UX/UI hardening and technical audit are `Done` or explicitly skipped, no milestone pull request remains open in review, and no blocking follow-up must be completed before closeout.
+- If closeout is complete, propose moving the completed milestone's Project items from `Current` to `Closed` and the next milestone's Project items from `Next` to `Current`. After product-owner confirmation, attempt to update the Project fields; if the update fails, use the Project field blocker policy below.
 - A milestone focus transition updates board focus only. It does not authorize implementation of the next roadmap issue.
 - If Project field updates fail because of permissions, missing tooling, unresolved Project metadata, GitHub availability, or another blocker, report the limitation and ask for the concrete access, authorization, or Project metadata needed to complete the update.
 
