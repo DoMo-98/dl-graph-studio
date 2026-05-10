@@ -90,9 +90,9 @@ Expected: `Commit message format is valid.`
 Run:
 
 ```bash
-pnpm validate:commit-message -- --message "ci: validate pull request commit messages"
+pnpm validate:commit-message -- --message "chore: validate pull request commit messages"
 git add .github/workflows/ci.yml
-git commit -m "ci: validate pull request commit messages"
+git commit -m "chore: validate pull request commit messages"
 ```
 
 Expected: commit succeeds with only `.github/workflows/ci.yml` staged.
@@ -354,7 +354,7 @@ Expected commits include:
 
 ```text
 docs: add ci custom rules design
-ci: validate pull request commit messages
+chore: validate pull request commit messages
 docs: document ci custom validation
 ```
 
