@@ -79,7 +79,8 @@ Use this intake sequence:
    pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>
    ```
 
-7. Ask the product owner to confirm issue creation, readiness, and priority.
+7. Ask the product owner to confirm issue creation, readiness, priority, and intended Project status.
+8. After creating or updating the live roadmap issue, verify that it is associated with the `dl-graph-studio Roadmap` Project. If the created issue has no Project item, add it to the Project before ending the turn, or report the exact permission, authorization, or Project metadata blocker that prevents the agent from doing so.
 
 Intake confirmation can create or update the issue, mark it `Ready`, and set its priority, but it does not authorize implementation. Ideas become implementation work only when the product owner explicitly selects or confirms a ready issue for work under the Agent Cycle. Clear ideas should move toward `Ready`; unclear ideas should stay blocked by named decisions rather than relying on hidden assumptions.
 

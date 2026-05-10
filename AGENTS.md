@@ -51,7 +51,7 @@ This repository uses an agent-assisted roadmap workflow. Agents must work from e
 - If the idea is too large for one reviewable PR, propose a split and recommend the first issue to create.
 - Before creating or updating a live roadmap issue outside GitHub's issue-template UI, run `pnpm validate:roadmap-issue -- --title "[Roadmap]: <title>" --body <body-file>`.
 - Ask the product owner to confirm issue creation, readiness, priority, and intended Project status before applying `ready`, adding the issue to the `dl-graph-studio Roadmap` Project, or starting implementation.
-- When creating a roadmap issue, add it to the `dl-graph-studio Roadmap` Project in the confirmed status before treating the issue as ready for roadmap execution. If Project placement fails, ask the product owner for the permissions, authorization, or project metadata needed for the agent to complete the placement, or for explicit authorization to continue while the Project status remains temporarily unchanged, instead of asking for a manual Project update.
+- When creating a roadmap issue, add it to the `dl-graph-studio Roadmap` Project in the confirmed status before treating the issue as ready for roadmap execution. Immediately verify the created issue's Project association after creation; if `projectItems` is empty, add the issue to the Project before ending the turn. If Project placement or verification fails, ask the product owner for the permissions, authorization, or project metadata needed for the agent to complete the placement, or for explicit authorization to continue while the Project status remains temporarily unchanged, instead of asking for a manual Project update.
 
 ## GitHub Milestones
 
