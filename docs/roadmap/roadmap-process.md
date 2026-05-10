@@ -61,7 +61,7 @@ Create these saved Project views:
 - An issue enters `Ready` only when objective, scope, out-of-scope, acceptance criteria, and verification are clear.
 - Do not apply the `ready` label or add the issue to the Project as ready until the roadmap issue validator passes.
 - Keep issues small enough for a PR review of about 15-30 minutes.
-- Each roadmap issue added to the Project should have both a GitHub Milestone and a `Milestone Focus` value. Use `Current` for active milestone work, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
+- Each roadmap issue added to the Project must have both a GitHub Milestone and a `Milestone Focus` value. Use `Current` for active milestone work, `Next` for the next planned milestone, `Later` for future milestone work, and `Closed` for completed milestone work after closeout is accepted.
 
 ## Milestone Project Board Focus
 
@@ -243,11 +243,11 @@ The GitHub Project tracks roadmap issues as the status owner. Pull requests are 
 1. The product owner asks for the next task.
 2. The agent reviews the GitHub Project.
 3. If the agent cannot review the GitHub Project because authentication, permissions, tooling, network access, or Project metadata is unavailable, the agent asks the product owner for the concrete access, re-authentication, authorization, or Project metadata needed to inspect it before recommending an executable task. When a CLI or app can start an interactive authorization flow, the agent starts that flow and gives the product owner the exact URL, code, or approval prompt to complete, instead of only describing commands for the product owner to run. Issue labels, issue sidebars, and public issue HTML are not substitutes for the Project status.
-4. The agent proposes one issue with the `ready` label and explains the recommendation.
+4. The agent proposes one issue whose Project status is `Ready` and whose labels include `ready`, then explains the recommendation.
 5. The product owner confirms the issue or selects another one.
 6. The agent creates a branch named `codex/<issue-number>-<short-name>`.
 7. Immediately after branch creation, before implementation edits, the agent attempts to move the confirmed issue from `Ready` to `In Progress` in the GitHub Project.
-8. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, or GitHub availability, the agent reports the limitation and requests the manual move of issue `#<issue-number>` to `In Progress`, or gets explicit product-owner approval to continue despite the temporary Project mismatch.
+8. If the Project update cannot be performed because of permissions, missing tooling, unresolved Project metadata, GitHub availability, or another blocker, the agent reports the limitation and asks the product owner for the permissions, authorization, or Project metadata needed to complete the update, or for explicit authorization to continue while the Project status remains temporarily unchanged. The agent does not request a manual Project move unless the product owner explicitly chooses that fallback.
 9. The agent implements the issue scope using the maintainability and scope balance convention.
 10. The agent runs the required verification.
 11. The agent opens a PR linked with `Closes #<issue-number>`, and the issue moves to `In Review`.
